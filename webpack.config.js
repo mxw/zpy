@@ -2,6 +2,14 @@ let path = require('path');
 let process = require('process');
 let nodeExternals = require('webpack-node-externals');
 
+let resolvePath = (() => {
+    if (process.env.NODE_PATH === undefined) {
+        return [ "node_modules" ];
+    } else {
+        return [ "node_modules", path.resolve(process.env.NODE_PATH) ];
+    }
+})()
+
 let common = {
     mode: "production",
     devtool: "source-map",
@@ -23,13 +31,9 @@ let common = {
         ]
     },
 
-    resolve: {
-        modules: [ "node_modules", path.resolve(process.env.NODE_PATH) ]
-    },
+    resolve: {modules: resolvePath},
 
-    resolveLoader: {
-        modules: [ "node_modules", path.resolve(process.env.NODE_PATH)]
-    }
+    resolveLoader: {modules: resolvePath}
 };
 
 let frontend = Object.assign({
