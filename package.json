@@ -22,14 +22,11 @@
     "ts-loader": "*",
     "ts-node": "*",
     "source-map-loader": "*",
-
     "mocha": "*",
     "chai": "*",
-
     "@types/react": "*",
     "@types/react-dom": "*",
     "@types/express": "*",
-
     "@types/mocha": "*",
     "@types/chai": "*"
   }
