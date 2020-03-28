@@ -1,0 +1,29 @@
+{
+    "name": "zhaopengyou",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "build": "webpack",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "react":"*",
+        "react-dom":"*",
+        "express":"*"
+    },
+    "devDependencies": {
+        "typescript": "*",
+        "webpack": "*",
+        "webpack-cli":"*",
+        "webpack-node-externals":"*",
+        "ts-loader":"*",
+        "source-map-loader":"*",
+
+        "@types/react":"*",
+        "@types/react-dom":"*",
+        "@types/express":"*"
+    }
+}

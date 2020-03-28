@@ -1,0 +1,5 @@
+dist
+node_modules
+default.nix
+node-env.nix
+node-packages.nix
