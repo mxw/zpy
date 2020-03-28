@@ -1,36 +1,36 @@
 {
-    "name": "zhaopengyou",
-    "version": "1.0.0",
-    "description": "",
-    "main": "index.js",
-    "scripts": {
-        "build": "webpack",
-        "test": "mocha -r ts-node/register test/**/*.ts"
-    },
-    "author": "",
-    "license": "MIT",
-    "dependencies": {
-        "react": "*",
-        "react-dom": "*",
-        "express": "*"
-    },
-    "devDependencies": {
-        "typescript": "*",
-        "webpack": "*",
-        "webpack-cli": "*",
-        "webpack-node-externals": "*",
-        "ts-loader": "*",
-        "ts-node": "*",
-        "source-map-loader": "*",
+  "name": "zhaopengyou",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack",
+    "test": "mocha -r ts-node/register test/**/*.ts"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "react": "*",
+    "react-dom": "*",
+    "express": "*"
+  },
+  "devDependencies": {
+    "typescript": "*",
+    "webpack": "*",
+    "webpack-cli": "*",
+    "webpack-node-externals": "*",
+    "ts-loader": "*",
+    "ts-node": "*",
+    "source-map-loader": "*",
 
-        "mocha": "*",
-        "chai": "*",
+    "mocha": "*",
+    "chai": "*",
 
-        "@types/react": "*",
-        "@types/react-dom": "*",
-        "@types/express": "*",
+    "@types/react": "*",
+    "@types/react-dom": "*",
+    "@types/express": "*",
 
-        "@types/mocha": "*",
-        "@types/chai": "*"
-    }
+    "@types/mocha": "*",
+    "@types/chai": "*"
+  }
 }
