@@ -10,20 +10,19 @@
     "author": "",
     "license": "MIT",
     "dependencies": {
-        "react":"*",
-        "react-dom":"*",
-        "express":"*"
+        "react": "*",
+        "react-dom": "*",
+        "express": "*"
     },
     "devDependencies": {
         "typescript": "*",
         "webpack": "*",
-        "webpack-cli":"*",
-        "webpack-node-externals":"*",
-        "ts-loader":"*",
-        "source-map-loader":"*",
-
-        "@types/react":"*",
-        "@types/react-dom":"*",
-        "@types/express":"*"
+        "webpack-cli": "*",
+        "webpack-node-externals": "*",
+        "ts-loader": "*",
+        "source-map-loader": "*",
+        "@types/react": "*",
+        "@types/react-dom": "*",
+        "@types/express": "*"
     }
 }
