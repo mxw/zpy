@@ -88,6 +88,15 @@ export class TrumpMeta {
     this.suit = suit;
     this.rank = rank;
   }
+
+  /*
+   * Increment a virtual rank within the domain of this trump selection.
+   *
+   * This will happily keep incrementing past joker.
+   */
+  inc_rank(rank: number): number {
+    return rank + 1 === this.rank ? rank + 2 : rank + 1;
+  }
 }
 
 /*
@@ -180,8 +189,8 @@ export class Card extends CardBase {
    */
   static compare(l: Card, r: Card): number | null {
     if (l.v_suit === r.v_suit) return Math.sign(l.v_rank - r.v_rank);
-    if (l.v_suit === Suit.TRUMP && r.v_suit !== Suit.TRUMP) return 100;
-    if (l.v_suit !== Suit.TRUMP && r.v_suit === Suit.TRUMP) return -100;
+    if (l.v_suit === Suit.TRUMP && r.v_suit !== Suit.TRUMP) return 1;
+    if (l.v_suit !== Suit.TRUMP && r.v_suit === Suit.TRUMP) return -1;
     return null;
   }
 
@@ -226,37 +235,35 @@ export class CardPile {
     }
   }
 
-  private * gen_cards(filter_fn?: Function): Generator<Card, void> {
+  * gen_counts(): Generator<[Card, number], void> {
     for (let suit of CardBase.SUITS) {
       for (let rank = 2; rank <= Rank.A; ++rank) {
         let n = this.#counts[CardPile.index_of(suit, rank)];
-        for (let i = 0; i < n; ++i) {
-          yield new Card(suit, rank, this.#tr);
-        }
+        if (n > 0) yield [new Card(suit, rank, this.#tr), n];
       }
     }
     for (let rank = 2; rank <= Rank.B; ++rank) {
       if (rank === Rank.N_off) {
         for (let suit of CardBase.SUITS) {
           let n = this.#osnt_counts[suit];
-          for (let i = 0; i < n; ++i) {
-            yield new Card(suit, this.#tr.rank, this.#tr);
-          }
+          if (n > 0) yield [new Card(suit, this.#tr.rank, this.#tr), n];
         }
       } else if (rank === Rank.N_on) {
         let n = this.#counts[CardPile.index_of(Suit.TRUMP, rank)];
-        for (let i = 0; i < n; ++i) {
-          yield new Card(this.#tr.suit, this.#tr.rank, this.#tr);
-        }
+        if (n > 0) yield [new Card(this.#tr.suit, this.#tr.rank, this.#tr), n];
       } else {
         let n = this.#counts[CardPile.index_of(Suit.TRUMP, rank)];
-        for (let i = 0; i < n; ++i) {
-          yield new Card(
-            rank >= Rank.S ? Suit.TRUMP : this.#tr.suit,
-            rank, this.#tr
-          );
+        if (n > 0) {
+          let suit = rank >= Rank.S ? Suit.TRUMP : this.#tr.suit;
+          yield [new Card(suit, rank, this.#tr), n];
         }
       }
+    }
+  }
+
+  * gen_cards(): Generator<Card, void> {
+    for (let [card, n] of this.gen_counts()) {
+      for (let i = 0; i < n; ++i) yield card;
     }
   }
 

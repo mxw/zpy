@@ -29,6 +29,26 @@ describe('Card', () => {
     expect(card.v_suit).to.equal(Suit.TRUMP);
     expect(card.v_rank).to.equal(Rank.B);
   });
+
+  it('compares correctly', () => {
+    let tr = new TrumpMeta(Suit.HEARTS, 7);
+
+    let small = new Card(Suit.SPADES, 6, tr);
+    let large = new Card(Suit.SPADES, Rank.A, tr);
+    let off   = new Card(Suit.CLUBS, Rank.A, tr);
+    let trump = new Card(Suit.HEARTS, 6, tr);
+
+    expect(Card.compare(small, large)).to.equal(-1);
+    expect(Card.compare(small, small)).to.equal(0);
+    expect(Card.compare(large, small)).to.equal(1);
+
+    expect(Card.compare(small, off)).to.be.null;
+    expect(Card.compare(off, small)).to.be.null;
+
+    expect(Card.compare(off, trump)).to.equal(-1);
+    expect(Card.compare(trump, trump)).to.equal(0);
+    expect(Card.compare(trump, off)).to.equal(1);
+  });
 });
 
 describe('CardPile', () => {
