@@ -54,21 +54,22 @@ export class CardTuple {
 export class Tractor {
   constructor(readonly tuples: CardTuple[]) {
     assert(tuples.length > 0);
-    assert(tuples.every(t => t.card.v_suit === this.suit()));
-    assert(tuples.every(t => t.arity === this.arity()));
+    assert(tuples.every(t => t.card.v_suit === this.v_suit));
+    assert(tuples.every(t => t.arity === this.arity));
 
     this.tuples = tuples.sort((l, r) => CardTuple.compare(l, r));
   }
 
   /*
-   * Property accessors.
+   * Property getters.
    */
-  length(): number { return this.tuples.length; }
-  arity(): number { return this.tuples[0].arity; }
-  suit(): Suit { return this.tuples[0].card.v_suit; }
-  shape(): Tractor.Shape {
-    return new Tractor.Shape(this.length(), this.arity());
+  get shape(): Tractor.Shape {
+    return new Tractor.Shape(this.length, this.arity);
   }
+  get length(): number { return this.tuples.length; }
+  get arity(): number { return this.tuples[0].arity; }
+  get count(): number { return this.length * this.arity; }
+  get v_suit(): Suit { return this.tuples[0].card.v_suit; }
 
   /*
    * Spaceship-style comparator.
@@ -115,17 +116,21 @@ export namespace Tractor {
  * degenerate (i.e., a single (n,m)-tractor).
  */
 export class Flight {
+  readonly count: number;
+
   private constructor(
     readonly tractors: Tractor[],
     readonly total: number
   ) {
     assert(tractors.length > 0);
+    assert(tractors.every(t => t.v_suit === tractors[0].v_suit));
 
     this.tractors = tractors.sort((l, r) => {
-      let shape_cmp = Tractor.Shape.compare(l.shape(), r.shape());
+      let shape_cmp = Tractor.Shape.compare(l.shape, r.shape);
       if (shape_cmp !== 0) return -shape_cmp;
       return -Tractor.compare(l, r);
     });
+    this.count = this.tractors.reduce((sum, t) => sum + t.count, 0);
   }
 
   /*
@@ -222,6 +227,11 @@ export class Flight {
   }
 
   /*
+   * Property getters.
+   */
+  get v_suit(): Suit { return this.tractors[0].v_suit; }
+
+  /*
    * Whether `this` beats `other`, assuming `this` has turn-order precedence.
    */
   beats(other: Flight): boolean {
@@ -247,12 +257,13 @@ export class Flight {
 }
 
 /*
- * A CardPile with a bunch of tractor-finding metadata.
+ * A CardPile with a bunch of tractor-finding metadata.  We convert a CardPile
+ * to a Hand once all cards are drawn.
  *
- * ThiccPile offers the following capability: for any given (length, arity)
- * pair (m,n), find all the ranks at which a potential (m,n)-tractor begins.
- * We maintain this capability cheaply across deletion operations (but not
- * insertions).
+ * Hand is optimized for finding plays, and offers the following capability:
+ * For any given (length, arity) pair (m,n), find all the ranks at which a
+ * potential (m,n)-tractor begins.  We maintain this capability cheaply across
+ * deletion operations (but not insertions).
  *
  * To accomplish this, we create and maintain two data structures:
  *
@@ -283,79 +294,99 @@ export class Flight {
  * (NB: This is a slight simplification; in practice, we need to do this same
  * work for every suit.)
  */
-export class ThiccPile extends CardPile {
-  readonly K: ThiccPile.Node[][][][] = []; // suit -> arity -> len -> [nodes]
-  readonly I: ThiccPile.Node[][][] = [];   // suit -> rank -> [nodes]
-  readonly I_osnt: ThiccPile.Node[][][] = [];  // suit -> suit -> [nodes]
+export class Hand {
+  #K: Hand.Node[][][][] = []; // v_suit -> arity -> len -> [nodes]
+  #I: Hand.Node[][][] = [];   // v_suit -> v_rank -> [nodes]
+  #I_osnt: Hand.Node[][][] = [];  // v_suit -> suit -> [nodes]
 
-  constructor(cards: CardBase[], tr: TrumpMeta) {
-    super(cards, tr);
+  constructor(readonly pile: CardPile) {
+    let p : {v_suit?: Suit, v_rank?: number};
 
-    let p : {suit?: Suit, rank?: number};
-
-    for (let [card, n] of this.gen_counts()) {
-      if (p.suit !== card.v_suit) {
+    for (let [card, n] of this.pile.gen_counts()) {
+      if (p.v_suit !== card.v_suit) {
         // we changed suits; reset our position.
-        p.suit = card.v_suit;
-        p.rank = 2;
+        p.v_suit = card.v_suit;
+        p.v_rank = 2;
       }
 
       // 1-tuples are equivalent to void ranks.
       if (n === 1) continue;
 
-      let K = this.K[p.suit];
-      let I = this.I[p.suit];
-      let I_osnt = this.I_osnt[p.suit];
+      let K = this.#K[p.v_suit];
 
-      let I_p : ThiccPile.Node[];
+      let I_p : Hand.Node[];
 
       while (true) {
-        let next = this.tr.inc_rank(p.rank);
+        let next = this.pile.tr.inc_rank(p.v_rank);
 
         if (next === card.v_rank) {
-          I_p = (p.rank === Rank.N_off) ? [].concat.apply([], I_osnt) : I_p;
+          I_p = this.I(p.v_suit, p.v_rank);
           break;
         }
         if (next > card.v_rank) {
-          assert(p.rank === 2);
+          assert(p.v_rank === 2);
           assert(card.v_rank === 2);
           break;
         }
-        p.rank = next;
+        p.v_rank = next;
       }
-      assert(!I_p || this.tr.inc_rank(p.rank) === card.v_rank);
+      assert(!I_p || this.pile.tr.inc_rank(p.v_rank) === card.v_rank);
 
-      let I_cur : ThiccPile.Node[] = I[card.v_rank] = [];
       let osnt_suit = (card.v_rank === Rank.N_off) ? card.suit : undefined;
+      let I_cur = this.I(card.v_suit, card.v_rank, osnt_suit);
 
-      let push = (node: ThiccPile.Node) => {
+      let register = (node: Hand.Node) => {
         I_cur.push(node);
+        K[node.n][node.m] = K[node.n][node.m] || [];
+        K[node.n][node.m].push(node);
       };
 
       for (let n_ = 2; n_ <= n; ++n_) {
-        let node = new ThiccPile.Node(
+        let node = new Hand.Node(
           new Tractor.Shape(1, n_),
           card.v_rank,
           osnt_suit,
         );
-        I_cur.push(node);
-        K[n_][1] = K[n_][1] || [];
-        K[n_][1].push(node);
+        register(node);
       }
 
       for (let src of I_p) {
         if (src.n > n) continue;
-
-        let node = ThiccPile.Node.chain_from(src, osnt_suit);
-        I_cur.push(node);
-        K[node.n][node.m] = K[node.n][node.m] || [];
-        K[node.n][node.m].push(node);
+        let node = Hand.Node.chain_from(src, osnt_suit);
+        register(node);
       }
+    }
+  }
+
+  /*
+   * Obtain a Node set from I.
+   *
+   * The presence of `osnt_suit` serves as a "mutable" flag.  If it's set,
+   * mutating the result is a coherent operation that affects the contents of
+   * this.#I.  If it's not set, the result may be a temporary, so mutations
+   * should not be attempted.
+   */
+  private I(
+    v_suit: Suit,
+    v_rank: number,
+    osnt_suit?: Suit,
+  ): Hand.Node[] {
+    if (!osnt_suit) {
+      return v_rank === Rank.N_off
+        ? [].concat.apply([], this.#I_osnt[v_suit])
+        : this.#I[v_suit][v_rank];
+    }
+    if (v_rank === Rank.N_off) {
+      return (this.#I_osnt[v_suit][osnt_suit] =
+              this.#I_osnt[v_suit][osnt_suit] || []);
+    } else {
+      return (this.#I[v_suit][v_rank] =
+              this.#I[v_suit][v_rank] || []);
     }
   }
 }
 
-export namespace ThiccPile {
+export namespace Hand {
   /*
    * A tractor shape starting at a certain rank.
    *

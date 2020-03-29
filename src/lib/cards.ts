@@ -213,7 +213,7 @@ export class CardPile {
   #total: number;
   #counts: number[];
   #osnt_counts: number[];  // counts for off-suit natural trumps
-  protected tr: TrumpMeta;
+  readonly tr: TrumpMeta;
 
   // 13 slots for each non-trump suit, plus 17 trump rank slots (heh).
   private static readonly IND_MAX = 13 * 4 + Rank.B - 1;
@@ -273,16 +273,23 @@ export class CardPile {
   }
 
   /*
+   * Basic getters.
+   */
+  get size(): number { return this.#total; }
+
+  /*
    * Get, add to, or deduct from the count of `card` in `this`.
    */
   count(c: Card): number {
     return this.#counts[CardPile.index_of(c.v_suit, c.v_rank)];
   }
   insert(c: Card, n: number = 1): void {
+    this.#total += n;
     this.#counts[CardPile.index_of(c.v_suit, c.v_rank)] += n;
   }
   remove(c: Card, n: number = 1): void {
     assert(this.count(c) >= n);
+    this.#total -= n;
     this.#counts[CardPile.index_of(c.v_suit, c.v_rank)] -= n;
   }
 
