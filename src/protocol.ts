@@ -15,6 +15,8 @@ export interface User {
 export interface RequestHello {
   verb: "req:hello";
   nick: string;
+  principal: string;
+  token: string;
 };
 
 export interface Hello {
@@ -150,14 +152,3 @@ export interface Engine<Config, State, Action, ClientState, ClientAction> {
   redact: (state: State, who: User) => ClientState;
   redactAction: (state: Action, who: User) => ClientAction;
 };
-
-export type EngineConfig<E> =
-  E extends Engine<infer CF, infer S, infer A, infer CS, infer CA> ? CF : any;
-export type EngineState<E> =
-  E extends Engine<infer CF, infer S, infer A, infer CS, infer CA> ? S : any;
-export type EngineAction<E> =
-  E extends Engine<infer CF, infer S, infer A, infer CS, infer CA> ? A : any;
-export type EngineClientState<E> =
-  E extends Engine<infer CF, infer S, infer A, infer CS, infer CA> ? CS : any;
-export type EngineClientAction<E> =
-  E extends Engine<infer CF, infer S, infer A, infer CS, infer CA> ? CA : any;
