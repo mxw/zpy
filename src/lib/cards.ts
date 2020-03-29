@@ -93,7 +93,7 @@ export class TrumpMeta {
 /*
  * A standard ZPY-agnostic playing card.
  */
-export class BoringCard {
+export class CardBase {
   readonly suit: Suit;
   readonly rank: number;
 
@@ -118,12 +118,16 @@ export class BoringCard {
     this.rank = rank;
   }
 
-  static same(l: BoringCard, r: BoringCard): boolean {
+  static same(l: CardBase, r: CardBase): boolean {
     return l.suit === r.suit && l.rank === r.rank;
   }
 
-  toString(): string {
-    return "" + rank_to_string(this.rank) + suit_to_symbol(this.suit);
+  toString(color: boolean = false): string {
+    let out = '';
+    if (color) out += suit_to_color(this.suit);
+    out += rank_to_string(this.rank) + suit_to_symbol(this.suit);
+    if (color) out += ansi.RESET;
+    return out;
   }
 }
 
@@ -132,28 +136,27 @@ export class BoringCard {
  *
  * Essentially a raw playing card with "trumpiness" baked in.
  */
-export class Card {
-  readonly card: BoringCard;
-  readonly suit: Suit;    // effective (trump-aware) suit
-  readonly rank: number;  // effective (trump-aware) rank
+export class Card extends CardBase {
+  readonly v_suit: Suit;   // virtual (trump-aware) suit
+  readonly v_rank: number; // virtual (trump-aware) rank
 
   constructor(suit: Suit, rank: number, tr: TrumpMeta) {
-    this.card = new BoringCard(suit, rank);
+    super(suit, rank);
 
     if (suit === tr.suit) {
       if (rank === tr.rank) {
-        this.rank = Rank.N_on;
+        this.v_rank = Rank.N_on;
       } else {
-        this.rank = rank;
+        this.v_rank = rank;
       }
-      this.suit = Suit.TRUMP;
+      this.v_suit = Suit.TRUMP;
     } else {
       if (rank === tr.rank) {
-        this.suit = Suit.TRUMP;
-        this.rank = Rank.N_off;
+        this.v_suit = Suit.TRUMP;
+        this.v_rank = Rank.N_off;
       } else {
-        this.suit = suit;
-        this.rank = rank;
+        this.v_suit = suit;
+        this.v_rank = rank;
       }
     }
   }
@@ -162,7 +165,7 @@ export class Card {
    * Whether two cards are the literal same card.
    */
   static identical(l: Card, r: Card): boolean {
-    return BoringCard.same(l.card, r.card);
+    return CardBase.same(l, r);
   }
 
   /*
@@ -176,9 +179,9 @@ export class Card {
    * natural trumps).
    */
   static compare(l: Card, r: Card): number | null {
-    if (l.suit === r.suit) return Math.sign(l.rank - r.rank);
-    if (l.suit === Suit.TRUMP && r.suit !== Suit.TRUMP) return 100;
-    if (l.suit !== Suit.TRUMP && r.suit === Suit.TRUMP) return -100;
+    if (l.v_suit === r.v_suit) return Math.sign(l.v_rank - r.v_rank);
+    if (l.v_suit === Suit.TRUMP && r.v_suit !== Suit.TRUMP) return 100;
+    if (l.v_suit !== Suit.TRUMP && r.v_suit === Suit.TRUMP) return -100;
     return null;
   }
 
@@ -186,7 +189,7 @@ export class Card {
    * How many points is the card worth?
    */
   point_value(): number {
-    switch (this.card.rank) {
+    switch (this.rank) {
       case 5:      return 5;
       case 10:     return 10;
       case Rank.K: return 10;
@@ -211,20 +214,20 @@ export class CardPile {
   // 13 slots for each non-trump suit, plus 17 trump rank slots (heh).
   private static readonly IND_MAX = 13 * 4 + Rank.B - 1;
 
-  constructor(cards: BoringCard[], tr: TrumpMeta) {
+  constructor(cards: CardBase[], tr: TrumpMeta) {
     this.#counts = array_fill(CardPile.IND_MAX, 0);
     this.#osnt_counts = array_fill(4, 0);
     this.#tr = tr;
 
-    for (let card of cards) {
-      let c = new Card(card.suit, card.rank, tr);
-      ++this.#counts[CardPile.index_of(c.suit, c.rank)];
-      if (c.rank === Rank.N_off) ++this.#osnt_counts[c.card.suit];
+    for (let cb of cards) {
+      let c = (cb instanceof Card) ? cb : new Card(cb.suit, cb.rank, tr);
+      ++this.#counts[CardPile.index_of(c.v_suit, c.v_rank)];
+      if (c.v_rank === Rank.N_off) ++this.#osnt_counts[c.suit];
     }
   }
 
   private * gen_cards(filter_fn?: Function): Generator<Card, void> {
-    for (let suit of BoringCard.SUITS) {
+    for (let suit of CardBase.SUITS) {
       for (let rank = 2; rank <= Rank.A; ++rank) {
         let n = this.#counts[CardPile.index_of(suit, rank)];
         for (let i = 0; i < n; ++i) {
@@ -234,7 +237,7 @@ export class CardPile {
     }
     for (let rank = 2; rank <= Rank.B; ++rank) {
       if (rank === Rank.N_off) {
-        for (let suit of BoringCard.SUITS) {
+        for (let suit of CardBase.SUITS) {
           let n = this.#osnt_counts[suit];
           for (let i = 0; i < n; ++i) {
             yield new Card(suit, this.#tr.rank, this.#tr);
@@ -263,20 +266,17 @@ export class CardPile {
 
   toString(color: boolean = false): string {
     let out: string = '';
-    let suit: Suit | null = null;
+    let suit: Suit = null;
 
     for (let card of this.gen_cards()) {
-      if (suit !== card.suit) {
+      if (suit !== card.v_suit) {
         if (suit !== null) out += '\n';
-        suit = card.suit;
+        suit = card.v_suit;
 
         if (color) out += suit_to_color(suit);
         out += suit_to_symbol(suit) + ':';
       }
-      if (suit === Suit.TRUMP) {
-        if (color) out += suit_to_color(card.card.suit);
-      }
-      out += ' ' + card.card;
+      out += ' ' + card.toString(color);
     }
     if (color) out += ansi.RESET;
 

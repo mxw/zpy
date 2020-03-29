@@ -1,5 +1,5 @@
 import {
-  Suit, Rank, TrumpMeta, BoringCard, Card, CardPile
+  Suit, Rank, TrumpMeta, CardBase, Card, CardPile
 } from '../src/lib/cards';
 
 import {expect} from 'chai';
@@ -10,24 +10,24 @@ describe('Card', () => {
     let tr = new TrumpMeta(Suit.HEARTS, 7);
 
     card = new Card(Suit.CLUBS, Rank.K, tr);
-    expect(card.suit).to.equal(Suit.CLUBS);
-    expect(card.rank).to.equal(Rank.K);
+    expect(card.v_suit).to.equal(Suit.CLUBS);
+    expect(card.v_rank).to.equal(Rank.K);
 
     card = new Card(Suit.HEARTS, Rank.K, tr);
-    expect(card.suit).to.equal(Suit.TRUMP);
-    expect(card.rank).to.equal(Rank.K);
+    expect(card.v_suit).to.equal(Suit.TRUMP);
+    expect(card.v_rank).to.equal(Rank.K);
 
     card = new Card(Suit.CLUBS, 7, tr);
-    expect(card.suit).to.equal(Suit.TRUMP);
-    expect(card.rank).to.equal(Rank.N_off);
+    expect(card.v_suit).to.equal(Suit.TRUMP);
+    expect(card.v_rank).to.equal(Rank.N_off);
 
     card = new Card(Suit.HEARTS, 7, tr);
-    expect(card.suit).to.equal(Suit.TRUMP);
-    expect(card.rank).to.equal(Rank.N_on);
+    expect(card.v_suit).to.equal(Suit.TRUMP);
+    expect(card.v_rank).to.equal(Rank.N_on);
 
     card = new Card(Suit.TRUMP, Rank.B, tr);
-    expect(card.suit).to.equal(Suit.TRUMP);
-    expect(card.rank).to.equal(Rank.B);
+    expect(card.v_suit).to.equal(Suit.TRUMP);
+    expect(card.v_rank).to.equal(Rank.B);
   });
 });
 
@@ -36,29 +36,29 @@ describe('CardPile', () => {
     let tr = new TrumpMeta(Suit.SPADES, 7);
 
     let pile = new CardPile([
-      new BoringCard(Suit.CLUBS, Rank.K),
-      new BoringCard(Suit.CLUBS, Rank.K),
-      new BoringCard(Suit.CLUBS, 3),
-      new BoringCard(Suit.CLUBS, 7),
-      new BoringCard(Suit.CLUBS, 7),
-      new BoringCard(Suit.DIAMONDS, Rank.J),
-      new BoringCard(Suit.DIAMONDS, Rank.A),
-      new BoringCard(Suit.DIAMONDS, 2),
-      new BoringCard(Suit.SPADES, 2),
-      new BoringCard(Suit.SPADES, 2),
-      new BoringCard(Suit.SPADES, Rank.A),
-      new BoringCard(Suit.DIAMONDS, 7),
-      new BoringCard(Suit.DIAMONDS, 7),
-      new BoringCard(Suit.DIAMONDS, 7),
-      new BoringCard(Suit.HEARTS, 2),
-      new BoringCard(Suit.HEARTS, 10),
-      new BoringCard(Suit.HEARTS, 9),
-      new BoringCard(Suit.HEARTS, Rank.A),
-      new BoringCard(Suit.SPADES, 7),
-      new BoringCard(Suit.HEARTS, 8),
-      new BoringCard(Suit.TRUMP, Rank.B),
-      new BoringCard(Suit.TRUMP, Rank.S),
-      new BoringCard(Suit.TRUMP, Rank.B),
+      new CardBase(Suit.CLUBS, Rank.K),
+      new CardBase(Suit.CLUBS, Rank.K),
+      new CardBase(Suit.CLUBS, 3),
+      new CardBase(Suit.CLUBS, 7),
+      new CardBase(Suit.CLUBS, 7),
+      new CardBase(Suit.DIAMONDS, Rank.J),
+      new CardBase(Suit.DIAMONDS, Rank.A),
+      new CardBase(Suit.DIAMONDS, 2),
+      new CardBase(Suit.SPADES, 2),
+      new CardBase(Suit.SPADES, 2),
+      new CardBase(Suit.SPADES, Rank.A),
+      new CardBase(Suit.DIAMONDS, 7),
+      new CardBase(Suit.DIAMONDS, 7),
+      new CardBase(Suit.DIAMONDS, 7),
+      new CardBase(Suit.HEARTS, 2),
+      new CardBase(Suit.HEARTS, 10),
+      new CardBase(Suit.HEARTS, 9),
+      new CardBase(Suit.HEARTS, Rank.A),
+      new CardBase(Suit.SPADES, 7),
+      new CardBase(Suit.HEARTS, 8),
+      new CardBase(Suit.TRUMP, Rank.B),
+      new CardBase(Suit.TRUMP, Rank.S),
+      new CardBase(Suit.TRUMP, Rank.B),
     ], tr);
 
     expect('' + pile).to.equal(`
