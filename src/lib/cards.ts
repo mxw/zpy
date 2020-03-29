@@ -81,13 +81,10 @@ function rank_to_string(rank: number) {
  *    (JOKER, Rank.B): joker round, only joker trumps
  */
 export class TrumpMeta {
-  readonly suit: Suit;
-  readonly rank: number;
-
-  constructor(suit: Suit, rank: number) {
-    this.suit = suit;
-    this.rank = rank;
-  }
+  constructor(
+    readonly suit: Suit,
+    readonly rank: number
+  ) {}
 
   /*
    * Increment a virtual rank within the domain of this trump selection.
@@ -103,17 +100,10 @@ export class TrumpMeta {
  * A standard ZPY-agnostic playing card.
  */
 export class CardBase {
-  readonly suit: Suit;
-  readonly rank: number;
-
-  static readonly SUITS = [
-    Suit.CLUBS,
-    Suit.DIAMONDS,
-    Suit.SPADES,
-    Suit.HEARTS,
-  ];
-
-  constructor(suit: Suit, rank: number) {
+  constructor(
+    readonly suit: Suit,
+    readonly rank: number
+  ) {
     // natural trumps are not valid
     assert(rank !== Rank.N_off && rank !== Rank.N_on);
     // trump <=> joker
@@ -122,10 +112,14 @@ export class CardBase {
     // not trump <=> not joker
     assert(suit === Suit.TRUMP || rank <= Rank.A);
     assert(!(rank <= Rank.A) || suit !== Suit.TRUMP);
-
-    this.suit = suit;
-    this.rank = rank;
   }
+
+  static readonly SUITS = [
+    Suit.CLUBS,
+    Suit.DIAMONDS,
+    Suit.SPADES,
+    Suit.HEARTS,
+  ];
 
   static same(l: CardBase, r: CardBase): boolean {
     return l.suit === r.suit && l.rank === r.rank;
@@ -216,6 +210,7 @@ export class Card extends CardBase {
  * simple, but more importantly makes it very easy to find and validate combos.
  */
 export class CardPile {
+  #total: number;
   #counts: number[];
   #osnt_counts: number[];  // counts for off-suit natural trumps
   #tr: TrumpMeta;
@@ -230,6 +225,7 @@ export class CardPile {
 
     for (let cb of cards) {
       let c = (cb instanceof Card) ? cb : new Card(cb.suit, cb.rank, tr);
+      ++this.#total;
       ++this.#counts[CardPile.index_of(c.v_suit, c.v_rank)];
       if (c.v_rank === Rank.N_off) ++this.#osnt_counts[c.suit];
     }

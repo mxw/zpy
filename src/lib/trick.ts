@@ -23,13 +23,11 @@ import {strict as assert} from 'assert';
  * The denerate case is the 1-tuple, a single card.
  */
 export class CardTuple {
-  readonly card: Card;
-  readonly arity: number;
-
-  constructor(card: Card, arity: number) {
+  constructor(
+    readonly card: Card,
+    readonly arity: number
+  ) {
     assert(arity > 0);
-    this.card = card;
-    this.arity = arity;
   }
 
   /*
@@ -54,14 +52,22 @@ export class CardTuple {
  * The degenerate case is the (1,n)-tractor, a single n-tuple.
  */
 export class Tractor {
-  readonly tuples: CardTuple[];
-
-  constructor(tuples: CardTuple[]) {
+  constructor(readonly tuples: CardTuple[]) {
     assert(tuples.length > 0);
-    assert(tuples.every(t => t.card.v_suit === tuples[0].card.v_suit));
-    assert(tuples.every(t => t.arity === tuples[0].arity));
+    assert(tuples.every(t => t.card.v_suit === this.suit()));
+    assert(tuples.every(t => t.arity === this.arity()));
 
     this.tuples = tuples.sort((l, r) => CardTuple.compare(l, r));
+  }
+
+  /*
+   * Property accessors.
+   */
+  length(): number { return this.tuples.length; }
+  arity(): number { return this.tuples[0].arity; }
+  suit(): Suit { return this.tuples[0].card.v_suit; }
+  shape(): Tractor.Shape {
+    return new Tractor.Shape(this.length(), this.arity());
   }
 
   /*
@@ -80,6 +86,24 @@ export class Tractor {
   }
 }
 
+export namespace Tractor {
+  /*
+   * Dimensions of a tractor.
+   */
+  export class Shape {
+    constructor(
+      readonly len: number,
+      readonly arity: number
+    ) {}
+
+    static compare(l: Tractor.Shape, r: Tractor.Shape): number {
+      let arity_cmp = Math.sign(l.arity - r.arity);
+      if (arity_cmp !== 0) return arity_cmp;
+      return Math.sign(l.len - r.len);
+    }
+  }
+}
+
 /*
  * An arbitrary collection of tractors.
  *
@@ -91,39 +115,17 @@ export class Tractor {
  * degenerate (i.e., a single (n,m)-tractor).
  */
 export class Flight {
-  readonly tractors: Tractor[];
-  readonly total: number;
-
-  private constructor(tractors: Tractor[], total: number) {
+  private constructor(
+    readonly tractors: Tractor[],
+    readonly total: number
+  ) {
     assert(tractors.length > 0);
 
     this.tractors = tractors.sort((l, r) => {
-      let arity_cmp = Math.sign(l.tuples[0].arity - r.tuples[0].arity);
-      if (arity_cmp !== 0) return -arity_cmp;
-
-      let len_cmp = Math.sign(l.tuples.length - r.tuples.length);
-      if (len_cmp !== 0) return -len_cmp;
-
+      let shape_cmp = Tractor.Shape.compare(l.shape(), r.shape());
+      if (shape_cmp !== 0) return -shape_cmp;
       return -Tractor.compare(l, r);
     });
-    this.total = total;
-  }
-
-  /*
-   * Whether `this` beats `other`, assuming `this` has turn-order precedence.
-   */
-  beats(other: Flight): boolean {
-    assert(this.total === other.total);
-
-    // A flight must have the same structure...
-    if (this.tractors.length !== other.tractors.length) return true;
-
-    // ...and compare stricly greater in every component.
-    for (let i = 0; i < this.tractors.length; ++i) {
-      let cmp = Tractor.compare(this.tractors[i], other.tractors[i]);
-      if (cmp === null || cmp >= 0) return true;
-    }
-    return false;
   }
 
   /*
@@ -217,6 +219,23 @@ export class Flight {
       }
     }
     return new Flight(tractors, total);
+  }
+
+  /*
+   * Whether `this` beats `other`, assuming `this` has turn-order precedence.
+   */
+  beats(other: Flight): boolean {
+    assert(this.total === other.total);
+
+    // A flight must have the same structure...
+    if (this.tractors.length !== other.tractors.length) return true;
+
+    // ...and compare stricly greater in every component.
+    for (let i = 0; i < this.tractors.length; ++i) {
+      let cmp = Tractor.compare(this.tractors[i], other.tractors[i]);
+      if (cmp === null || cmp >= 0) return true;
+    }
+    return false;
   }
 
   toString(tr: TrumpMeta, color: boolean = false): string {
