@@ -235,6 +235,12 @@ export class CardPile {
     }
   }
 
+  /*
+   * Generate (card, count) for every card in the pile.
+   *
+   * Guarantees that suits are contiguous and that no earlier card is greater
+   * in value than a later card.
+   */
   * gen_counts(): Generator<[Card, number], void> {
     for (let suit of CardBase.SUITS) {
       for (let rank = 2; rank <= Rank.A; ++rank) {
@@ -261,6 +267,9 @@ export class CardPile {
     }
   }
 
+  /*
+   * Splatty version of gen_counts().
+   */
   * gen_cards(): Generator<Card, void> {
     for (let [card, n] of this.gen_counts()) {
       for (let i = 0; i < n; ++i) yield card;

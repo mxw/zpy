@@ -167,6 +167,7 @@ export class Flight {
         return Math.min(base, tuple.arity);
       }, Number.POSITIVE_INFINITY);
 
+      // look for the highest water mark nontrivial subsequence.
       let [begin, end, , ] = chunk.reduce(
         ([begin, end, i, prev], tuple) => {
           let new_begin = tuple.arity >= prev && prev > base;
@@ -187,12 +188,12 @@ export class Flight {
         let len = chunk.length;
 
         // partition the chunk up to three ways, and re-queue the parts that
-        // aren't our "high water mark" sequence.
+        // aren't our high water mark subsequence.
         if (end <= begin) end = len;
         if (begin > 0) chunks.push(chunk.slice(0, begin));
         if (end < len) chunks.push(chunk.slice(end, len));
 
-        // set up for our new chunk.
+        // make our subsequence the new current chunk.
         chunk = chunk.slice(begin, end);
         base = chunk.reduce((base, tuple) => {
           return Math.min(base, tuple.arity);
