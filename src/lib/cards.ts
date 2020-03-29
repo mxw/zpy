@@ -213,7 +213,7 @@ export class CardPile {
   #total: number;
   #counts: number[];
   #osnt_counts: number[];  // counts for off-suit natural trumps
-  #tr: TrumpMeta;
+  protected tr: TrumpMeta;
 
   // 13 slots for each non-trump suit, plus 17 trump rank slots (heh).
   private static readonly IND_MAX = 13 * 4 + Rank.B - 1;
@@ -221,7 +221,7 @@ export class CardPile {
   constructor(cards: CardBase[], tr: TrumpMeta) {
     this.#counts = array_fill(CardPile.IND_MAX, 0);
     this.#osnt_counts = array_fill(4, 0);
-    this.#tr = tr;
+    this.tr = tr;
 
     for (let cb of cards) {
       let c = (cb instanceof Card) ? cb : new Card(cb.suit, cb.rank, tr);
@@ -241,23 +241,23 @@ export class CardPile {
     for (let suit of CardBase.SUITS) {
       for (let rank = 2; rank <= Rank.A; ++rank) {
         let n = this.#counts[CardPile.index_of(suit, rank)];
-        if (n > 0) yield [new Card(suit, rank, this.#tr), n];
+        if (n > 0) yield [new Card(suit, rank, this.tr), n];
       }
     }
     for (let rank = 2; rank <= Rank.B; ++rank) {
       if (rank === Rank.N_off) {
         for (let suit of CardBase.SUITS) {
           let n = this.#osnt_counts[suit];
-          if (n > 0) yield [new Card(suit, this.#tr.rank, this.#tr), n];
+          if (n > 0) yield [new Card(suit, this.tr.rank, this.tr), n];
         }
       } else if (rank === Rank.N_on) {
         let n = this.#counts[CardPile.index_of(Suit.TRUMP, rank)];
-        if (n > 0) yield [new Card(this.#tr.suit, this.#tr.rank, this.#tr), n];
+        if (n > 0) yield [new Card(this.tr.suit, this.tr.rank, this.tr), n];
       } else {
         let n = this.#counts[CardPile.index_of(Suit.TRUMP, rank)];
         if (n > 0) {
-          let suit = rank >= Rank.S ? Suit.TRUMP : this.#tr.suit;
-          yield [new Card(suit, rank, this.#tr), n];
+          let suit = rank >= Rank.S ? Suit.TRUMP : this.tr.suit;
+          yield [new Card(suit, rank, this.tr), n];
         }
       }
     }
