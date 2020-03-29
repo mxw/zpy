@@ -210,9 +210,10 @@ export class Card extends CardBase {
  * simple, but more importantly makes it very easy to find and validate combos.
  */
 export class CardPile {
-  #total: number;
-  #counts: number[];
-  #osnt_counts: number[];  // counts for off-suit natural trumps
+  #total: number = 0;     // total number of cards in pile
+  #counts: number[];      // (v_suit, v_rank) -> count
+  #counts_osnt: number[]; // suit -> count; for off-suit natural trumps
+  #suit_counts: number[]; // v_suit -> count; per-suit totals
   readonly tr: TrumpMeta;
 
   // 13 slots for each non-trump suit, plus 17 trump rank slots (heh).
@@ -220,14 +221,13 @@ export class CardPile {
 
   constructor(cards: CardBase[], tr: TrumpMeta) {
     this.#counts = array_fill(CardPile.IND_MAX, 0);
-    this.#osnt_counts = array_fill(4, 0);
+    this.#suit_counts = array_fill(5, 0);
+    this.#counts_osnt = array_fill(4, 0);
     this.tr = tr;
 
     for (let cb of cards) {
       let c = (cb instanceof Card) ? cb : new Card(cb.suit, cb.rank, tr);
-      ++this.#total;
-      ++this.#counts[CardPile.index_of(c.v_suit, c.v_rank)];
-      if (c.v_rank === Rank.N_off) ++this.#osnt_counts[c.suit];
+      this.insert(c);
     }
   }
 
@@ -247,7 +247,7 @@ export class CardPile {
     for (let rank = 2; rank <= Rank.B; ++rank) {
       if (rank === Rank.N_off) {
         for (let suit of CardBase.SUITS) {
-          let n = this.#osnt_counts[suit];
+          let n = this.#counts_osnt[suit];
           if (n > 0) yield [new Card(suit, this.tr.rank, this.tr), n];
         }
       } else if (rank === Rank.N_on) {
@@ -285,12 +285,37 @@ export class CardPile {
   }
   insert(c: Card, n: number = 1): void {
     this.#total += n;
+    this.#suit_counts[c.v_suit] += n;
+    if (c.v_rank === Rank.N_off) {
+      this.#counts_osnt[c.suit] += n;
+    }
     this.#counts[CardPile.index_of(c.v_suit, c.v_rank)] += n;
   }
   remove(c: Card, n: number = 1): void {
     assert(this.count(c) >= n);
     this.#total -= n;
+    this.#suit_counts[c.v_suit] -= n;
+    if (c.v_rank === Rank.N_off) {
+      this.#counts_osnt[c.suit] -= n;
+    }
     this.#counts[CardPile.index_of(c.v_suit, c.v_rank)] -= n;
+  }
+
+  /*
+   * Count of cards in each v_suit.
+   */
+  count_suit(v_suit: Suit): number {
+    return this.#suit_counts[v_suit];
+  }
+
+  /*
+   * Whether `this` contains all the cards in `other`.
+   */
+  contains(counts: Iterable<[Card, number]>): boolean {
+    for (let [card, n] of counts) {
+      if (this.count(card) < n) return false;
+    }
+    return true;
   }
 
   private static index_of(suit: Suit, rank: number): number {

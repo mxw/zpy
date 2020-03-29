@@ -103,5 +103,26 @@ describe('CardPile', () => {
 ☉: 2♠ 2♠ A♠ 7♣ 7♣ 7♦ 7♦ 7♦ 7♠ w☉ W☉ W☉
 `.trim()
     );
+
+    expect(pile.count_suit(Suit.CLUBS)).to.equal(4);
+    expect(pile.count_suit(Suit.DIAMONDS)).to.equal(3);
+    expect(pile.count_suit(Suit.SPADES)).to.equal(0);
+    expect(pile.count_suit(Suit.HEARTS)).to.equal(5);
+    expect(pile.count_suit(Suit.TRUMP)).to.equal(12);
+
+    let subpile = new CardPile([
+      new CardBase(Suit.CLUBS, Rank.K),
+      new CardBase(Suit.CLUBS, 7),
+      new CardBase(Suit.DIAMONDS, Rank.J),
+      new CardBase(Suit.DIAMONDS, 7),
+      new CardBase(Suit.DIAMONDS, 7),
+      new CardBase(Suit.DIAMONDS, 7),
+      new CardBase(Suit.HEARTS, 2),
+      new CardBase(Suit.HEARTS, 10),
+      new CardBase(Suit.TRUMP, Rank.S),
+      new CardBase(Suit.TRUMP, Rank.B),
+    ], tr);
+
+    expect(pile.contains(subpile.gen_counts())).to.be.true;
   });
 });
