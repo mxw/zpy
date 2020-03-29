@@ -88,5 +88,20 @@ describe('CardPile', () => {
 ☉: 2♠ 2♠ A♠ 7♣ 7♣ 7♦ 7♦ 7♦ 7♠ w☉ W☉ W☉
 `.trim()
     );
+
+    let card = new Card(Suit.CLUBS, Rank.K, tr);
+    expect(pile.count(card)).to.equal(2);
+    pile.remove(card, 2);
+    expect(pile.count(card)).to.equal(0);
+    pile.insert(card, 3);
+    expect(pile.count(card)).to.equal(3);
+
+    expect('' + pile).to.equal(`
+♣: 3♣ K♣ K♣ K♣
+♦: 2♦ J♦ A♦
+♥: 2♥ 8♥ 9♥ 10♥ A♥
+☉: 2♠ 2♠ A♠ 7♣ 7♣ 7♦ 7♦ 7♦ 7♠ w☉ W☉ W☉
+`.trim()
+    );
   });
 });

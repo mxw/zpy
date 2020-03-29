@@ -272,6 +272,20 @@ export class CardPile {
     }
   }
 
+  /*
+   * Get, add to, or deduct from the count of `card` in `this`.
+   */
+  count(c: Card): number {
+    return this.#counts[CardPile.index_of(c.v_suit, c.v_rank)];
+  }
+  insert(c: Card, n: number = 1): void {
+    this.#counts[CardPile.index_of(c.v_suit, c.v_rank)] += n;
+  }
+  remove(c: Card, n: number = 1): void {
+    assert(this.count(c) >= n);
+    this.#counts[CardPile.index_of(c.v_suit, c.v_rank)] -= n;
+  }
+
   private static index_of(suit: Suit, rank: number): number {
     return suit * 13 + rank - 2;  // 1 for ace offset, 1 for 0-index
   }
