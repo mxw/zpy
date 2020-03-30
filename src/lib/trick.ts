@@ -52,24 +52,37 @@ export class CardTuple {
  * The degenerate case is the (1,n)-tractor, a single n-tuple.
  */
 export class Tractor {
-  constructor(readonly tuples: CardTuple[]) {
-    assert(tuples.length > 0);
-    assert(tuples.every(t => t.card.v_suit === this.v_suit));
-    assert(tuples.every(t => t.arity === this.arity));
-
-    this.tuples = tuples.sort((l, r) => CardTuple.compare(l, r));
-  }
+  constructor(
+    readonly shape: Tractor.Shape, // len & arity
+    readonly card: Card,      // starting card
+    readonly osnt_suit?: Suit // participating osnt suit
+  ) {}
 
   /*
    * Property getters.
    */
-  get shape(): Tractor.Shape {
-    return new Tractor.Shape(this.length, this.arity);
-  }
-  get length(): number { return this.tuples.length; }
-  get arity(): number { return this.tuples[0].arity; }
+  get length(): number { return this.shape.len; }
+  get arity(): number { return this.shape.arity; }
   get count(): number { return this.length * this.arity; }
-  get v_suit(): Suit { return this.tuples[0].card.v_suit; }
+  get v_suit(): Suit { return this.card.v_suit; }
+
+  /*
+   * Generate (card, count) for every card in the tractor.
+   */
+  * gen_counts(tr: TrumpMeta): Generator<[Card, number], void> {
+    for (let [i, v_rank] = [0, this.card.v_rank];
+         i < this.length;
+         ++i, v_rank = tr.inc_rank(v_rank)) {
+      let [suit, rank] = tr.devirt(this.card.v_suit, v_rank, this.osnt_suit);
+      yield [new Card(suit, rank, tr), this.arity];
+    }
+  }
+
+  * gen_tuples(tr: TrumpMeta): Generator<CardTuple, void> {
+    for (let [card, n] of this.gen_counts(tr)) {
+      yield new CardTuple(card, n);
+    }
+  }
 
   /*
    * Spaceship-style comparator.
@@ -78,12 +91,15 @@ export class Tractor {
    * length or their tuples have different arity).
    */
   static compare(l: Tractor, r: Tractor): number | null {
-    if (l.tuples.length !== r.tuples.length) return null;
-    return CardTuple.compare(l.tuples[0], r.tuples[0]);
+    if (l.length !== r.length) return null;
+    if (l.arity  !== r.arity)  return null;
+    return Card.compare(l.card, r.card);
   }
 
   toString(tr: TrumpMeta, color: boolean = false): string {
-    return this.tuples.map(t => t.toString(color)).join('');
+    return Array.from(this.gen_tuples(tr)).map(
+      t => t.toString(color)
+    ).join('');
   }
 }
 
@@ -209,8 +225,11 @@ export class Flight {
 
       // at this point, `chunk` now contains a (chunk.length,base)-tractor,
       // plus some singleton tuples.  start by registering the tractor...
+      let osnt = chunk.find(tuple => tuple.card.v_rank === Rank.N_off);
       tractors.push(new Tractor(
-        chunk.map(t => new CardTuple(t.card, base))
+        new Tractor.Shape(chunk.length, base),
+        chunk[0].card,
+        osnt ? osnt.card.osnt_suit : undefined
       ));
       total += chunk.length * base;
 
@@ -219,7 +238,11 @@ export class Flight {
         if (tuple.arity === base) continue;
 
         let arity = tuple.arity - base;
-        tractors.push(new Tractor([new CardTuple(tuple.card, arity)]));
+        tractors.push(new Tractor(
+          new Tractor.Shape(1, arity),
+          tuple.card,
+          tuple.card.osnt_suit
+        ));
         total += arity;
       }
     }
@@ -317,7 +340,7 @@ export class Hand {
       let I_p : Hand.Node[];
 
       while (true) {
-        let next = this.pile.tr.inc_rank(p.v_rank);
+        let next = this.tr.inc_rank(p.v_rank);
 
         if (next === card.v_rank) {
           I_p = this.I(p.v_suit, p.v_rank);
@@ -330,10 +353,9 @@ export class Hand {
         }
         p.v_rank = next;
       }
-      assert(!I_p || this.pile.tr.inc_rank(p.v_rank) === card.v_rank);
+      assert(!I_p || this.tr.inc_rank(p.v_rank) === card.v_rank);
 
-      let osnt_suit = (card.v_rank === Rank.N_off) ? card.suit : undefined;
-      let I_cur = this.I(card.v_suit, card.v_rank, osnt_suit);
+      let I_cur = this.I(card.v_suit, card.v_rank, card.osnt_suit);
 
       let register = (node: Hand.Node) => {
         I_cur.push(node);
@@ -344,18 +366,182 @@ export class Hand {
       for (let n_ = 2; n_ <= n; ++n_) {
         let node = new Hand.Node(
           new Tractor.Shape(1, n_),
-          card.v_rank,
-          osnt_suit,
+          card,
+          card.osnt_suit
         );
         register(node);
       }
 
       for (let src of I_p) {
         if (src.n > n) continue;
-        let node = Hand.Node.chain_from(src, osnt_suit);
+        let node = Hand.Node.chain_from(src, card.osnt_suit);
         register(node);
       }
     }
+  }
+
+  /*
+   * Property getters.
+   */
+  get tr(): TrumpMeta { return this.pile.tr; }
+
+  /*
+   * Remove `n` copies of `c`, updating internal data structures.
+   *
+   * This is a fairly simple process.  We look at I(p) where p is the (virtual)
+   * rank of `c`, and invalidate every Node with shape (m',n') where we have
+   * n' > count(c) - n.  (Note that we have to follow all Node chains.)
+   * Because of Node sharing, this also invalidates the relevant Nodes in K, as
+   * well as in I for higher ranks.
+   *
+   * Note that Hand does not support insertion.
+   */
+  remove(c: Card, n: number = 1): void {
+    let remaining = this.pile.count(c) - n;
+    assert(remaining >= 0);
+
+    let I_p = this.I(c.v_suit, c.v_rank, c.suit);
+    assert(I_p.length > 0);
+
+    let invalidate = function invalidate(node: Hand.Node) {
+      if (!node.valid) return;
+      for (let next of node.next) invalidate(next);
+      node.invalidate();
+    };
+    for (let node of I_p) {
+      if (node.n > remaining) invalidate(node);
+    }
+    this.pile.remove(c, n);
+  }
+
+  /*
+   * Register `play`, and determine whether it correctly follows `lead`.
+   *
+   * To find out, we walk the tractor shapes of `lead` in lexicographic order.
+   * For each (m,n)-tractor, we iteratively try K(m -> 1, n -> 2) (with the
+   * tuple arity n treated as the "higher-order" position, lexicographically)
+   * looking for a match (m',n')---i.e., an (m',n') such that K(m',n') is
+   * nonempty.  We then ensure that `play` contains one of the tractors
+   * identified in K(m',n').  If it does not, we will return false.
+   *
+   * If it does, we re-sort (m - m', n - n') into the lexicographic ordering of
+   * all the tractor shapes in `lead` (only if m - m' > 0 and n - n' > 1).
+   *
+   * However, we cannot yet remove the cards in the tractor we found from our
+   * Hand (unless it was the only option).  This is because, had we matched (or
+   * had the follower played) one of the other tractors, it's possible they
+   * could have satisfied a better "prefix" of constraints.
+   *
+   * So, we need to branch whenever K(m',n') contains more than one tractor and
+   * try each path.  Then, `play` satisfies `lead` iff it includes all the
+   * cards from any of the best paths walked (which we can determine using a
+   * lexicographic comparison of the shapes that were matched).
+   *
+   * A path ends when we run out of non-singleton components of `lead`.
+   *
+   * Finally, we also need to check that `play` follows suit for the remaining
+   * singletons.
+   *
+   * We always succeed at making `play`, even if it would result in a renege
+   * (unless `play` is invalid for the Hand, in which case we assert).
+   */
+  follow_with(lead: Flight, play: Card[]): boolean {
+    assert(lead.count === play.length);
+    let play_pile = new CardPile(play, this.tr);
+
+    // Ensure `play` is a subset of `this`.
+    assert(this.pile.contains(play_pile.gen_counts()));
+
+    // `shapes` is kept ordered with the "strongest" shape at the end (so it's
+    // basically a poor man's prioqueue).
+    let shapes = lead.tractors.map(t => t.shape).reverse();
+
+    enum Code { DONE, FAIL, STOP };
+
+    // callback for generic match loop step function.
+    type StepFn<T> = (sh: Tractor.Shape, K: Hand.Node[]) => T | Code;
+
+    // generic step function.
+    //
+    // check for stop conditions (and potentially returning Code.STOP), pop the
+    // biggest shape off `shapes`, and try to find a match in this.#K.  if we
+    // find such a match, call `fn` and return its result.  if we don't, return
+    // Code.DONE.
+    let step = function step<T>(fn: StepFn<T>): T | Code {
+      if (shapes.length === 0) return Code.STOP;
+      if (play_pile.size <= 1) return Code.STOP;
+
+      let sh = shapes.pop();
+      if (sh.arity === 1) return Code.STOP;
+
+      for (let n = sh.arity; n >= 2; --n) {
+        for (let m = sh.len; m >= 1; --m) {
+          let K = this.#K[lead.v_suit][n][m];
+          if (K) K = K.filter((n: Hand.Node) => n.valid);
+
+          if (!K || K.length === 0) continue;
+
+          assert(n === K[0].n && m === K[0].m);
+          return fn(sh, K);
+        }
+      }
+      return Code.DONE;
+    };
+
+    // check for suit following and consume the remainder of the play.
+    let finish = (result: boolean) => {
+      let on_suit_left = this.pile.count_suit(lead.v_suit);
+      let on_suit_played = play_pile.count_suit(lead.v_suit);
+
+      // if we neither played entirely on suit nor played all our remaining
+      // cards in the lead suit, we're bad.
+      if (on_suit_played !== play_pile.size &&
+          on_suit_played !== on_suit_left) {
+        result = false;
+      }
+      // remove all cards we haven't already removed.
+      for (let count of play_pile.gen_counts()) {
+        this.remove(...count);
+      }
+      return result;
+    };
+
+    while (true) {
+      let code = step((shape: Tractor.Shape, K: Hand.Node[]): Code => {
+        if (K.length > 1) {
+          // we need to backtrack.
+          shapes.push(shape);
+          return Code.STOP;
+        }
+        if (!play_pile.contains(K[0].gen_counts(this.tr))) {
+          return Code.FAIL;
+        }
+
+        for (let [card, n] of K[0].gen_counts(this.tr)) {
+          play_pile.remove(card, n);
+          this.remove(card, n);
+        }
+        assert(!K[0].valid); // should be invalidated by the remove
+
+        let m = shape.len - K[0].shape.len;
+        let n = shape.arity - K[0].shape.arity;
+        assert(m > 0 && n > 0);
+
+        if (m > 0 && n > 1) {
+          shapes.push(new Tractor.Shape(m, n));
+          shapes = shapes.sort(Tractor.Shape.compare);
+        }
+        return Code.DONE;
+      });
+      switch (code) {
+        case Code.DONE: continue;
+        case Code.FAIL: return finish(false);
+        case Code.STOP: break;
+      }
+      break;
+    }
+
+    return finish(true);
   }
 
   /*
@@ -388,23 +574,24 @@ export class Hand {
 
 export namespace Hand {
   /*
-   * A tractor shape starting at a certain rank.
+   * A possible tractor in a Hand.
    *
    * We keep at most one Node for every (m,n,start) triple.  This allows us to
    * performance all our differential updates on I and have the changes be
    * reflected in K.
    */
-  export class Node {
+  export class Node extends Tractor {
     #valid: boolean = false;
     // pointers to (m+1,n) Nodes.  there are multiple because of branching
     // paths through osnt's.
     readonly next: Node[] = [];
 
     constructor(
-      readonly shape: Tractor.Shape, // len & arity
-      readonly start: number,   // starting rank
-      readonly osnt_suit?: Suit // starting osnt suit
+      shape: Tractor.Shape, // len & arity
+      card: Card,      // starting card
+      osnt_suit?: Suit // participating osnt suit
     ) {
+      super(shape, card, osnt_suit);
       this.#valid = true;
     }
 
@@ -417,7 +604,7 @@ export namespace Hand {
     static chain_from(src: Node, osnt_suit?: Suit): Node {
       let next = new Node(
         new Tractor.Shape(src.m + 1, src.n),
-        src.start,
+        src.card,
         osnt_suit || src.osnt_suit,
       );
       assert(!osnt_suit || src.next.length === 0);

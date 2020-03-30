@@ -87,6 +87,35 @@ export class TrumpMeta {
   ) {}
 
   /*
+   * Virtualize/devirtualize a (suit, rank) pair.
+   */
+  virt(suit: Suit, rank: number): [Suit, number] {
+    return suit === this.suit
+      ? (rank === this.rank
+          ? [Suit.TRUMP, Rank.N_on]
+          : [Suit.TRUMP, rank]
+        )
+      : (rank === this.rank
+          ? [Suit.TRUMP, Rank.N_off]
+          : [suit, rank]
+        )
+      ;
+  }
+  devirt(suit: Suit, rank: number, osnt_suit?: Suit): [Suit, number] {
+    switch (rank) {
+      case Rank.N_off:
+        assert(typeof osnt_suit === 'number');
+        return [osnt_suit, this.rank];
+      case Rank.N_on:
+        return [this.suit, this.rank];
+      default: break;
+    }
+    return suit === Suit.TRUMP && rank < Rank.S
+      ? [this.suit, rank]
+      : [suit, rank];
+  }
+
+  /*
    * Increment a virtual rank within the domain of this trump selection.
    *
    * This will happily keep incrementing past joker.
@@ -145,23 +174,14 @@ export class Card extends CardBase {
 
   constructor(suit: Suit, rank: number, tr: TrumpMeta) {
     super(suit, rank);
+    [this.v_suit, this.v_rank] = tr.virt(suit, rank);
+  }
 
-    if (suit === tr.suit) {
-      if (rank === tr.rank) {
-        this.v_rank = Rank.N_on;
-      } else {
-        this.v_rank = rank;
-      }
-      this.v_suit = Suit.TRUMP;
-    } else {
-      if (rank === tr.rank) {
-        this.v_suit = Suit.TRUMP;
-        this.v_rank = Rank.N_off;
-      } else {
-        this.v_suit = suit;
-        this.v_rank = rank;
-      }
-    }
+  /*
+   * The underlying suit, only if this is an off-suit natural trump.
+   */
+  get osnt_suit(): Suit {
+    return this.v_rank === Rank.N_off ? this.suit : undefined;
   }
 
   /*
