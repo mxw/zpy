@@ -118,6 +118,10 @@ export namespace Tractor {
       if (arity_cmp !== 0) return arity_cmp;
       return Math.sign(l.len - r.len);
     }
+
+    toString(): string {
+      return `(${this.len},${this.arity})`;
+    }
   }
 }
 
@@ -354,7 +358,7 @@ export class Hand {
       }
       assert(!I_p || this.tr.inc_rank(p.v_rank) === card.v_rank);
 
-      let I_cur = this.I(card.v_suit, card.v_rank, card.osnt_suit);
+      let I_cur = this.I(card.v_suit, card.v_rank, card.suit);
 
       let register = (node: Hand.Node) => {
         I_cur.push(node);
@@ -372,7 +376,7 @@ export class Hand {
         register(node);
       }
 
-      for (let src of I_p) {
+      for (let src of I_p || []) {
         if (src.n > n) continue;
         let node = Hand.Node.chain_from(src, card.osnt_suit);
         register(node);
@@ -453,7 +457,10 @@ export class Hand {
 
     // `shapes` is kept ordered with the "strongest" shape at the end (so it's
     // basically a poor man's prioqueue).
-    let shapes = lead.tractors.map(t => t.shape).reverse();
+    let shapes = lead.tractors
+      .map(t => t.shape)
+      .filter(sh => sh.arity > 1)
+      .reverse();
 
     enum Code { DONE, FAIL, STOP };
 
@@ -471,11 +478,11 @@ export class Hand {
       if (play_pile.size <= 1) return Code.STOP;
 
       let sh = shapes.pop();
-      if (sh.arity === 1) return Code.STOP;
+      assert(sh.arity > 1);
 
       for (let n = sh.arity; n >= 2; --n) {
         for (let m = sh.len; m >= 1; --m) {
-          let K = this.#K[lead.v_suit][n][m];
+          let K = this.#K[lead.v_suit]?.[n]?.[m];
           if (K) K = K.filter((n: Hand.Node) => n.valid);
 
           if (!K || K.length === 0) continue;
@@ -486,6 +493,7 @@ export class Hand {
       }
       return Code.DONE;
     };
+    step = step.bind(this);
 
     // check for suit following and consume the remainder of the play.
     let finish = (result: boolean) => {
@@ -507,30 +515,39 @@ export class Hand {
 
     while (true) {
       let code = step((shape: Tractor.Shape, K: Hand.Node[]): Code => {
-        if (K.length > 1) {
-          // we need to backtrack.
+        if (K.length > 1 &&
+            play_pile.size - K[0].count > 1) {
+          // if there's only one match or we have no more non-singletons left
+          // in `play`, we can avoid backtracking.  otherwise, we're shit outta
+          // luck.
+          //
+          // note that even if if `shapes` is empty, we can't be confident that
+          // we won't need to backtrack (...i think).
           shapes.push(shape);
+          assert(false); // XXX
           return Code.STOP;
         }
-        if (!play_pile.contains(K[0].gen_counts(this.tr))) {
-          return Code.FAIL;
-        }
 
-        for (let [card, n] of K[0].gen_counts(this.tr)) {
-          play_pile.remove(card, n);
-          this.remove(card, n);
-        }
-        assert(!K[0].valid); // should be invalidated by the remove
+        for (let node of K) {
+          if (!play_pile.contains(node.gen_counts(this.tr))) continue;
 
-        let m = shape.len - K[0].shape.len;
-        let n = shape.arity - K[0].shape.arity;
-        assert(m > 0 && n > 0);
+          for (let [card, n] of node.gen_counts(this.tr)) {
+            play_pile.remove(card, n);
+            this.remove(card, n);
+          }
+          assert(!node.valid); // should be invalidated by the remove
 
-        if (m > 0 && n > 1) {
-          shapes.push(new Tractor.Shape(m, n));
-          shapes = shapes.sort(Tractor.Shape.compare);
+          let m = shape.len - node.shape.len;
+          let n = shape.arity - node.shape.arity;
+          assert(m >= 0 && n >= 0);
+
+          if (m > 0 && n > 1) {
+            shapes.push(new Tractor.Shape(m, n));
+            shapes = shapes.sort(Tractor.Shape.compare);
+          }
+          return Code.DONE;
         }
-        return Code.DONE;
+        return Code.FAIL;
       });
       switch (code) {
         case Code.DONE: continue;
@@ -546,7 +563,7 @@ export class Hand {
   /*
    * Obtain a Node set from I.
    *
-   * The presence of `osnt_suit` serves as a "mutable" flag.  If it's set,
+   * The presence of `suit` serves as a "mutable" flag.  If it's set,
    * mutating the result is a coherent operation that affects the contents of
    * this.#I.  If it's not set, the result may be a temporary, so mutations
    * should not be attempted.
@@ -554,16 +571,16 @@ export class Hand {
   private I(
     v_suit: Suit,
     v_rank: number,
-    osnt_suit?: Suit,
+    suit?: Suit,
   ): Hand.Node[] {
-    if (!osnt_suit) {
+    if (!suit) {
       return v_rank === Rank.N_off
         ? [].concat.apply([], this.#I_osnt[v_suit])
         : (this.#I[v_suit]?.[v_rank] ?? []);
     }
     if (v_rank === Rank.N_off) {
       let I_s = (this.#I_osnt[v_suit] = this.#I_osnt[v_suit] ?? []);
-      return (I_s[osnt_suit] = I_s[osnt_suit] ?? []);
+      return (I_s[suit] = I_s[suit] ?? []);
     } else {
       let I_s = (this.#I[v_suit] = this.#I[v_suit] ?? []);
       return (I_s[v_rank] = I_s[v_rank] ?? []);
