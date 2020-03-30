@@ -225,11 +225,10 @@ export class Flight {
 
       // at this point, `chunk` now contains a (chunk.length,base)-tractor,
       // plus some singleton tuples.  start by registering the tractor...
-      let osnt = chunk.find(tuple => tuple.card.v_rank === Rank.N_off);
       tractors.push(new Tractor(
         new Tractor.Shape(chunk.length, base),
         chunk[0].card,
-        osnt ? osnt.card.osnt_suit : undefined
+        chunk.find(tuple => tuple.card.v_rank === Rank.N_off)?.card.osnt_suit
       ));
       total += chunk.length * base;
 
@@ -323,7 +322,7 @@ export class Hand {
   #I_osnt: Hand.Node[][][] = [];  // v_suit -> suit -> [nodes]
 
   constructor(readonly pile: CardPile) {
-    let p : {v_suit?: Suit, v_rank?: number};
+    let p : {v_suit?: Suit, v_rank?: number} = {};
 
     for (let [card, n] of this.pile.gen_counts()) {
       if (p.v_suit !== card.v_suit) {
@@ -335,7 +334,7 @@ export class Hand {
       // 1-tuples are equivalent to void ranks.
       if (n === 1) continue;
 
-      let K = this.#K[p.v_suit];
+      let K = (this.#K[p.v_suit] = this.#K[p.v_suit] ?? []);
 
       let I_p : Hand.Node[];
 
@@ -359,8 +358,9 @@ export class Hand {
 
       let register = (node: Hand.Node) => {
         I_cur.push(node);
-        K[node.n][node.m] = K[node.n][node.m] || [];
-        K[node.n][node.m].push(node);
+        let K_n = (K[node.n] = K[node.n] ?? []);
+        K_n[node.m] = K_n[node.m] ?? [];
+        K_n[node.m].push(node);
       };
 
       for (let n_ = 2; n_ <= n; ++n_) {
@@ -401,7 +401,6 @@ export class Hand {
     assert(remaining >= 0);
 
     let I_p = this.I(c.v_suit, c.v_rank, c.suit);
-    assert(I_p.length > 0);
 
     let invalidate = function invalidate(node: Hand.Node) {
       if (!node.valid) return;
@@ -560,14 +559,14 @@ export class Hand {
     if (!osnt_suit) {
       return v_rank === Rank.N_off
         ? [].concat.apply([], this.#I_osnt[v_suit])
-        : this.#I[v_suit][v_rank];
+        : (this.#I[v_suit]?.[v_rank] ?? []);
     }
     if (v_rank === Rank.N_off) {
-      return (this.#I_osnt[v_suit][osnt_suit] =
-              this.#I_osnt[v_suit][osnt_suit] || []);
+      let I_s = (this.#I_osnt[v_suit] = this.#I_osnt[v_suit] ?? []);
+      return (I_s[osnt_suit] = I_s[osnt_suit] ?? []);
     } else {
-      return (this.#I[v_suit][v_rank] =
-              this.#I[v_suit][v_rank] || []);
+      let I_s = (this.#I[v_suit] = this.#I[v_suit] ?? []);
+      return (I_s[v_rank] = I_s[v_rank] ?? []);
     }
   }
 }
@@ -605,7 +604,7 @@ export namespace Hand {
       let next = new Node(
         new Tractor.Shape(src.m + 1, src.n),
         src.card,
-        osnt_suit || src.osnt_suit,
+        osnt_suit ?? src.osnt_suit,
       );
       assert(!osnt_suit || src.next.length === 0);
       src.next.push(next);

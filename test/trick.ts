@@ -2,7 +2,7 @@ import {
   Suit, Rank, TrumpMeta, CardBase, Card, CardPile
 } from '../src/lib/cards';
 import {
-  CardTuple, Tractor, Flight
+  CardTuple, Tractor, Flight, Hand
 } from '../src/lib/trick';
 
 import {expect} from 'chai';
@@ -403,5 +403,77 @@ describe('Flight#beats', () => {
 
     expect(me.beats(you)).to.be.true;
     expect(you.beats(me)).to.be.true;
+  });
+});
+
+describe('Hand#follow_with', () => {
+  it('handles singletons', () => {
+    let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
+    let hand = new Hand(new CardPile([
+      new CardBase(Suit.DIAMONDS, 4),
+      new CardBase(Suit.DIAMONDS, 4),
+      new CardBase(Suit.SPADES, 8),
+      new CardBase(Suit.SPADES, 9),
+      new CardBase(Suit.CLUBS, Rank.J),
+      new CardBase(Suit.HEARTS, Rank.J),
+    ], tr));
+
+    let lead1 = Flight.extract([
+      new Card(Suit.DIAMONDS, Rank.K, tr),
+    ], tr);
+    let play1 = [
+      new Card(Suit.DIAMONDS, Rank.K, tr),
+    ];
+    expect(() => hand.follow_with(lead1, play1)).to.throw();
+
+    let lead2 = lead1;
+    let play2 = [
+      new Card(Suit.DIAMONDS, 4, tr),
+    ];
+    expect(hand.follow_with(lead2, play2)).to.be.true;
+    expect(hand.pile.toString()).to.equal(`
+♦: 4♦
+♠: 8♠ 9♠
+☉: J♣ J♥
+`.trim()
+    );
+
+    let lead3 = lead1;
+    let play3 = [
+      new Card(Suit.SPADES, 9, tr),
+    ];
+    expect(hand.follow_with(lead2, play3)).to.be.false;
+    expect(hand.pile.toString()).to.equal(`
+♦: 4♦
+♠: 8♠
+☉: J♣ J♥
+`.trim()
+    );
+
+    let lead4 = Flight.extract([
+      new Card(Suit.CLUBS, Rank.K, tr),
+    ], tr);
+    let play4 = [
+      new Card(Suit.SPADES, 8, tr),
+    ];
+    expect(hand.follow_with(lead4, play4)).to.be.true;
+    expect(hand.pile.toString()).to.equal(`
+♦: 4♦
+☉: J♣ J♥
+`.trim()
+    );
+
+    let lead5 = Flight.extract([
+      new Card(Suit.HEARTS, 4, tr),
+    ], tr);
+    let play5 = [
+      new Card(Suit.CLUBS, Rank.J, tr),
+    ];
+    expect(hand.follow_with(lead5, play5)).to.be.true;
+    expect(hand.pile.toString()).to.equal(`
+♦: 4♦
+☉: J♥
+`.trim()
+    );
   });
 });
