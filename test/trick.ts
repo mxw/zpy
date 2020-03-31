@@ -848,4 +848,120 @@ describe('Hand#follow_with', () => {
 `.trim()
     );
   });
+
+  it('deals with impractically complicated cases', () => {
+    let tr = new TrumpMeta(Suit.HEARTS, Rank.Q);
+    let cards = [
+      new CardBase(Suit.CLUBS, 3),
+      new CardBase(Suit.CLUBS, 3),
+      new CardBase(Suit.CLUBS, 4),
+      new CardBase(Suit.CLUBS, 4),
+      new CardBase(Suit.CLUBS, 5),
+      new CardBase(Suit.CLUBS, 5),
+
+      new CardBase(Suit.CLUBS, 7),
+      new CardBase(Suit.CLUBS, 7),
+      new CardBase(Suit.CLUBS, 7),
+      new CardBase(Suit.CLUBS, 8),
+      new CardBase(Suit.CLUBS, 8),
+      new CardBase(Suit.CLUBS, 8),
+
+      new CardBase(Suit.CLUBS, 10),
+      new CardBase(Suit.CLUBS, 10),
+      new CardBase(Suit.CLUBS, Rank.J),
+      new CardBase(Suit.CLUBS, Rank.J),
+      new CardBase(Suit.CLUBS, Rank.J),
+      new CardBase(Suit.CLUBS, Rank.K),
+      new CardBase(Suit.CLUBS, Rank.K),
+      new CardBase(Suit.CLUBS, Rank.K),
+      new CardBase(Suit.CLUBS, Rank.A),
+      new CardBase(Suit.CLUBS, Rank.A),
+    ];
+
+    let lead: Flight;
+    let play: Card[];
+
+    lead = Flight.extract([
+      new Card(Suit.CLUBS, 9, tr),
+      new Card(Suit.CLUBS, 9, tr),
+      new Card(Suit.CLUBS, 9, tr),
+      new Card(Suit.CLUBS, 10, tr),
+      new Card(Suit.CLUBS, 10, tr),
+      new Card(Suit.CLUBS, 10, tr),
+
+      new Card(Suit.CLUBS, 4, tr),
+      new Card(Suit.CLUBS, 4, tr),
+      new Card(Suit.CLUBS, 5, tr),
+      new Card(Suit.CLUBS, 5, tr),
+      new Card(Suit.CLUBS, 6, tr),
+      new Card(Suit.CLUBS, 6, tr),
+      new Card(Suit.CLUBS, 7, tr),
+      new Card(Suit.CLUBS, 7, tr),
+
+      new Card(Suit.CLUBS, Rank.A, tr),
+      new Card(Suit.CLUBS, Rank.A, tr),
+
+      new Card(Suit.CLUBS, Rank.K, tr),
+      new Card(Suit.CLUBS, Rank.J, tr),
+    ], tr);
+
+    expect(lead.toString(tr)).to.equal(
+      '[9♣9♣9♣10♣10♣10♣][4♣4♣5♣5♣6♣6♣7♣7♣][A♣A♣][K♣][J♣]'
+    );
+
+    // ambiguous misplay
+    let hand1 = new Hand(new CardPile(cards, tr));
+    play = [
+      new Card(Suit.CLUBS, Rank.J, tr),
+      new Card(Suit.CLUBS, Rank.J, tr),
+      new Card(Suit.CLUBS, Rank.J, tr),
+      new Card(Suit.CLUBS, Rank.K, tr),
+      new Card(Suit.CLUBS, Rank.K, tr),
+      new Card(Suit.CLUBS, Rank.K, tr),
+
+      new Card(Suit.CLUBS, 3, tr),
+      new Card(Suit.CLUBS, 3, tr),
+      new Card(Suit.CLUBS, 4, tr),
+      new Card(Suit.CLUBS, 4, tr),
+      new Card(Suit.CLUBS, 5, tr),
+      new Card(Suit.CLUBS, 5, tr),
+
+      new Card(Suit.CLUBS, 10, tr),
+      new Card(Suit.CLUBS, 10, tr),
+
+      new Card(Suit.CLUBS, Rank.A, tr),
+      new Card(Suit.CLUBS, Rank.A, tr),
+
+      new Card(Suit.CLUBS, 8, tr),
+      new Card(Suit.CLUBS, 7, tr),
+    ];
+    expect(hand1.follow_with(lead, play)).to.be.false;
+
+    // ambiguous follow
+    let hand2 = new Hand(new CardPile(cards, tr));
+    play = [
+      new Card(Suit.CLUBS, 7, tr),
+      new Card(Suit.CLUBS, 7, tr),
+      new Card(Suit.CLUBS, 7, tr),
+      new Card(Suit.CLUBS, 8, tr),
+      new Card(Suit.CLUBS, 8, tr),
+      new Card(Suit.CLUBS, 8, tr),
+
+      new Card(Suit.CLUBS, 10, tr),
+      new Card(Suit.CLUBS, 10, tr),
+      new Card(Suit.CLUBS, Rank.J, tr),
+      new Card(Suit.CLUBS, Rank.J, tr),
+      new Card(Suit.CLUBS, Rank.K, tr),
+      new Card(Suit.CLUBS, Rank.K, tr),
+      new Card(Suit.CLUBS, Rank.A, tr),
+      new Card(Suit.CLUBS, Rank.A, tr),
+
+      new Card(Suit.CLUBS, 3, tr),
+      new Card(Suit.CLUBS, 3, tr),
+
+      new Card(Suit.CLUBS, Rank.K, tr),
+      new Card(Suit.CLUBS, Rank.J, tr),
+    ];
+    expect(hand2.follow_with(lead, play)).to.be.true;
+  });
 });

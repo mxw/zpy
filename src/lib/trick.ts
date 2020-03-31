@@ -398,23 +398,39 @@ export class Hand {
    * Because of Node sharing, this also invalidates the relevant Nodes in K, as
    * well as in I for higher ranks.
    *
+   * The private version of this function additionally returns a Node which is
+   * the head of the Node#sidechain linked list, which includes (and only
+   * includes) every Node invalidated by this operation.
+   *
    * Note that Hand does not support insertion.
    */
   remove(c: Card, n: number = 1): void {
+    this.remove_(c, n);
+  }
+  private remove_(c: Card, n: number): Hand.Node {
     let remaining = this.pile.count(c) - n;
     assert(remaining >= 0);
 
     let I_p = this.I(c.v_suit, c.v_rank, c.suit);
 
+    let prev : Hand.Node = null;
+
     let invalidate = function invalidate(node: Hand.Node) {
       if (!node.valid) return;
+
       for (let next of node.next) invalidate(next);
+
+      node.sidechain = prev;
+      prev = node;
       node.invalidate();
     };
+
     for (let node of I_p) {
       if (node.n > remaining) invalidate(node);
     }
     this.pile.remove(c, n);
+
+    return prev;
   }
 
   /*
@@ -448,7 +464,7 @@ export class Hand {
    * We always succeed at making `play`, even if it would result in a renege
    * (unless `play` is invalid for the Hand, in which case we assert).
    */
-  follow_with(lead: Flight, play: Card[]): boolean {
+  follow_with(lead: Flight, play: Card[], trace: boolean = false): boolean {
     assert(lead.count === play.length);
     let play_pile = new CardPile(play, this.tr);
 
@@ -465,7 +481,8 @@ export class Hand {
     enum Code { DONE, FAIL, STOP };
 
     // callback for generic match loop step function.
-    type StepFn<T> = (sh: Tractor.Shape, K: Hand.Node[]) => T | Code;
+    type StepFn<T extends Array<any>> =
+      (sh: Tractor.Shape, K: Hand.Node[], ...args: T) => Code;
 
     // generic step function.
     //
@@ -473,7 +490,7 @@ export class Hand {
     // biggest shape off `shapes`, and try to find a match in this.#K.  if we
     // find such a match, call `fn` and return its result.  if we don't, return
     // Code.DONE.
-    let step = function step<T>(fn: StepFn<T>): T | Code {
+    let step = function step<T extends Array<any>>(fn: StepFn<T>, ...args: T): Code {
       if (shapes.length === 0) return Code.STOP;
       if (play_pile.size <= 1) return Code.STOP;
 
@@ -488,12 +505,11 @@ export class Hand {
           if (!K || K.length === 0) continue;
 
           assert(n === K[0].n && m === K[0].m);
-          return fn(sh, K);
+          return fn(sh, K, ...args);
         }
       }
       return Code.DONE;
-    };
-    step = step.bind(this);
+    }.bind(this);
 
     // check for suit following and consume the remainder of the play.
     let finish = (result: boolean) => {
@@ -520,11 +536,7 @@ export class Hand {
           // if there's only one match or we have no more non-singletons left
           // in `play`, we can avoid backtracking.  otherwise, we're shit outta
           // luck.
-          //
-          // note that even if if `shapes` is empty, we can't be confident that
-          // we won't need to backtrack (...i think).
           shapes.push(shape);
-          assert(false); // XXX
           return Code.STOP;
         }
 
@@ -557,7 +569,167 @@ export class Hand {
       break;
     }
 
-    return finish(true);
+    if (shapes.length === 0) return finish(true);
+
+    // oof... we have to switch to a painful recursive approach with
+    // backtracking.  our goal here is to perform the same algorithm as above,
+    // but do it for each "branch" we can take at a K(m,n) with multiple valid
+    // entries.  we then take all the paths that have the highest "value"---
+    // determined by a lexicographic comparison over a sequence of tractor
+    // shapes that we matched---and see if `play` actually satisfies any of
+    // them.  if so, `play` successfully followed; and if not, it's a renege.
+
+    // the best path sequence we've encountered so far.  since the comparison
+    // is lexicographic, we can greedily prune suboptimal paths.
+    let best_seq : Tractor.Shape[] = [];
+
+    // all paths we've seen whose shape-sequence matches `best_seq`.
+    let paths : Hand.Node[][] = [];
+
+    // spaceship comparator for path shape and path: -1 if l < r, 0 if l == r,
+    // 1 if l > r.
+    let compare_paths = (l: Tractor.Shape[], ...r: Hand.Node[]) => {
+      for (let i = 0; i < l.length; ++i) {
+        // if `l` is longer than `r` and has `r` as a prefix, `l` wins.
+        if (i >= r.length) return 1;
+
+        let cmp = Tractor.Shape.compare(l[i], r[i].shape);
+        if (cmp !== 0) return cmp;
+      }
+      // either l == r or `l` is a prefix of `r`; return accordingly.
+      return Math.sign(l.length - r.length);
+    };
+
+    // debug trace helpers
+    let seq_to_str = (seq: Tractor.Shape[]): string => {
+      return seq.map(sh => sh.toString()).join('-');
+    };
+    let path_to_str = (path: Hand.Node[]): string => {
+      return path.map(n => n.shape.toString()).join('-') +
+        ` [${path.map(n => n.toString(this.tr, true)).join('-')}]`;
+    };
+
+    // current path that we're descending.  note that since JS and TS arrays
+    // are always passed "by reference" and hence mutable, we avoid threading
+    // arguments to make the statefulness overt.
+    let cur_path : Hand.Node[] = [];
+
+    let explore = function explore<T>(
+      shape: Tractor.Shape,
+      K: Hand.Node[],
+      explore_: T,
+      depth: number,
+    ): Code {
+      let finish_path = () => {
+        if (trace) console.log(' '.repeat((depth + 1) * 3) + 'terminated');
+
+        let cmp = compare_paths(best_seq, ...cur_path);
+        if (cmp < 0) {
+          // replace `best_seq`, and nuke and re-fill `paths`.
+          best_seq = cur_path.map(n => n.shape);
+          paths.length = 0;
+          paths.push(cur_path.map(n => n)); // must make a copy
+        } else if (cmp === 0) {
+          // register `cur_path` as an equally-valid option.
+          paths.push(cur_path.map(n => n)); // must make a copy
+        }
+        // if `cur_path` is worse than `best_seq`, just quietly drop it.
+      };
+
+      for (let node of K) {
+        if (!this.pile.contains(node.gen_counts(this.tr))) {
+          // path ends if it no longer matches the hand.
+          finish_path();
+          continue;
+        }
+
+        // if the new node would result in a worse path than the best we've
+        // seen so far, we don't need to explore this branch.
+        let cmp = compare_paths(
+          best_seq.slice(0, cur_path.length + 1), ...cur_path, node
+        );
+        if (cmp > 0) continue;
+
+        let undos : [Card, number, Hand.Node][] = [];
+
+        // "commit" this node to the chain.  this mirrors the logic in the non-
+        // backtracking version, except that we don't need to track `play`
+        // because we can't decide one way or another until we have all "best
+        // paths".
+        for (let [card, n] of node.gen_counts(this.tr)) {
+          let chain = this.remove_(card, n);
+          undos.push([card, n, chain]);
+        }
+        undos = undos.reverse();
+        assert(!node.valid); // should be invalidated by the remove
+
+        cur_path.push(node);
+
+        if (trace) {
+          let prefix = ' '.repeat(depth * 3);
+          console.log(prefix + 'recursing');
+          console.log(prefix + '├--shapes remaining:', seq_to_str(shapes));
+          console.log(prefix + '└--cur_path:', path_to_str(cur_path));
+        }
+
+        let m = shape.len - node.shape.len;
+        let n = shape.arity - node.shape.arity;
+        assert(m >= 0 && n >= 0);
+
+        let orig_shapes = (() => {
+          if (m > 0 && n > 1) {
+            let copy = shapes.map(sh => sh);
+            shapes.push(new Tractor.Shape(m, n));
+            shapes = shapes.sort(Tractor.Shape.compare);
+            return copy;
+          }
+          return shapes;
+        })();
+
+        let code = step(explore_, explore_, depth + 1);
+        // if we got STOP, it means the mutual recursion finished immediately
+        // before invoking explore again, so we need to do the bookkeeping.
+        if (code === Code.STOP) finish_path();
+
+        let out = cur_path.pop();
+        assert(node === out); // should be the exact same object
+
+        for (let [card, n, chain] of undos) {
+          while (chain !== null) {
+            chain.revive();
+            chain = chain.sidechain;
+          }
+          this.pile.insert(card, n);
+        }
+        shapes = orig_shapes;
+        // don't return; continue and try the next branch.
+      }
+      shapes.push(shape);
+
+      return Code.DONE;
+    }.bind(this);
+
+    let code = step(explore, explore, 0);
+    assert(code === Code.DONE);
+
+    if (trace) {
+      console.log('strongest constraint:', seq_to_str(best_seq));
+      for (let path of paths) {
+        console.log('  ' + path_to_str(path));
+      }
+    }
+
+    let gen_path_counts = function*(path: Hand.Node[]) {
+      for (let node of path) {
+        for (let count of node.gen_counts(this.tr)) {
+          yield count;
+        }
+      }
+    }.bind(this);
+
+    let matched = !!paths.find(path => play_pile.contains(gen_path_counts(path)));
+
+    return finish(matched);
   }
 
   /*
@@ -601,6 +773,9 @@ export namespace Hand {
     // pointers to (m+1,n) Nodes.  there are multiple because of branching
     // paths through osnt's.
     readonly next: Node[] = [];
+    // a linear side chain used for fun activities (like undoing a remove
+    // operation when backtracking in Hand#follow_with).
+    sidechain: Node = null;
 
     constructor(
       shape: Tractor.Shape, // len & arity
@@ -632,6 +807,7 @@ export namespace Hand {
     get m() { return this.shape.len; }
     get n() { return this.shape.arity; }
 
+    revive() { this.#valid = true; }
     invalidate() { this.#valid = false; }
   }
 }
