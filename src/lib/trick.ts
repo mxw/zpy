@@ -573,7 +573,7 @@ export class Hand {
     v_rank: number,
     suit?: Suit,
   ): Hand.Node[] {
-    if (!suit) {
+    if (suit === null || suit === undefined) {
       return v_rank === Rank.N_off
         ? [].concat.apply([], this.#I_osnt[v_suit])
         : (this.#I[v_suit]?.[v_rank] ?? []);
