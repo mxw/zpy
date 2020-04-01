@@ -77,8 +77,8 @@ function rank_to_string(rank: number) {
  *
  * Examples:
  *    (HEARTS, 2): normal round, rank 2, hearts trump
- *    (JOKER, Rank.Q): joker override round on queens, natural trumps only
- *    (JOKER, Rank.B): joker round, only joker trumps
+ *    (TRUMP, Rank.Q): joker override round on queens, natural trumps only
+ *    (TRUMP, Rank.B): joker round, only joker trumps
  */
 export class TrumpMeta {
   constructor(
@@ -234,7 +234,7 @@ export class CardPile {
   #counts: number[];      // (v_suit, v_rank) -> count
   #counts_osnt: number[]; // suit -> count; for off-suit natural trumps
   #suit_counts: number[]; // v_suit -> count; per-suit totals
-  readonly tr: TrumpMeta;
+  #tr: TrumpMeta;
 
   // 13 slots for each non-trump suit, plus 17 trump rank slots (heh).
   private static readonly IND_MAX = 13 * 4 + Rank.B - 1;
@@ -243,7 +243,7 @@ export class CardPile {
     this.#counts = array_fill(CardPile.IND_MAX, 0);
     this.#suit_counts = array_fill(5, 0);
     this.#counts_osnt = array_fill(4, 0);
-    this.tr = tr;
+    this.#tr = tr;
 
     for (let cb of cards) {
       let c = (cb instanceof Card) ? cb : new Card(cb.suit, cb.rank, tr);
@@ -295,6 +295,7 @@ export class CardPile {
   /*
    * Basic getters.
    */
+  get tr(): TrumpMeta { return this.#tr; }
   get size(): number { return this.#total; }
 
   /*
@@ -336,6 +337,89 @@ export class CardPile {
       if (this.count(card) < n) return false;
     }
     return true;
+  }
+
+  /*
+   * Select a new trump for the pile.
+   */
+  rehash(tr: TrumpMeta): void {
+    let idx_off = CardPile.index_of(Suit.TRUMP, Rank.N_off);
+    let idx_on  = CardPile.index_of(Suit.TRUMP, Rank.N_on);
+
+    if (this.tr.suit !== tr.suit && this.tr.suit !== Suit.TRUMP) {
+      // move the old trump suit out of the trump slots
+      this.#counts.copyWithin(
+        this.tr.suit * 13,
+        Suit.TRUMP * 13,
+        (Suit.TRUMP + 1) * 13
+      );
+      this.#suit_counts[this.tr.suit] = this.#suit_counts[Suit.TRUMP];
+      this.#suit_counts[Suit.TRUMP] = 0;
+
+      // adjust counts for jokers (we handle natural rank trumps below)
+      let end = this.#counts.length;
+      this.#suit_counts[this.tr.suit] -= this.#counts[end - 1];
+      this.#suit_counts[this.tr.suit] -= this.#counts[end - 2];
+    }
+    if (this.tr.rank !== tr.rank && this.tr.rank <= Rank.A) {
+      // move the old natural trumps back into their respective suits
+      for (let suit = 0; suit < this.#counts_osnt.length; ++suit) {
+        // off-suit natural trumps
+        let idx = CardPile.index_of(suit, this.tr.rank);
+        let n = this.#counts_osnt[suit];
+        this.#counts[idx] = n;
+        this.#counts_osnt[suit] = 0;
+        this.#suit_counts[suit] += n;
+        this.#suit_counts[this.tr.suit] -= n;
+      }
+      // on-suit natural trumps (and the off-suit slot)
+      let idx = CardPile.index_of(this.tr.suit, this.tr.rank);
+      this.#counts[idx] = this.#counts[idx_on];
+      this.#counts[idx_off] = 0;
+      this.#counts[idx_on] = 0;
+    }
+
+    if (this.tr.suit !== tr.suit) {
+      if (tr.suit !== Suit.TRUMP) {
+        // move the new trump suit into the trump slots
+        this.#counts.copyWithin(
+          Suit.TRUMP * 13,
+          tr.suit * 13,
+          (tr.suit + 1) * 13
+        );
+        for (let i = 0; i < 13; ++i) {
+          this.#counts[tr.suit * 13 + i] = 0;
+        }
+        this.#suit_counts[Suit.TRUMP] += this.#suit_counts[tr.suit];
+        this.#suit_counts[tr.suit] = 0;
+      } else {
+        for (let i = 0; i < 13; ++i) {
+          this.#counts[Suit.TRUMP * 13 + i] = 0;
+        }
+      }
+    }
+    if (this.tr.rank !== tr.rank && tr.rank <= Rank.A) {
+      // move the new natural trumps into the trump suit
+      for (let suit = 0; suit < this.#counts_osnt.length; ++suit) {
+        if (suit === tr.suit) {
+          // we already moved this into the trump range above
+          let idx_tr = CardPile.index_of(Suit.TRUMP, tr.rank);
+          this.#counts[idx_on] = this.#counts[idx_tr];
+          this.#counts[idx_tr] = 0;
+        } else {
+          let idx = CardPile.index_of(suit, tr.rank);
+          let n = this.#counts[idx];
+          this.#counts_osnt[suit] = n;
+          this.#counts[idx_off] += n;
+          this.#suit_counts[Suit.TRUMP] += n;
+
+          this.#counts[idx] = 0;
+          this.#suit_counts[suit] -= n;
+        }
+      }
+    }
+
+    this.#tr = tr;
   }
 
   private static index_of(suit: Suit, rank: number): number {

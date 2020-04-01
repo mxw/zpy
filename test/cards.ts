@@ -124,5 +124,39 @@ describe('CardPile', () => {
     ], tr);
 
     expect(pile.contains(subpile.gen_counts())).to.be.true;
+
+    tr = new TrumpMeta(Suit.DIAMONDS, Rank.A);
+    pile.rehash(tr);
+
+    expect('' + pile).to.equal(`
+♣: 3♣ 7♣ 7♣ K♣ K♣ K♣
+♠: 2♠ 2♠ 7♠
+♥: 2♥ 8♥ 9♥ 10♥
+☉: 2♦ 7♦ 7♦ 7♦ J♦ A♠ A♥ A♦ w☉ W☉ W☉
+`.trim()
+    );
+
+    tr = new TrumpMeta(Suit.TRUMP, Rank.B);
+    pile.rehash(tr);
+
+    expect('' + pile).to.equal(`
+♣: 3♣ 7♣ 7♣ K♣ K♣ K♣
+♦: 2♦ 7♦ 7♦ 7♦ J♦ A♦
+♠: 2♠ 2♠ 7♠ A♠
+♥: 2♥ 8♥ 9♥ 10♥ A♥
+☉: w☉ W☉ W☉
+`.trim()
+    );
+
+    tr = new TrumpMeta(Suit.SPADES, 7);
+    pile.rehash(tr);
+
+    expect('' + pile).to.equal(`
+♣: 3♣ K♣ K♣ K♣
+♦: 2♦ J♦ A♦
+♥: 2♥ 8♥ 9♥ 10♥ A♥
+☉: 2♠ 2♠ A♠ 7♣ 7♣ 7♦ 7♦ 7♦ 7♠ w☉ W☉ W☉
+`.trim()
+    );
   });
 });
