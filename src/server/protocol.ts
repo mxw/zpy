@@ -38,36 +38,31 @@ export interface RequestReset {
   verb: "req:reset";
 };
 
-export interface Reset<State> {
+export interface Reset<ClientState> {
   verb: "reset";
   version: Version;
-  state: State;
+  state: ClientState;
   who: User[];
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export interface RequestUpdate<Action> {
+export interface RequestUpdate<Intent> {
   verb: "req:update";
   base: Version;
-  action: Action;
+  intent: Intent;
 };
 
-export interface Update<Action> {
+export interface Update<Effect> {
   verb: "update";
   base: Version;
-  action: Action;
+  effect: Effect;
 };
 
-export interface UpdateRejectReason {
-  why: "invalid" | "outdated";
-  remark?: string;
-}
-
-export interface UpdateReject {
+export interface UpdateReject<UpdateError> {
   verb: "update-reject";
   base: Version;
-  reason: UpdateRejectReason;
+  reason: UpdateError;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -89,17 +84,17 @@ export type ProtocolAction = Join | Part;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export type ServerMessage<State, Action> =
+export type ServerMessage<ClientState, Effect, UpdateError> =
   Hello |
   Bye |
-  Reset<State> |
-  Update<Action | ProtocolAction> |
-  UpdateReject;
+  Reset<ClientState> |
+  Update<Effect | ProtocolAction> |
+  UpdateReject<UpdateError>;
 
-export type ClientMessage<State, Action> =
+export type ClientMessage<Intent> =
   RequestHello |
   RequestReset |
-  RequestUpdate<Action> |
+  RequestUpdate<Intent> |
   RequestBye;
 
 // the engine interface defines how the application being managed by the server
@@ -119,7 +114,13 @@ export type ClientMessage<State, Action> =
 //
 // in particular, this diagram commutes:
 //
-//  Action  --redactAction-->  ClientAction
+//  Intent
+//     |      \
+//     |       \
+//  listen      predict
+//     |                \___________
+//     v                            v
+//  Action ----redactAction-->    Effect
 //     |                            |
 //     |                            |
 //   apply                      clientApply
@@ -130,13 +131,20 @@ export type ClientMessage<State, Action> =
 // that is, it should not matter if you redact and use clientApply or use apply
 // and then redact--the results should be the same (though see below for a caveat)
 
-export interface Engine<Config, State, Action, ClientState, ClientAction> {
+export interface Engine<Config, Intent, State, Action, ClientState, Effect, UpdateError> {
   // generate the initial engine state
   init: (options: Config) => State;
 
+  // lift a client-generated intent into an action that will be applied
+  listen: (state: State, int: Intent) => Action | UpdateError;
+
   // compute the effect of an action on a given state or describe the reason why
   // the update is invalid, inapplicable, or otherwise problematic(TM)
-  apply: (state: State, act: Action | ProtocolAction) => State | UpdateRejectReason;
+  apply: (state: State, act: Action | ProtocolAction) => State | UpdateError;
+
+  // predict the outcome of an intent based on the client state -- return null
+  // if the outcome is unknown
+  predict: (state: ClientState, int: Intent) => Effect | UpdateError | null;
 
   // same as apply, on the client side, except:
   //
@@ -144,11 +152,11 @@ export interface Engine<Config, State, Action, ClientState, ClientAction> {
   // available on the client--e.g. if the action is "draw card" and we need to
   // wait on the response of the server to discover that the result is "draw 4
   // of spades"
-  applyClient: (state: ClientState, act: ClientAction | ProtocolAction) =>
-    (ClientState | UpdateRejectReason | null);
+  applyClient: (state: ClientState, eff: Effect | ProtocolAction) =>
+    (ClientState | UpdateError | null);
 
   // redact a server-side state/action into a client-side state/action for the
   // given recipient
   redact: (state: State, who: User) => ClientState;
-  redactAction: (state: Action, who: User) => ClientAction;
+  redactAction: (state: State, act: Action, who: User) => Effect;
 };

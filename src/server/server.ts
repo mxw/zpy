@@ -25,10 +25,8 @@ interface Game<State> {
   clients: Client[];
 }
 
-export class GameServer<
-  Cfg, S, A, CS, CA,
-  Eng extends Protocol.Engine<Cfg, S, A, CS, CA>
-> {
+export class GameServer<Cfg, I, S, A, CS, CA, UE,
+                        Eng extends Protocol.Engine<Cfg, I, S, A, CS, CA, UE>> {
   #engine: Eng;
   #ws: WebSocket.Server;
   #games: Record<GameId, Game<S>>;
