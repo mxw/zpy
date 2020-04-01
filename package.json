@@ -25,17 +25,14 @@
     "ts-loader": "*",
     "ts-node": "*",
     "source-map-loader": "*",
-
     "mocha": "*",
     "chai": "*",
-
     "@types/cookie-parser": "*",
     "@types/react": "*",
     "@types/react-dom": "*",
     "@types/express": "*",
     "@types/uuid": "*",
     "@types/ws": "*",
-
     "@types/mocha": "*",
     "@types/chai": "*"
   }

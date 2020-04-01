@@ -1,5 +1,5 @@
-import * as Uuid from "uuid"
-import * as Crypto from "crypto"
+import * as Uuid from 'uuid'
+import * as Crypto from 'crypto'
 
 export type Id = string;
 

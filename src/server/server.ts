@@ -1,10 +1,14 @@
-import * as Protocol from "./protocol"
-import * as Session from "./session.ts"
+/*
+ * Webserver implementation, wrapped around a generic game engine.
+ */
 
-import * as WebSocket from "ws"
-import * as Http from "http"
-import * as assert from "assert"
-import * as Uuid from "uuid"
+import * as Protocol from './protocol'
+import * as Session from './session.ts'
+
+import * as WebSocket from 'ws'
+import * as Http from 'http'
+import * as assert from 'assert'
+import * as Uuid from 'uuid'
 
 export type GameId = string;
 export type Principal = Session.Id;
@@ -21,16 +25,18 @@ interface Game<State> {
   clients: Client[];
 }
 
-export class GameServer<Cfg, S, A, CS, CA,
-                        Eng extends Protocol.Engine<Cfg, S, A, CS, CA>> {
-  engine: Eng;
-  ws: WebSocket.Server;
-  games: Record<GameId, Game<S>>;
+export class GameServer<
+  Cfg, S, A, CS, CA,
+  Eng extends Protocol.Engine<Cfg, S, A, CS, CA>
+> {
+  #engine: Eng;
+  #ws: WebSocket.Server;
+  #games: Record<GameId, Game<S>>;
 
   constructor(engine: Eng, server: Http.Server) {
-    this.engine = engine;
-    this.ws = new WebSocket.Server({noServer: true});
-    this.games = {};
+    this.#engine = engine;
+    this.#ws = new WebSocket.Server({noServer: true});
+    this.#games = {};
 
     server.on('upgrade', async (req: Http.IncomingMessage, sock, head) => {
       let bail = (reason: string) => {
@@ -50,10 +56,10 @@ export class GameServer<Cfg, S, A, CS, CA,
 
       // is the game a real thing
       let gameId = matches[1];
-      if (!(gameId in this.games)) {
+      if (!(gameId in this.#games)) {
         return bail("no such game: " + gameId);
       }
-      let game = this.games[gameId];
+      let game = this.#games[gameId];
 
       // is this someone we know about
       var id: string | null = null;
@@ -72,7 +78,7 @@ export class GameServer<Cfg, S, A, CS, CA,
       }
 
       if (id === null || token === null) {
-        return bail("no principal provided (log in first)"); 
+        return bail("no principal provided (log in first)");
       }
 
       let session = Session.getSession(id);
@@ -84,33 +90,33 @@ export class GameServer<Cfg, S, A, CS, CA,
         return bail("invalid token: " + token);
       }
 
-      this.ws.handleUpgrade(req, sock, head, async (ws: WebSocket) => {
-        this.ws.emit('connection', ws, req, game)
+      this.#ws.handleUpgrade(req, sock, head, async (ws: WebSocket) => {
+        this.#ws.emit('connection', ws, req, game)
       });
     });
 
-    this.ws.on('connection', (sock: WebSocket,
-                              req: Http.IncomingMessage,
-                              game: Game<Eng>) => {
-                                this.newClient(sock, req, game);
-                              });
+    this.#ws.on('connection', this.newClient);
   }
 
-  public beginGame(cfg: Cfg,
-                   owner: Principal): GameId {
+  public beginGame(
+    cfg: Cfg,
+    owner: Principal
+  ): GameId {
     let id = Uuid.v4();
-    let state = this.engine.init(cfg);
-    this.games[id] = {
-      state: this.engine.init(cfg),
+    let state = this.#engine.init(cfg);
+    this.#games[id] = {
+      state: this.#engine.init(cfg),
       owner,
       clients: []
     };
     return id;
   }
 
-  private newClient(sock: WebSocket,
-                    req: Http.IncomingMessage,
-                    game: Game<Eng>) {
+  private newClient(
+    sock: WebSocket,
+    req: Http.IncomingMessage,
+    game: Game<Eng>
+  ) {
     console.log("blorf");
     sock.close();
   }

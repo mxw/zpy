@@ -1,10 +1,12 @@
-import express from "express"
-import * as WebSocket from "ws"
-import * as Http from "http"
-import { GameServer } from "./server.ts"
-import { CounterEngine } from "./trivial-engine.ts"
-import * as Session from "./session.ts"
-import CookieParser from "cookie-parser"
+import { CounterEngine } from './trivial-engine.ts'
+
+import { GameServer } from './server/server.ts'
+import * as Session from './server/session.ts'
+
+import CookieParser from 'cookie-parser'
+import express from 'express'
+import * as Http from 'http'
+import * as WebSocket from 'ws'
 
 let app = express();
 
