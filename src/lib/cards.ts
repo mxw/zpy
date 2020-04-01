@@ -239,7 +239,7 @@ export class CardPile {
   // 13 slots for each non-trump suit, plus 17 trump rank slots (heh).
   private static readonly IND_MAX = 13 * 4 + Rank.B - 1;
 
-  constructor(cards: CardBase[], tr: TrumpMeta) {
+  constructor(cards: Iterable<CardBase>, tr: TrumpMeta) {
     this.#counts = array_fill(CardPile.IND_MAX, 0);
     this.#suit_counts = array_fill(5, 0);
     this.#counts_osnt = array_fill(4, 0);

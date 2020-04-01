@@ -262,6 +262,25 @@ export class Flight {
   get v_suit(): Suit { return this.tractors[0].v_suit; }
 
   /*
+   * Generate (card, count), or each card individually, for every card in the
+   * flight.
+   */
+  * gen_counts(tr: TrumpMeta): Generator<[Card, number], void> {
+    for (let tractor of this.tractors) {
+      for (let count of tractor.gen_counts(tr)) {
+        yield count;
+      }
+    }
+  }
+  * gen_cards(tr: TrumpMeta): Generator<Card, void> {
+    for (let [card, n] of this.gen_counts(tr)) {
+      for (let i = 0; i < n; ++i) {
+        yield card;
+      }
+    }
+  }
+
+  /*
    * Whether `this` beats `other`, assuming `this` has turn-order precedence.
    */
   beats(other: Flight): boolean {
