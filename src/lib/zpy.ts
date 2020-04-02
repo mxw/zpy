@@ -16,6 +16,8 @@ import {strict as assert} from 'assert';
 
 export class ZPY {
   #phase: ZPY.Phase = ZPY.Phase.INIT;
+  // rule modifiers
+  #rules: ZPY.RuleModifiers;
 
   // owner of the game
   #owner: ZPY.PlayerID = null;
@@ -68,6 +70,10 @@ export class ZPY {
   #plays: ZPY.PlayerMap<Flight> = {};
   // current winning player
   #winning: ZPY.PlayerID | null = null;
+
+  constructor(rules: ZPY.RuleModifiers) {
+    this.#rules = rules;
+  }
 
   /*
    * Property getters.
@@ -619,7 +625,13 @@ export class ZPY {
       let multiplier = Math.max(
         ...this.#plays[this.#winning].tractors.map(t => t.count)
       );
-      atk_points += (2 ** multiplier) * kitty_points;
+      atk_points += kitty_points * (() => {
+        switch (this.#rules.kitty) {
+          case ZPY.KittyMultiplierRule.EXP: return 2 ** multiplier;
+          case ZPY.KittyMultiplierRule.MULT: return 2 * multiplier;
+        }
+        assert(false);
+      })();
     }
 
     // number of ranks the attacking team ascends
@@ -662,6 +674,28 @@ export namespace ZPY {
   export type PlayerID = string;
 
   export type PlayerMap<T> = { [key: string]: T };
+
+  export enum RenegeRule {
+    ACCUSE,   // reneges are tracked, but must be called out by other players
+    FORBID,   // disallow plays that would result in a renege
+    AUTOLOSE, // reneges immediately cause players to lose
+    UNDO_ONE, // allow players to undo their renege play before the trick ends
+  }
+  export enum RankSkipRule {
+    PLAY_ONCE, // must play 5,10,J,K,W once before ranking up
+    NO_SKIP,   // must stop at 5,10,J,K,W before passing
+    NO_PASS,   // must win on 5,10,J,K,W to pass
+    NO_RULE,   // no limits, freely skip any rank
+  }
+  export enum KittyMultiplierRule {
+    EXP,  // 2^n multiplier
+    MULT, // 2*n multiplier
+  }
+  export interface RuleModifiers {
+    renege: RenegeRule,
+    rank: RankSkipRule,
+    kitty: KittyMultiplierRule,
+  }
 
   export enum Phase {
     INIT,    // assembling players
