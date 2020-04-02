@@ -77,10 +77,14 @@ export class Tractor {
       yield [new Card(suit, rank, tr), this.arity];
     }
   }
-
   * gen_tuples(tr: TrumpMeta): Generator<CardTuple, void> {
     for (let [card, n] of this.gen_counts(tr)) {
       yield new CardTuple(card, n);
+    }
+  }
+  * gen_cards(tr: TrumpMeta): Generator<Card, void> {
+    for (let [card, n] of this.gen_counts(tr)) {
+      for (let i = 0; i < n; ++i) yield card;
     }
   }
 
@@ -138,7 +142,7 @@ export namespace Tractor {
 export class Flight {
   readonly count: number;
 
-  private constructor(
+  constructor(
     readonly tractors: Tractor[],
     readonly total: number
   ) {
@@ -464,9 +468,14 @@ export class Hand {
    * We always succeed at making `play`, even if it would result in a renege
    * (unless `play` is invalid for the Hand, in which case we assert).
    */
-  follow_with(lead: Flight, play: Card[], trace: boolean = false): boolean {
-    assert(lead.count === play.length);
-    let play_pile = new CardPile(play, this.tr);
+  follow_with(
+    lead: Flight,
+    play_pile: CardPile,
+    trace: boolean = false
+  ): boolean {
+    assert(lead.count === play_pile.size);
+    assert(this.tr.suit === play_pile.tr.suit &&
+           this.tr.rank === play_pile.tr.rank);
 
     // Ensure `play` is a subset of `this`.
     assert(this.pile.contains(play_pile.gen_counts()));
@@ -727,6 +736,7 @@ export class Hand {
       }
     }.bind(this);
 
+    // XXX: this is wrong because gen_path_counts() doesn't uniquify by card
     let matched = !!paths.find(path => play_pile.contains(gen_path_counts(path)));
 
     return finish(matched);

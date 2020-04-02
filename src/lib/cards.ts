@@ -161,6 +161,19 @@ export class CardBase {
     if (color) out += ansi.RESET;
     return out;
   }
+
+  /*
+   * How many points is the card worth?
+   */
+  point_value(): number {
+    switch (this.rank) {
+      case 5:      return 5;
+      case 10:     return 10;
+      case Rank.K: return 10;
+      default: break;
+    }
+    return 0;
+  }
 }
 
 /*
@@ -207,19 +220,6 @@ export class Card extends CardBase {
     if (l.v_suit !== Suit.TRUMP && r.v_suit === Suit.TRUMP) return -1;
     return null;
   }
-
-  /*
-   * How many points is the card worth?
-   */
-  point_value(): number {
-    switch (this.rank) {
-      case 5:      return 5;
-      case 10:     return 10;
-      case Rank.K: return 10;
-      default: break;
-    }
-    return 0;
-  }
 }
 
 /*
@@ -255,7 +255,8 @@ export class CardPile {
    * Generate (card, count) for every card in the pile.
    *
    * Guarantees that suits are contiguous and that no earlier card is greater
-   * in value than a later card.
+   * in value than a later card.  Note that this guarantee is not true in
+   * general for methods named gen_counts() across lib/.
    */
   * gen_counts(): Generator<[Card, number], void> {
     for (let suit of CardBase.SUITS) {
