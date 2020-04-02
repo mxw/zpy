@@ -606,7 +606,33 @@ export class ZPY {
    * A delta of -1 indicates that the player was J'd.
    */
   rank_up(player: ZPY.PlayerID, delta: number): void {
-    // TODO implement me, including point/joker rank barriers
+    for (let i = 0; i < delta; ++i) {
+      let rank = this.#ranks[player];
+
+      if ([5,10,Rank.J,Rank.K,Rank.B].includes(rank)) {
+        if (this.#rules.rank === ZPY.RankSkipRule.NO_PASS) {
+          if (player !== this.#host) return;
+        }
+      }
+
+      if (rank === Rank.B) {
+        rank = this.#ranks[player] = 2;
+      } else if (rank === Rank.A) {
+        rank = this.#ranks[player] = Rank.B;
+      } else {
+        rank = ++this.#ranks[player];
+      }
+
+      if ([5,10,Rank.J,Rank.K,Rank.B].includes(rank)) {
+        if (this.#rules.rank === ZPY.RankSkipRule.PLAY_ONCE) {
+          // TODO: implement tracking for this
+          return;
+        }
+        if (this.#rules.rank === ZPY.RankSkipRule.NO_SKIP) {
+          return;
+        }
+      }
+    }
   }
 
   /*
@@ -651,6 +677,7 @@ export class ZPY {
       }
       next_idx = this.next_player_idx(next_idx);
     }
+    this.#phase = ZPY.Phase.FINISH;
   }
 
   /*
@@ -684,7 +711,7 @@ export namespace ZPY {
   export enum RankSkipRule {
     PLAY_ONCE, // must play 5,10,J,K,W once before ranking up
     NO_SKIP,   // must stop at 5,10,J,K,W before passing
-    NO_PASS,   // must win on 5,10,J,K,W to pass
+    NO_PASS,   // must win as host on 5,10,J,K,W to pass
     NO_RULE,   // no limits, freely skip any rank
   }
   export enum KittyMultiplierRule {
