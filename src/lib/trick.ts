@@ -423,20 +423,17 @@ export class Hand {
    *
    * The private version of this function additionally returns a Node which is
    * the head of the Node#sidechain linked list, which includes (and only
-   * includes) every Node invalidated by this operation.
-   *
-   * Note that Hand does not support insertion.
+   * includes) every Node invalidated by this operation.  The optional `prev`
+   * argument allows us to build a single list out of multiple remove() calls.
    */
-  remove(c: Card, n: number = 1): void {
+  remove(c: Card, n: number): void {
     this.remove_(c, n);
   }
-  private remove_(c: Card, n: number): Hand.Node {
+  private remove_(c: Card, n: number, prev: Hand.Node = null): Hand.Node {
     let remaining = this.pile.count(c) - n;
     assert(remaining >= 0);
 
     let I_p = this.I(c.v_suit, c.v_rank, c.suit);
-
-    let prev : Hand.Node = null;
 
     let invalidate = function invalidate(node: Hand.Node) {
       if (!node.valid) return;
@@ -491,13 +488,15 @@ export class Hand {
     lead: Flight,
     play_pile: CardPile,
     trace: boolean = false
-  ): boolean {
+  ): [boolean, Hand.Node] {
     assert(lead.count === play_pile.size);
     assert(this.tr.suit === play_pile.tr.suit &&
            this.tr.rank === play_pile.tr.rank);
 
     // Ensure `play` is a subset of `this`.
     assert(this.pile.contains(play_pile));
+
+    play_pile = CardPile.copy(play_pile); // don't mutate inputs
 
     // `shapes` is kept ordered with the "strongest" shape at the end (so it's
     // basically a poor man's prioqueue).
@@ -540,7 +539,10 @@ export class Hand {
     }.bind(this);
 
     // check for suit following and consume the remainder of the play.
-    let finish = (result: boolean) => {
+    let finish = (
+      result: boolean,
+      undo_chain: Hand.Node
+    ): [boolean, Hand.Node] => {
       let on_suit_left = this.pile.count_suit(lead.v_suit);
       let on_suit_played = play_pile.count_suit(lead.v_suit);
 
@@ -551,11 +553,13 @@ export class Hand {
         result = false;
       }
       // remove all cards we haven't already removed.
-      for (let count of play_pile) {
-        this.remove(...count);
+      for (let [card, n] of play_pile) {
+        undo_chain = this.remove_(card, n, undo_chain);
       }
-      return result;
+      return [result, undo_chain];
     };
+
+    let undo_chain: Hand.Node = null;
 
     while (true) {
       let code = step((shape: Tractor.Shape, K: Hand.Node[]): Code => {
@@ -573,7 +577,7 @@ export class Hand {
 
           for (let [card, n] of node.gen_counts(this.tr)) {
             play_pile.remove(card, n);
-            this.remove(card, n);
+            undo_chain = this.remove_(card, n, undo_chain);
           }
           assert(!node.valid); // should be invalidated by the remove
 
@@ -591,13 +595,13 @@ export class Hand {
       });
       switch (code) {
         case Code.DONE: continue;
-        case Code.FAIL: return finish(false);
+        case Code.FAIL: return finish(false, undo_chain);
         case Code.STOP: break;
       }
       break;
     }
 
-    if (shapes.length === 0) return finish(true);
+    if (shapes.length === 0) return finish(true, undo_chain);
 
     // oof... we have to switch to a painful recursive approach with
     // backtracking.  our goal here is to perform the same algorithm as above,
@@ -678,17 +682,15 @@ export class Hand {
         );
         if (cmp > 0) continue;
 
-        let undos : [Card, number, Hand.Node][] = [];
+        let chain: Hand.Node = null;
 
         // "commit" this node to the chain.  this mirrors the logic in the non-
         // backtracking version, except that we don't need to track `play`
         // because we can't decide one way or another until we have all "best
         // paths".
         for (let [card, n] of node.gen_counts(this.tr)) {
-          let chain = this.remove_(card, n);
-          undos.push([card, n, chain]);
+          chain = this.remove_(card, n, chain);
         }
-        undos = undos.reverse();
         assert(!node.valid); // should be invalidated by the remove
 
         cur_path.push(node);
@@ -722,13 +724,8 @@ export class Hand {
         let out = cur_path.pop();
         assert(node === out); // should be the exact same object
 
-        for (let [card, n, chain] of undos) {
-          while (chain !== null) {
-            chain.revive();
-            chain = chain.sidechain;
-          }
-          this.pile.insert(card, n);
-        }
+        this.undo(node.gen_counts(this.tr), chain);
+        assert(node.valid);
         shapes = orig_shapes;
         // don't return; continue and try the next branch.
       }
@@ -755,9 +752,37 @@ export class Hand {
       }
     }.bind(this);
 
-    let matched = !!paths.find(path => play_pile.contains(gen_path_counts(path)));
+    let the_path = paths.find(path => play_pile.contains(gen_path_counts(path)));
+    if (!the_path) return finish(false, undo_chain);
 
-    return finish(matched);
+    for (let node of the_path) {
+      for (let [card, n] of node.gen_counts(this.tr)) {
+        undo_chain = this.remove_(card, n, undo_chain);
+        play_pile.remove(card, n);
+      }
+    }
+    return finish(true, undo_chain);
+  }
+
+  /*
+   * Undo a follow.
+   *
+   * This is a somewhat modularity-breaking aspect of the Hand interface, since
+   * undos require exposing the Node data that lives in I and K.  On the bright
+   * side, it's very simple.
+   *
+   * `counts` must be the most recent play, and `chain` must be the undo chain
+   * returned by `follow_with`.  Any number of plays may be unwound in this
+   * manner, but they have to each be popped of the "play stack", so to speak.
+   */
+  undo(counts: Iterable<[Card, number]>, chain: Hand.Node) {
+    while (chain !== null) {
+      chain.revive();
+      chain = chain.sidechain;
+    }
+    for (let [card, n] of counts) {
+      this.pile.insert(card, n);
+    }
   }
 
   /*

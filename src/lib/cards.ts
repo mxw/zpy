@@ -252,6 +252,19 @@ export class CardPile {
   }
 
   /*
+   * Make and return a copy of `src`.
+   */
+  static copy(src: CardPile): CardPile {
+    let dst = new CardPile([], src.tr);
+    dst.#total = src.#total;
+    dst.#counts = src.#counts.slice();
+    dst.#suit_counts = src.#suit_counts.slice();
+    dst.#counts_osnt = src.#counts_osnt.slice();
+    dst.#tr = src.#tr;
+    return dst;
+  }
+
+  /*
    * Generate (card, count) for every card in the pile.
    *
    * Guarantees that suits are contiguous and that no earlier card is greater

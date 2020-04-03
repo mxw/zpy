@@ -569,7 +569,9 @@ export class ZPY {
       return new ZPY.InvalidPlayError('incorrectly sized play');
     }
 
-    let renege = !this.#hands[player].follow_with(this.#lead, play_pile);
+    let [success, undo] = this.#hands[player].follow_with(
+      this.#lead, play_pile
+    );
     // TODO: handle renege logic
 
     this.commit_play(player, play, play_pile);
