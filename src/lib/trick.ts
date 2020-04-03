@@ -175,7 +175,7 @@ export class Flight {
     let pile = new CardPile(cards, tr);
     let chunks : CardTuple[][] = [[]];
 
-    for (let [card, arity] of pile.gen_counts()) {
+    for (let [card, arity] of pile) {
       let cur_chunk = chunks[chunks.length - 1];
       let prev = cur_chunk[cur_chunk.length - 1];
 
@@ -351,7 +351,7 @@ export class Hand {
   constructor(readonly pile: CardPile) {
     let p : {v_suit?: Suit, v_rank?: number} = {};
 
-    for (let [card, n] of this.pile.gen_counts()) {
+    for (let [card, n] of this.pile) {
       if (p.v_suit !== card.v_suit) {
         // we changed suits; reset our position.
         p.v_suit = card.v_suit;
@@ -497,7 +497,7 @@ export class Hand {
            this.tr.rank === play_pile.tr.rank);
 
     // Ensure `play` is a subset of `this`.
-    assert(this.pile.contains(play_pile.gen_counts()));
+    assert(this.pile.contains(play_pile));
 
     // `shapes` is kept ordered with the "strongest" shape at the end (so it's
     // basically a poor man's prioqueue).
@@ -551,7 +551,7 @@ export class Hand {
         result = false;
       }
       // remove all cards we haven't already removed.
-      for (let count of play_pile.gen_counts()) {
+      for (let count of play_pile) {
         this.remove(...count);
       }
       return result;
@@ -755,7 +755,6 @@ export class Hand {
       }
     }.bind(this);
 
-    // XXX: this is wrong because gen_path_counts() doesn't uniquify by card
     let matched = !!paths.find(path => play_pile.contains(gen_path_counts(path)));
 
     return finish(matched);

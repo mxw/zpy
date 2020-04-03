@@ -258,6 +258,9 @@ export class CardPile {
    * in value than a later card.  Note that this guarantee is not true in
    * general for methods named gen_counts() across lib/.
    */
+  [Symbol.iterator](): Iterator<[Card, number]> {
+    return this.gen_counts();
+  }
   * gen_counts(): Generator<[Card, number], void> {
     for (let suit of CardBase.SUITS) {
       for (let rank = 2; rank <= Rank.A; ++rank) {
@@ -334,10 +337,22 @@ export class CardPile {
    * Whether `this` contains all the cards in `other`.
    */
   contains(counts: Iterable<[Card, number]>): boolean {
-    for (let [card, n] of counts) {
-      if (this.count(card) < n) return false;
+    if (counts instanceof CardPile) {
+      for (let [card, n] of counts) {
+        if (this.count(card) < n) return false;
+      }
+      return true;
     }
-    return true;
+
+    let gen_cards = function*() {
+      for (let [card, n] of counts) {
+        for (let i = 0; i < n; ++i) yield card;
+      }
+    }.bind(this);
+
+    // we can't rely on uniqueness, so turn `counts` into a pile
+    let other_pile = new CardPile(gen_cards(), this.tr);
+    return this.contains(other_pile);
   }
 
   /*

@@ -286,7 +286,7 @@ export class ZPY {
    */
   request_redeal(player: ZPY.PlayerID): ZPY.Result {
     let points = 0;
-    for (let [card, n] of this.#draws[player].gen_counts()) {
+    for (let [card, n] of this.#draws[player]) {
       points += card.point_value() * n;
     }
     if (points > this.#ndecks * 5) {
@@ -352,11 +352,11 @@ export class ZPY {
     }
     let kitty_pile = new CardPile(kitty, this.#tr);
 
-    if (!this.#draws[player].contains(kitty_pile.gen_counts())) {
+    if (!this.#draws[player].contains(kitty_pile)) {
       return new ZPY.InvalidPlayError('kitty not part of hand');
     }
 
-    for (let count of kitty_pile.gen_counts()) {
+    for (let count of kitty_pile) {
       this.#draws[player].remove(...count);
     }
     this.#kitty = kitty;
@@ -430,7 +430,7 @@ export class ZPY {
     }
     let play_pile = new CardPile(play.gen_cards(this.#tr), this.#tr);
 
-    if (!this.#hands[player].pile.contains(play_pile.gen_counts())) {
+    if (!this.#hands[player].pile.contains(play_pile)) {
       return new ZPY.InvalidPlayError('play not part of hand');
     }
     this.#current = this.next_player_idx(this.#current);
@@ -449,7 +449,7 @@ export class ZPY {
     play: Flight,
     play_pile: CardPile,
   ): void {
-    for (let count of play_pile.gen_counts()) {
+    for (let count of play_pile) {
       this.#hands[player].remove(...count);
     }
     this.#plays[player] = play;
@@ -665,7 +665,9 @@ export class ZPY {
     if (atk_points === 0) --delta;
 
     let winning_team = delta >= 0 ? this.#atk_team : this.#host_team;
-    winning_team.forEach(p => this.rank_up(p, Math.abs(delta)));
+    for (let player of winning_team.values()) {
+      this.rank_up(player, Math.abs(delta));
+    }
 
     // choose the next host
     let next_idx = this.next_player_idx(this.#order[this.#host]);
