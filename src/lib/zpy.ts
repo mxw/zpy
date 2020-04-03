@@ -569,11 +569,27 @@ export class ZPY {
       return new ZPY.InvalidPlayError('incorrectly sized play');
     }
 
-    let [success, undo] = this.#hands[player].follow_with(
+    let [correct, undo] = this.#hands[player].follow_with(
       this.#lead, play_pile
     );
-    // TODO: handle renege logic
-
+    if (!correct) {
+      switch (this.#rules.renege) {
+        case ZPY.RenegeRule.ACCUSE: {
+          // TODO: implement this
+        }
+        case ZPY.RenegeRule.FORBID: {
+          this.#hands[player].undo(play_pile, undo);
+          return new ZPY.InvalidPlayError('invalid follow');
+        }
+        case ZPY.RenegeRule.AUTOLOSE: {
+          // TODO: implement this
+          this.#phase = ZPY.Phase.FINISH;
+        }
+        case ZPY.RenegeRule.UNDO_ONE: {
+          // TODO: implement this
+        }
+      }
+    }
     this.commit_play(player, play, play_pile);
 
     if (Object.keys(this.#plays).length === this.#players.length) {
