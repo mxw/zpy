@@ -3,13 +3,13 @@
  */
 
 import {
-  Suit, Rank, TrumpMeta, CardBase, Card, CardPile
+  Suit, Rank, TrumpMeta, CardBase, Card, CardPile, rank_to_string
 } from './cards';
 import {
   CardTuple, Tractor, Flight, Hand
 } from './trick';
 import {
-  array_shuffle, o_map
+  array_fill, array_shuffle, o_map
 } from './utils';
 
 import {strict as assert} from 'assert';
@@ -48,7 +48,7 @@ export class ZPY {
   // kitty; set before DRAW, replaced by KITTY, consumed by FINISH
   #kitty: CardBase[] = [];
   // list of successful trump bids made during DRAW; last one is the winner
-  #bids: {player: ZPY.PlayerID, bid: CardTuple}[] = [];
+  #bids: {player: ZPY.PlayerID, card: CardBase, n: number}[] = [];
   // players' hands as they are being drawn
   #draws: ZPY.PlayerMap<CardPile> = {};
   // current index into #players for draws, play, etc.
@@ -79,6 +79,11 @@ export class ZPY {
   // current winning player
   #winning: ZPY.PlayerID | null = null;
 
+  // debugging determinism flag
+  #debug: boolean = false;
+
+  /////////////////////////////////////////////////////////////////////////////
+
   constructor(rules: ZPY.RuleModifiers) {
     this.#rules = rules;
   }
@@ -87,6 +92,16 @@ export class ZPY {
    * Property getters.
    */
   get nplayers(): number { return this.#players.length; }
+  get tr(): TrumpMeta { return this.#tr; }
+
+  /*
+   * Debugging helpers.
+   */
+  set_debug() { this.#debug = true; }
+  stack_deck(i: number, j: number) {
+    assert(this.#debug);
+    [this.#deck[i], this.#deck[j]] = [this.#deck[j], this.#deck[i]];
+  }
 
   /////////////////////////////////////////////////////////////////////////////
 
@@ -128,7 +143,7 @@ export class ZPY {
   /*
    * Shuffle `n` standard decks together.
    */
-  private static shuffled_deck(n: number): CardBase[] {
+  private shuffled_deck(n: number): CardBase[] {
     let deck: CardBase[] = [];
 
     for (let i = 0; i < n; ++i) {
@@ -142,7 +157,7 @@ export class ZPY {
     }
     assert(deck.length === n * 54);
 
-    return array_shuffle(deck);
+    return !this.#debug ? array_shuffle(deck) : deck;
   }
 
   /*
@@ -155,7 +170,7 @@ export class ZPY {
     ++this.#round;
     this.#consensus = new Set();
 
-    this.#deck = ZPY.shuffled_deck(this.#ndecks);
+    this.#deck = this.shuffled_deck(this.#ndecks);
 
     let kitty_sz = this.#deck.length % this.nplayers;
     if (kitty_sz === 0) kitty_sz = this.nplayers;
@@ -205,7 +220,9 @@ export class ZPY {
     if (this.nplayers < 4) {
       return new ZPY.InvalidPlayError('must have at least 4 players');
     }
-    this.#players = array_shuffle(this.#players);
+    if (!this.#debug) {
+      this.#players = array_shuffle(this.#players);
+    }
     for (let i = 0; i < this.nplayers; ++i) {
       this.#order[this.#players[i]] = i;
     }
@@ -246,47 +263,47 @@ export class ZPY {
    * Place a bid for a trump.  This also reindexes each player's current draw
    * pile and changes the current trump selection.
    */
-  bid_trump(player: ZPY.PlayerID, bid: CardTuple): ZPY.Result {
-    if (bid.arity < 1) {
+  bid_trump(player: ZPY.PlayerID, card: CardBase, n: number): ZPY.Result {
+    if (n < 1) {
       return new ZPY.InvalidArgError('bid is empty');
     }
 
-    if (!this.#draws[player].contains([[bid.card, bid.arity]])) {
+    if (!this.#draws[player].contains(
+      [[new Card(card.suit, card.rank, this.#tr), n]]
+    )) {
       return new ZPY.InvalidPlayError('bid not part of hand');;
     }
 
-    if (bid.card.rank <= Rank.A &&
-        bid.card.rank !== this.#ranks[this.#host ?? player].rank) {
+    if (card.rank <= Rank.A &&
+        card.rank !== this.#ranks[this.#host ?? player].rank) {
       // we bid either the host's rank or our own (in a bid-to-host draw), so
       // valid bids against the appropriate value.
       return new ZPY.InvalidPlayError('invalid trump bid');
     }
 
     let commit_bid = () => {
-      this.#bids.push({player, bid});
-      this.#tr = new TrumpMeta(bid.card.suit, bid.card.rank);
+      this.#bids.push({player, card, n});
+      this.#tr = new TrumpMeta(card.suit, card.rank);
       for (let p in this.#draws) this.#draws[p].rehash(this.#tr);
     };
 
     if (this.#bids.length === 0) {
-      // if this is the first bid in a bid-for-host draw, set the host
-      this.#host = this.#host ?? player;
       return commit_bid();
     }
 
     let prev = this.#bids[this.#bids.length - 1];
 
     if (player === prev.player) {
-      if (bid.card.suit === prev.bid.card.suit &&
-          bid.arity > prev.bid.arity) {
+      if (card.suit === prev.card.suit && n > prev.n) {
         return commit_bid();
       }
       return new ZPY.InvalidPlayError('cannot overturn own bid');
     }
 
-    if (bid.arity > prev.bid.arity) return commit_bid();
-    if (bid.arity === prev.bid.arity &&
-        prev.bid.card.rank <= Rank.A && bid.card.rank >= Rank.S) {
+    if (n > prev.n) return commit_bid();
+    if (n === prev.n &&
+        prev.card.rank <= Rank.A &&
+        card.rank >= Rank.S) {
       return commit_bid();
     }
     return new ZPY.InvalidPlayError('bid too low');
@@ -326,6 +343,13 @@ export class ZPY {
     if (this.#consensus.size !== this.#players.length) return;
 
     this.#consensus.clear();
+
+    let nbids = this.#bids.length;
+
+    this.#host = this.#host ?? (nbids !== 0
+      ? this.#bids[nbids - 1].player
+      : this.#players[this.#current]
+    );
 
     if (this.#bids.length === 0) {
       // if there's no host, the starting player becomes host
@@ -401,12 +425,18 @@ export class ZPY {
     player: ZPY.PlayerID,
     friends: [CardBase, number][]
   ): ZPY.Result {
+    if (player !== this.#host) {
+      return new ZPY.WrongPlayerError('host only');
+    }
+
     // this is the correct number of friends for all single-digit numbers of
     // players and probably at least some double-digit numbers.
     let allowed = this.nfriends;
 
     if (friends.length !== allowed) {
-      return new ZPY.InvalidPlayError(`must call exactly ${allowed} friends`);
+      return new ZPY.InvalidPlayError(
+        `must call exactly ${allowed} friend${allowed > 1 ? 's' : ''}`
+      );
     }
 
     for (let [c, nth] of friends) {
@@ -449,8 +479,6 @@ export class ZPY {
     if (!this.#hands[player].pile.contains(play_pile)) {
       return new ZPY.InvalidPlayError('play not part of hand');
     }
-    this.#current = this.next_player_idx(this.#current);
-
     return play_pile;
   }
 
@@ -465,9 +493,6 @@ export class ZPY {
     play: Flight,
     play_pile: CardPile,
   ): void {
-    for (let count of play_pile) {
-      this.#hands[player].remove(...count);
-    }
     this.#plays[player] = play;
 
     // set `player` as the new winner if they're the first play or the current
@@ -497,6 +522,7 @@ export class ZPY {
         }
       }
     }
+    this.#current = this.next_player_idx(this.#current);
   }
 
   /*
@@ -511,13 +537,15 @@ export class ZPY {
     if (!(play_pile instanceof CardPile)) return play_pile;
 
     this.#lead = play;
-    this.#current = this.next_player_idx(this.#order[this.#leader]);
 
     if (play.tractors.length > 1) {
       this.#consensus.add(player);
       this.#phase = ZPY.Phase.FLY;
       // delay registering the play until Phase.FLY completes
       return;
+    }
+    for (let count of play_pile) {
+      this.#hands[player].remove(...count);
     }
     this.commit_play(player, play, play_pile);
 
@@ -548,6 +576,9 @@ export class ZPY {
       this.#lead = new Flight([component], component.count);
 
       let play_pile = new CardPile(component.gen_cards(this.#tr), this.#tr);
+      for (let count of play_pile) {
+        this.#hands[this.#leader].remove(...count);
+      }
       this.commit_play(this.#leader, this.#lead, play_pile);
 
       this.#phase = ZPY.Phase.FOLLOW;
@@ -801,8 +832,11 @@ phase: ${ZPY.Phase[this.#phase]}
 owner: ${this.#owner}
 ndecks: ${this.#ndecks}
 players: ${this.#players.join(', ')}
-ranks: ${o_map(this.#ranks,
-  (p, meta) => `  ${p}: ${o_map(meta, (k, v) => `${k}:${v}`).join(', ')}`
+ranks:
+${o_map(this.#ranks,
+  (p, meta) => `  ${p}: ${
+    o_map(meta, (k, v) => `${k[0]}:${rank_to_string(v)}`).join(' ')
+  }`
 ).join('\n')}
 
 round: ${this.#round}
@@ -810,28 +844,33 @@ consensus: ${Array.from(this.#consensus.values()).join(', ')}
 
 deck: ${this.#deck.map(c => c.toString(color)).join(' ')}
 kitty: ${this.#kitty.map(c => c.toString(color)).join(' ')}
-bids: ${this.#bids.map(
-  ({player, bid}) => `  ${player}: ${bid.toString(color)}`
+bids:
+${this.#bids.map(
+  ({player, card, n}) => `  ${player}: ${
+    array_fill(n, card.toString(color)).join(' ')
+  }`
 ).join('\n')}
-current: ${this.#current}
+current: ${this.#players[this.#current]}
 
 host: ${this.#host}
-tr: ${this.#tr.toString(color)}
+tr: ${this.#tr?.toString(color)}
 friends: ${this.#friends.map(
-  ({card, nth}) => `#${nth} ${card.toString(color)}`
+  ({card, nth}) => `${card.toString(color)}:${nth}º`
 ).join(', ')}
 joins: ${this.#joins}
 host_team: ${Array.from(this.#host_team.values()).join(', ')}
 atk_team: ${Array.from(this.#atk_team.values()).join(', ')}
 
 leader: ${this.#leader}
-lead: ${this.#lead.toString(this.#tr, color)}
-plays: ${o_map(this.#plays,
+lead: ${this.#lead?.toString(this.#tr, color)}
+plays:
+${o_map(this.#plays,
   (p, play) => `  ${p}: ${play.toString(this.#tr, color)}`
 ).join('\n')}
 winning: ${this.#winning}
 
-points: ${o_map(this.#points,
+points:
+${o_map(this.#points,
   (p, cards) => `  ${p}: ${cards.map(c => c.toString(color)).join(' ')}`
 ).join('\n')}`;
 

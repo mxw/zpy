@@ -60,7 +60,7 @@ export const Rank = {
   B:     18,  // big joker
 }
 
-function rank_to_string(rank: number) {
+export function rank_to_string(rank: number) {
   if (rank <= 10) return '' + rank;
   if (rank == Rank.J) return 'J';
   if (rank == Rank.Q) return 'Q';
@@ -91,11 +91,11 @@ export class TrumpMeta {
    */
   virt(suit: Suit, rank: number): [Suit, number] {
     return suit === this.suit
-      ? (rank === this.rank
+      ? (rank === this.rank && this.rank <= Rank.A
           ? [Suit.TRUMP, Rank.N_on]
           : [Suit.TRUMP, rank]
         )
-      : (rank === this.rank
+      : (rank === this.rank && this.rank <= Rank.A
           ? [Suit.TRUMP, Rank.N_off]
           : [suit, rank]
         )
@@ -394,7 +394,7 @@ export class CardPile {
       this.#suit_counts[this.tr.suit] -= this.#counts[end - 1];
       this.#suit_counts[this.tr.suit] -= this.#counts[end - 2];
     }
-    if (this.tr.rank !== tr.rank && this.tr.rank <= Rank.A) {
+    if (this.tr.rank <= Rank.A) {
       // move the old natural trumps back into their respective suits
       for (let suit = 0; suit < this.#counts_osnt.length; ++suit) {
         // off-suit natural trumps
@@ -431,7 +431,7 @@ export class CardPile {
         }
       }
     }
-    if (this.tr.rank !== tr.rank && tr.rank <= Rank.A) {
+    if (tr.rank <= Rank.A) {
       // move the new natural trumps into the trump suit
       for (let suit = 0; suit < this.#counts_osnt.length; ++suit) {
         if (suit === tr.suit) {

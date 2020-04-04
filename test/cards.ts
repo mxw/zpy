@@ -30,6 +30,19 @@ describe('Card', () => {
     expect(card.v_rank).to.equal(Rank.B);
   });
 
+  it('canonicalizes jokers', () => {
+    let card;
+    let tr = new TrumpMeta(Suit.TRUMP, Rank.B);
+
+    card = new Card(Suit.CLUBS, Rank.K, tr);
+    expect(card.v_suit).to.equal(Suit.CLUBS);
+    expect(card.v_rank).to.equal(Rank.K);
+
+    card = new Card(Suit.TRUMP, Rank.S, tr);
+    expect(card.v_suit).to.equal(Suit.TRUMP);
+    expect(card.v_rank).to.equal(Rank.S);
+  });
+
   it('compares correctly', () => {
     let tr = new TrumpMeta(Suit.HEARTS, 7);
 
@@ -156,6 +169,17 @@ describe('CardPile', () => {
 ♦: 2♦ J♦ A♦
 ♥: 2♥ 8♥ 9♥ 10♥ A♥
 ☉: 2♠ 2♠ A♠ 7♣ 7♣ 7♦ 7♦ 7♦ 7♠ w☉ W☉ W☉
+`.trim()
+    );
+
+    tr = new TrumpMeta(Suit.CLUBS, 7);
+    pile.rehash(tr);
+
+    expect('' + pile).to.equal(`
+♦: 2♦ J♦ A♦
+♠: 2♠ 2♠ A♠
+♥: 2♥ 8♥ 9♥ 10♥ A♥
+☉: 3♣ K♣ K♣ K♣ 7♦ 7♦ 7♦ 7♠ 7♣ 7♣ w☉ W☉ W☉
 `.trim()
     );
   });

@@ -45,9 +45,9 @@ export namespace ansi {
 /*
  * Functional map for objects.
  */
-export function o_map<O, K extends keyof O, R>(
+export function o_map<O, K extends keyof O & string, R>(
   o: O,
   fn: (k: K, v: O[K]) => R,
 ) {
-  return Object.keys((k: K) => fn(k, o[k]));
+  return Object.keys(o).map((k: K) => fn(k, o[k]));
 }
