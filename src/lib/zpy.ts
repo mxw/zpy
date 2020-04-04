@@ -56,8 +56,8 @@ export class ZPY {
   #tr: TrumpMeta = null;
   // hands; valid iff #phase > KITTY
   #hands: ZPY.PlayerMap<Hand> = {};
-  // each player's point count; valid if #phase > FRIEND
-  #points: ZPY.PlayerMap<number> = {};
+  // each player's point cards; valid if #phase > FRIEND
+  #points: ZPY.PlayerMap<CardBase[]> = {};
   // friends declarations; valid iff #phase > FRIEND
   #friends: {card: Card, nth: number}[] = [];
   // number of times a friend has joined; valid iff #phase > FRIEND
@@ -183,7 +183,7 @@ export class ZPY {
 
     for (let p of this.#players) {
       this.#draws[p] = new CardPile([], this.#tr);
-      this.#points[p] = 0;
+      this.#points[p] = [];
     }
   }
 
@@ -613,7 +613,11 @@ export class ZPY {
   collect_trick(): void {
     for (let player of this.#players) {
       for (let [card, n] of this.#plays[player].gen_counts(this.#tr)) {
-        this.#points[this.#winning] += card.point_value() * n;
+        if (card.point_value() > 0) {
+          for (let i = 0; i < n; ++i) {
+            this.#points[this.#winning].push(card);
+          }
+        }
       }
     }
     if (this.#hands[this.#leader].pile.size === 0) {
@@ -673,7 +677,11 @@ export class ZPY {
    */
   finish_round(): void {
     let atk_points = this.#players.reduce(
-      (total, p) => total + (this.#atk_team.has(p) ? this.#points[p] : 0),
+      (total, p) => total + (
+        this.#atk_team.has(p)
+          ? this.#points[p].reduce((tot, c) => tot + c.point_value(), 0)
+          : 0
+      ),
       0
     );
     if (this.#atk_team.has(this.#winning)) {
