@@ -9,15 +9,19 @@ import {
   CardTuple, Tractor, Flight, Hand
 } from './trick';
 import {
-  array_shuffle
+  array_shuffle, o_map
 } from './utils';
 
 import {strict as assert} from 'assert';
+
+///////////////////////////////////////////////////////////////////////////////
 
 export class ZPY {
   #phase: ZPY.Phase = ZPY.Phase.INIT;
   // rule modifiers
   #rules: ZPY.RuleModifiers;
+  // the player whose state this represents; null for global view
+  #identity: ZPY.PlayerID | null = null;
 
   // owner of the game
   #owner: ZPY.PlayerID = null;
@@ -83,6 +87,8 @@ export class ZPY {
    * Property getters.
    */
   get nplayers(): number { return this.#players.length; }
+
+  /////////////////////////////////////////////////////////////////////////////
 
   /*
    * Phase.INIT : Action.ADD_PLAYER
@@ -736,7 +742,113 @@ export class ZPY {
     this.reset_round(this.#host, true);
     this.#phase = ZPY.Phase.DRAW;
   }
+
+  /////////////////////////////////////////////////////////////////////////////
+
+  /*
+   * Make a shallow copy of the game state for `player`.
+   */
+  redact_for(player: ZPY.PlayerID): ZPY {
+    let copy = new ZPY(this.#rules);
+    copy.#phase    = this.#phase;
+    copy.#identity = player;
+
+    copy.#owner   = this.#owner;
+    copy.#players = this.#players;
+    copy.#ranks   = this.#ranks;
+    copy.#ndecks  = this.#ndecks;
+
+    copy.#round     = this.#round;
+    copy.#order     = this.#order;
+    copy.#consensus = this.#consensus;
+
+    // #deck and other players' #draws are redacted
+    copy.#draws[player] = this.#draws[player];
+    if (this.#phase == ZPY.Phase.KITTY &&
+        this.#bids.length === 0) {
+      // kitty is public during Phase.KITTY iff no one bid
+      copy.#kitty = this.#kitty;
+    }
+    copy.#bids    = this.#bids;
+    copy.#current = this.#current;
+
+    copy.#host = this.#host;
+    copy.#tr   = this.#tr;
+    // other players' #hands are redacted
+    copy.#hands[player] = this.#hands[player];
+    copy.#points  = this.#points;
+    copy.#friends = this.#friends;
+    copy.#joins   = this.#joins;
+    copy.#host_team = this.#host_team;
+    copy.#atk_team  = this.#atk_team;
+
+    copy.#leader  = this.#leader;
+    copy.#lead    = this.#lead;
+    copy.#plays   = this.#plays;
+    copy.#winning = this.#winning;
+
+    return copy;
+  }
+
+  /*
+   * Human-readable game state printout.
+   */
+  toString(color: boolean = false): string {
+    let out =
+`identity: ${this.#identity ?? 'global'}
+phase: ${ZPY.Phase[this.#phase]}
+
+owner: ${this.#owner}
+ndecks: ${this.#ndecks}
+players: ${this.#players.join(', ')}
+ranks: ${o_map(this.#ranks,
+  (p, meta) => `  ${p}: ${o_map(meta, (k, v) => `${k}:${v}`).join(', ')}`
+).join('\n')}
+
+round: ${this.#round}
+consensus: ${Array.from(this.#consensus.values()).join(', ')}
+
+deck: ${this.#deck.map(c => c.toString(color)).join(' ')}
+kitty: ${this.#kitty.map(c => c.toString(color)).join(' ')}
+bids: ${this.#bids.map(
+  ({player, bid}) => `  ${player}: ${bid.toString(color)}`
+).join('\n')}
+current: ${this.#current}
+
+host: ${this.#host}
+tr: ${this.#tr.toString(color)}
+friends: ${this.#friends.map(
+  ({card, nth}) => `#${nth} ${card.toString(color)}`
+).join(', ')}
+joins: ${this.#joins}
+host_team: ${Array.from(this.#host_team.values()).join(', ')}
+atk_team: ${Array.from(this.#atk_team.values()).join(', ')}
+
+leader: ${this.#leader}
+lead: ${this.#lead.toString(this.#tr, color)}
+plays: ${o_map(this.#plays,
+  (p, play) => `  ${p}: ${play.toString(this.#tr, color)}`
+).join('\n')}
+winning: ${this.#winning}
+
+points: ${o_map(this.#points,
+  (p, cards) => `  ${p}: ${cards.map(c => c.toString(color)).join(' ')}`
+).join('\n')}`;
+
+    for (let p of this.#players) {
+      let hand_pile = this.#hands[p]?.pile ?? this.#draws[p];
+      if (!hand_pile) continue;
+
+      out += `
+
+${p}'s hand:
+${hand_pile.toString(color)}`;
+    }
+    return out;
+  }
 }
+
+///////////////////////////////////////////////////////////////////////////////
 
 export namespace ZPY {
   export type PlayerID = string;

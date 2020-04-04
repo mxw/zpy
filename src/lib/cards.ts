@@ -123,6 +123,10 @@ export class TrumpMeta {
   inc_rank(rank: number): number {
     return rank + 1 === this.rank ? rank + 2 : rank + 1;
   }
+
+  toString(color: boolean = false): string {
+    return (new CardBase(this.suit, this.rank)).toString(color);
+  }
 }
 
 /*

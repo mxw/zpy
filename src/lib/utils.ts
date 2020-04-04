@@ -41,3 +41,13 @@ export namespace ansi {
   export const WHITE = '\u001b[37m';
   export const RESET = '\u001b[0m';
 }
+
+/*
+ * Functional map for objects.
+ */
+export function o_map<O, K extends keyof O, R>(
+  o: O,
+  fn: (k: K, v: O[K]) => R,
+) {
+  return Object.keys((k: K) => fn(k, o[k]));
+}
