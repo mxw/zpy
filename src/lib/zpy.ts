@@ -23,8 +23,12 @@ export class ZPY {
   #owner: ZPY.PlayerID = null;
   // all players; in turn order if #phase > INIT
   #players: ZPY.PlayerID[] = [];
-  // rank of each player; always valid
-  #ranks: ZPY.PlayerMap<number> = {};
+  // rank information of each player; always valid
+  #ranks: ZPY.PlayerMap<{
+    rank: number,  // current rank
+    start: number, // most recent starting rank
+    last_host: number, // last hosted rank
+  }> = {};
   // number of decks
   #ndecks: number = 0;
 
@@ -93,7 +97,11 @@ export class ZPY {
       this.#owner = player;
     }
     this.#players.push(player);
-    this.#ranks[player] = 2;
+    this.#ranks[player] = {
+      rank: 2,
+      start: 2,
+      last_host: 0,
+    }
   }
 
   /*
@@ -159,7 +167,7 @@ export class ZPY {
 
     this.#host = is_host ? starting : null;
     this.#tr = is_host
-      ? new TrumpMeta(Suit.TRUMP, this.#ranks[starting])
+      ? new TrumpMeta(Suit.TRUMP, this.#ranks[starting].rank)
       : new TrumpMeta(Suit.TRUMP, Rank.B);  // big joker is the sentinel tr
     this.#hands = {};
     this.#points = {};
@@ -242,7 +250,7 @@ export class ZPY {
     }
 
     if (bid.card.rank <= Rank.A &&
-        bid.card.rank !== this.#ranks[this.#host ?? player]) {
+        bid.card.rank !== this.#ranks[this.#host ?? player].rank) {
       // we bid either the host's rank or our own (in a bid-to-host draw), so
       // valid bids against the appropriate value.
       return new ZPY.InvalidPlayError('invalid trump bid');
@@ -316,7 +324,9 @@ export class ZPY {
     if (this.#bids.length === 0) {
       // if there's no host, the starting player becomes host
       this.#host = this.#host ?? this.#players[this.#current];
-      let rank = this.#ranks[this.#host];
+
+      let rank = this.#ranks[this.#host].last_host
+               = this.#ranks[this.#host].rank;
 
       // the natural-trump-only TrumpMeta works for comparisons here
       let ctx_tr = new TrumpMeta(Suit.TRUMP, rank);
@@ -624,28 +634,31 @@ export class ZPY {
    * A delta of -1 indicates that the player was J'd.
    */
   rank_up(player: ZPY.PlayerID, delta: number): void {
-    for (let i = 0; i < delta; ++i) {
-      let rank = this.#ranks[player];
+    let meta = this.#ranks[player];
 
-      if ([5,10,Rank.J,Rank.K,Rank.B].includes(rank)) {
+    for (let i = 0; i < delta; ++i) {
+      if ([5,10,Rank.J,Rank.K,Rank.B].includes(meta.rank)) {
         if (this.#rules.rank === ZPY.RankSkipRule.NO_PASS) {
           if (player !== this.#host) return;
         }
-      }
-
-      if (rank === Rank.B) {
-        rank = this.#ranks[player] = 2;
-      } else if (rank === Rank.A) {
-        rank = this.#ranks[player] = Rank.B;
-      } else {
-        rank = ++this.#ranks[player];
-      }
-
-      if ([5,10,Rank.J,Rank.K,Rank.B].includes(rank)) {
         if (this.#rules.rank === ZPY.RankSkipRule.PLAY_ONCE) {
-          // TODO: implement tracking for this
-          return;
+          if (meta.rank !== meta.last_host) return;
         }
+      }
+
+      if (meta.rank === Rank.B) {
+        if (++meta.start > Rank.A) {
+          // once we cycle back to 2 just... start over?
+          meta.start = 2;
+        }
+        meta.rank = meta.start;
+      } else if (meta.rank === Rank.A) {
+        meta.rank = Rank.B;
+      } else {
+        ++meta.rank;
+      }
+
+      if ([5,10,Rank.J,Rank.K,Rank.B].includes(meta.rank)) {
         if (this.#rules.rank === ZPY.RankSkipRule.NO_SKIP) {
           return;
         }
