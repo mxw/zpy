@@ -130,49 +130,65 @@ export namespace Tractor {
 }
 
 /*
- * An arbitrary collection of tractors.
+ * Interface for a play.
  *
- * The tractors in a flight are sorted by precedence order, which is a
- * descending lexicographic sort on (arity, len).  This is the order in which
- * the components of the flight impose constraints on another player's hand.
- *
- * For simplicity, all plays are considered a flight, even if it's often
- * degenerate (i.e., a single (n,m)-tractor).
+ * Plays are either flights or mixed-suit follows.
  */
-export class Flight {
+export interface Play {
+  /*
+   * Number of cards in the play.
+   */
   readonly count: number;
 
-  constructor(
-    readonly tractors: Tractor[],
-    readonly total: number
-  ) {
-    assert(tractors.length > 0);
-    assert(tractors.every(t => t.v_suit === tractors[0].v_suit));
-
-    this.tractors = tractors.sort((l, r) => {
-      let shape_cmp = Tractor.Shape.compare(l.shape, r.shape);
-      if (shape_cmp !== 0) return -shape_cmp;
-      return -Tractor.compare(l, r);
-    });
-    this.count = this.tractors.reduce((sum, t) => sum + t.count, 0);
-  }
+  /*
+   * Yield (card, count), or each card individually, for every card in `this`.
+   */
+  gen_counts(tr: TrumpMeta): Generator<[Card, number], void>;
+  gen_cards(tr: TrumpMeta): Generator<Card, void>;
 
   /*
-   * Greedily construct a flight from a bunch of cards.
+   * Whether `this` beats `other`, assuming `this` has turn-order precedence.
+   */
+  beats(other: Play): boolean;
+
+  /*
+   * Pretty-printer.
+   */
+  toString(tr: TrumpMeta, color?: boolean): string;
+}
+
+//export namespace Play {
+  /*
+   * Greedily construct a play from a bunch of cards.
    *
-   * The heuristic here prefers taller tractors to longer ones.  That means
-   * that a play of 22333444 gets correctly (well, for most situations) parsed
-   * as [333444][22].  However, a play like 556666777788 gets parsed as
-   * [66667777][88][55], which may not be what's intended.
+   * We build a Flight for all single-suit plays, and a Toss for multi-suit
+   * plays.
+   *
+   * The heuristic for flights here prefers taller tractors to longer ones.
+   * That means that a play of 22333444 gets correctly (well, for most
+   * situations) parsed as [333444][22].  However, a play like 556666777788
+   * gets parsed as [66667777][88][55], which may not be what's intended.
    *
    * That said, the latter situation is very unlikely, and this will probably
    * predict the player's intent in most cases.
    */
-  static extract(cards: Card[], tr: TrumpMeta): Flight {
+  function extract(cards: CardBase[], tr: TrumpMeta): Flight {
     assert(cards.length > 0);
-    assert(cards.every(c => c.v_suit === cards[0].v_suit));
 
     let pile = new CardPile(cards, tr);
+
+    //const suits = [
+    //  Suit.CLUBS,
+    //  Suit.DIAMONDS,
+    //  Suit.SPADES,
+    //  Suit.HEARTS,
+    //  Suit.TRUMP
+    //];
+		//if (!suits.every(s => pile.count_suit(s) === pile.size ||
+    //                      pile.count_suit(s) === 0)) {
+    //  return new Toss(cards);
+    //}
+
     let chunks : CardTuple[][] = [[]];
 
     for (let [card, arity] of pile) {
@@ -253,18 +269,38 @@ export class Flight {
         total += arity;
       }
     }
-    return new Flight(tractors, total);
+    return new Flight(tractors);
+  }
+//}
+
+/*
+ * An arbitrary collection of tractors.
+ *
+ * The tractors in a flight are sorted by precedence order, which is a
+ * descending lexicographic sort on (arity, len).  This is the order in which
+ * the components of the flight impose constraints on another player's hand.
+ *
+ * For simplicity, all single-suit (and particularly lead) plays are considered
+ * a flight, even if it's often degenerate (i.e., a single (n,m)-tractor).
+ */
+export class Flight implements Play {
+  readonly tractors: Tractor[];
+  readonly count: number;
+
+  constructor(tractors: Tractor[]) {
+    assert(tractors.length > 0);
+    assert(tractors.every(t => t.v_suit === tractors[0].v_suit));
+
+    this.tractors = tractors.sort((l, r) => {
+      let shape_cmp = Tractor.Shape.compare(l.shape, r.shape);
+      if (shape_cmp !== 0) return -shape_cmp;
+      return -Tractor.compare(l, r);
+    });
+    this.count = this.tractors.reduce((sum, t) => sum + t.count, 0);
   }
 
-  /*
-   * Property getters.
-   */
   get v_suit(): Suit { return this.tractors[0].v_suit; }
 
-  /*
-   * Generate (card, count), or each card individually, for every card in the
-   * flight.
-   */
   * gen_counts(tr: TrumpMeta): Generator<[Card, number], void> {
     for (let tractor of this.tractors) {
       for (let count of tractor.gen_counts(tr)) {
@@ -280,21 +316,23 @@ export class Flight {
     }
   }
 
-  /*
-   * Whether `this` beats `other`, assuming `this` has turn-order precedence.
-   */
-  beats(other: Flight): boolean {
-    assert(this.total === other.total);
+  beats(other: Play): boolean {
+    assert(this.count === other.count);
 
-    // A flight must have the same structure...
-    if (this.tractors.length !== other.tractors.length) return true;
+    if (other instanceof Toss) return true;
 
-    // ...and compare stricly greater in every component.
-    for (let i = 0; i < this.tractors.length; ++i) {
-      let cmp = Tractor.compare(this.tractors[i], other.tractors[i]);
-      if (cmp === null || cmp >= 0) return true;
+    if (other instanceof Flight) {
+      // A flight must have the same structure...
+      if (this.tractors.length !== other.tractors.length) return true;
+
+      // ...and compare stricly greater in every component.
+      for (let i = 0; i < this.tractors.length; ++i) {
+        let cmp = Tractor.compare(this.tractors[i], other.tractors[i]);
+        if (cmp === null || cmp >= 0) return true;
+      }
+      return false;
     }
-    return false;
+    assert(false);
   }
 
   toString(tr: TrumpMeta, color: boolean = false): string {
@@ -302,6 +340,148 @@ export class Flight {
       return this.tractors[0].toString(tr, color);
     }
     return this.tractors.map(t => '[' + t.toString(tr, color) + ']').join('');
+  }
+
+  static extract(cards: CardBase[], tr: TrumpMeta): Flight {
+    return extract(cards, tr);
+  }
+  /*
+  static extract(cards: CardBase[], tr: TrumpMeta): Flight {
+    let play = Play.extract(cards, tr);
+    assert(play instanceof Flight);
+    return play as Flight;
+  }
+  */
+  /* FAST VERSION
+  static extract(cards: CardBase[], tr: TrumpMeta): Flight {
+    assert(cards.length > 0);
+
+    let pile = new CardPile(cards, tr);
+
+    //const suits = [
+    //  Suit.CLUBS,
+    //  Suit.DIAMONDS,
+    //  Suit.SPADES,
+    //  Suit.HEARTS,
+    //  Suit.TRUMP
+    //];
+		//if (!suits.every(s => pile.count_suit(s) === pile.size ||
+    //                      pile.count_suit(s) === 0)) {
+    //  return new Toss(cards);
+    //}
+
+    let chunks : CardTuple[][] = [[]];
+
+    for (let [card, arity] of pile) {
+      let cur_chunk = chunks[chunks.length - 1];
+      let prev = cur_chunk[cur_chunk.length - 1];
+
+      let should_continue = !prev ||
+        (arity !== 1 && prev.arity !== 1 &&
+         tr.inc_rank(prev.card.v_rank) === card.v_rank);
+
+      if (!should_continue) {
+        cur_chunk = [];
+        chunks.push(cur_chunk);
+      }
+      cur_chunk.push(new CardTuple(card, arity));
+    }
+
+    let tractors : Tractor[] = [];
+    let total : number = 0;
+
+    for (let chunk of chunks) {
+      let base = chunk.reduce((base, tuple) => {
+        return Math.min(base, tuple.arity);
+      }, Number.POSITIVE_INFINITY);
+
+      // look for the highest water mark nontrivial subsequence.
+      let [begin, end, , ] = chunk.reduce(
+        ([begin, end, i, prev], tuple) => {
+          let new_begin = tuple.arity >= prev && prev > base;
+          let new_end = end <= begin && tuple.arity < chunk[begin].arity;
+          return [
+            // start index of the highest-arity subsequence
+            new_begin ? i - 1 : begin,
+            // end index of the highest-arity subsequence
+            new_end ? i : end,
+            // accumulator internals
+            i + 1, tuple.arity
+          ];
+        },
+        [-1, 0, 0, base]
+      );
+
+      if (begin >= 0) {
+        let len = chunk.length;
+
+        // partition the chunk up to three ways, and re-queue the parts that
+        // aren't our high water mark subsequence.
+        if (end <= begin) end = len;
+        if (begin > 0) chunks.push(chunk.slice(0, begin));
+        if (end < len) chunks.push(chunk.slice(end, len));
+
+        // make our subsequence the new current chunk.
+        chunk = chunk.slice(begin, end);
+        base = chunk.reduce((base, tuple) => {
+          return Math.min(base, tuple.arity);
+        }, Number.POSITIVE_INFINITY);
+      }
+
+      // at this point, `chunk` now contains a (chunk.length,base)-tractor,
+      // plus some singleton tuples.  start by registering the tractor...
+      tractors.push(new Tractor(
+        new Tractor.Shape(chunk.length, base),
+        chunk[0].card,
+        chunk.find(tuple => tuple.card.v_rank === Rank.N_off)?.card.osnt_suit
+      ));
+      total += chunk.length * base;
+
+      // ...then register the singletons.
+      for (let tuple of chunk) {
+        if (tuple.arity === base) continue;
+
+        let arity = tuple.arity - base;
+        tractors.push(new Tractor(
+          new Tractor.Shape(1, arity),
+          tuple.card,
+          tuple.card.osnt_suit
+        ));
+        total += arity;
+      }
+    }
+    return new Flight(tractors);
+  }
+  */
+}
+
+/*
+ * A trivial, off-suit follow.
+ */
+export class Toss implements Play {
+  #cards: CardBase[];
+
+  constructor(cards: CardBase[]) {
+    assert(cards.length > 0);
+    this.#cards = cards;
+  }
+
+  get count(): number { return this.#cards.length; }
+
+  * gen_counts(tr: TrumpMeta): Generator<[Card, number], void> {
+    for (let c of this.#cards) yield [new Card(c.suit, c.rank, tr), 1];
+  }
+  * gen_cards(tr: TrumpMeta): Generator<Card, void> {
+    for (let c of this.#cards) yield new Card(c.suit, c.rank, tr);
+  }
+
+  beats(other: Play): boolean {
+    assert(false);
+    return false;
+  }
+
+  toString(tr: TrumpMeta, color: boolean = false): string {
+    return this.#cards.map(c => `[${c.toString(color)}]`).join('');
   }
 }
 

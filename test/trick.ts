@@ -2,7 +2,7 @@ import {
   Suit, Rank, TrumpMeta, CardBase, Card, CardPile
 } from '../src/lib/cards';
 import {
-  CardTuple, Tractor, Flight, Hand
+  CardTuple, Tractor, Flight, Play, Hand
 } from '../src/lib/trick';
 
 import {expect} from 'chai';
@@ -19,7 +19,7 @@ describe('Flight#extract', () => {
     expect(flight.toString(tr)).to.equal(
       'K♠K♠'
     );
-    expect(flight.total).to.equal(cards.length);
+    expect(flight.count).to.equal(cards.length);
   });
 
   it('extracts structure from a pile of cards', () => {
@@ -40,7 +40,7 @@ describe('Flight#extract', () => {
     expect(flight.toString(tr)).to.equal(
       '[2♣2♣3♣3♣4♣4♣][3♣3♣][A♣]'
     );
-    expect(flight.total).to.equal(cards.length);
+    expect(flight.count).to.equal(cards.length);
   });
 
   it('extracts structure from a more complicated pile of cards', () => {
@@ -66,7 +66,7 @@ describe('Flight#extract', () => {
     expect(flight.toString(tr)).to.equal(
       '[6♦6♦6♦6♦7♦7♦7♦7♦][8♦8♦9♦9♦][5♦5♦]'
     );
-    expect(flight.total).to.equal(cards.length);
+    expect(flight.count).to.equal(cards.length);
   });
 
   it('extracts structure from discontiguous chunks with thicc tail', () => {
@@ -97,7 +97,7 @@ describe('Flight#extract', () => {
     expect(flight.toString(tr)).to.equal(
       '[J♠J♠J♠J♠Q♠Q♠Q♠Q♠][9♠9♠9♠10♠10♠10♠][3♠3♠4♠4♠][6♠]'
     );
-    expect(flight.total).to.equal(cards.length);
+    expect(flight.count).to.equal(cards.length);
   });
 
   it('extracts structure from natural trump tractors', () => {
@@ -118,7 +118,7 @@ describe('Flight#extract', () => {
     expect(flight.toString(tr)).to.equal(
       '[A♥A♥J♣J♣J♥J♥][W☉W☉][Q♥]'
     );
-    expect(flight.total).to.equal(cards.length);
+    expect(flight.count).to.equal(cards.length);
   });
 
   it('extracts structure from ambiguous natural trump tractors', () => {
@@ -149,7 +149,7 @@ describe('Flight#extract', () => {
     expect(flight.toString(tr)).to.equal(
       '[w☉w☉w☉W☉W☉W☉][A♥A♥A♥J♣J♣J♣][J♠J♠J♥J♥][J♥][J♦]'
     );
-    expect(flight.total).to.equal(cards.length);
+    expect(flight.count).to.equal(cards.length);
   });
 });
 

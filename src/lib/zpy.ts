@@ -6,7 +6,7 @@ import {
   Suit, Rank, TrumpMeta, CardBase, Card, CardPile, rank_to_string
 } from './cards';
 import {
-  CardTuple, Tractor, Flight, Hand
+  CardTuple, Tractor, Flight, Play, Hand
 } from './trick';
 import {
   array_fill, array_shuffle, o_map
@@ -75,7 +75,7 @@ export class ZPY {
   // lead play for the current trick; valid iff #phase > LEAD
   #lead: Flight | null = null;
   // all plays for the current trick; valid iff #phase > LEAD
-  #plays: ZPY.PlayerMap<Flight> = {};
+  #plays: ZPY.PlayerMap<Play> = {};
   // current winning player
   #winning: ZPY.PlayerID | null = null;
 
@@ -91,8 +91,15 @@ export class ZPY {
   /*
    * Property getters.
    */
-  get nplayers(): number { return this.#players.length; }
   get tr(): TrumpMeta { return this.#tr; }
+  get nplayers(): number { return this.#players.length; }
+
+  /*
+   * Size of the host team given the number of players.
+   */
+  get nfriends(): number {
+    return Math.floor(0.35 * this.nplayers);
+  }
 
   /*
    * Debugging helpers.
@@ -101,6 +108,24 @@ export class ZPY {
   stack_deck(i: number, j: number) {
     assert(this.#debug);
     [this.#deck[i], this.#deck[j]] = [this.#deck[j], this.#deck[i]];
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+
+  /*
+   * Get the index of the next player in play order.
+   */
+  private next_player_idx(idx: number): number {
+    return ++idx < this.#players.length ? idx : 0;
+  }
+
+  /*
+   * The currently winning play as a Flight.
+   */
+  private winning_flight(): Flight | null {
+    if (!this.#winning) return null;
+    let play = this.#plays[this.#winning];
+    return play instanceof Flight ? play : (assert(false), null);
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -228,13 +253,6 @@ export class ZPY {
     }
     this.reset_round(this.#owner, false);
     this.#phase = ZPY.Phase.DRAW;
-  }
-
-  /*
-   * Get the index of the next player in play order.
-   */
-  private next_player_idx(idx: number): number {
-    return ++idx < this.#players.length ? idx : 0;
   }
 
   /*
@@ -409,13 +427,6 @@ export class ZPY {
   }
 
   /*
-   * Size of the host team given the number of players.
-   */
-  get nfriends(): number {
-    return Math.floor(0.35 * this.nplayers);
-  }
-
-  /*
    * Phase.FRIEND : Action.CALL_FRIENDS
    *
    * The host calls their friends, and we transition to Phase.LEAD, where
@@ -469,7 +480,7 @@ export class ZPY {
    */
   private init_play(
     player: ZPY.PlayerID,
-    play: Flight,
+    play: Play,
   ): ZPY.Result | CardPile {
     if (player !== this.#players[this.#current]) {
       return new ZPY.OutOfTurnError();
@@ -490,7 +501,7 @@ export class ZPY {
    */
   private commit_play(
     player: ZPY.PlayerID,
-    play: Flight,
+    play: Play,
     play_pile: CardPile,
   ): void {
     this.#plays[player] = play;
@@ -501,21 +512,19 @@ export class ZPY {
       this.#winning = player;
     }
 
-    for (let tractor of play.tractors) {
-      for (let [card, n] of tractor.gen_counts(this.#tr)) {
-        for (let friend of this.#friends) {
-          if (Card.identical(card, friend.card) &&
-              (friend.nth -= n) <= 0) {
-            friend.nth = 0;
-            this.#host_team.add(player);
+    for (let [card, n] of play.gen_counts(this.#tr)) {
+      for (let friend of this.#friends) {
+        if (Card.identical(card, friend.card) &&
+            (friend.nth -= n) <= 0) {
+          friend.nth = 0;
+          this.#host_team.add(player);
 
-            if (++this.#joins === this.nfriends) {
-              // add all other players to the attacking team.  note that some
-              // of the #joins may be redundant.
-              for (let p of this.#players) {
-                if (!this.#host_team.has(p)) {
-                  this.#atk_team.add(p);
-                }
+          if (++this.#joins === this.nfriends) {
+            // add all other players to the attacking team.  note that some
+            // of the #joins may be redundant.
+            for (let p of this.#players) {
+              if (!this.#host_team.has(p)) {
+                this.#atk_team.add(p);
               }
             }
           }
@@ -573,7 +582,7 @@ export class ZPY {
       // we beat the flight; force the new flight
       this.#consensus.clear();
 
-      this.#lead = new Flight([component], component.count);
+      this.#lead = new Flight([component]);
 
       let play_pile = new CardPile(component.gen_cards(this.#tr), this.#tr);
       for (let count of play_pile) {
@@ -608,11 +617,11 @@ export class ZPY {
    * played.  Transitions to either Phase.LEAD, or Phase.FINISH if the round
    * has ended.
    */
-  follow_lead(player: ZPY.PlayerID, play: Flight): ZPY.Result {
+  follow_lead(player: ZPY.PlayerID, play: Play): ZPY.Result {
     let play_pile = this.init_play(player, play);
     if (!(play_pile instanceof CardPile)) return play_pile;
 
-    if (play.total !== this.#lead.total) {
+    if (play.count !== this.#lead.count) {
       return new ZPY.InvalidPlayError('incorrectly sized play');
     }
 
@@ -647,7 +656,7 @@ export class ZPY {
   /*
    * Collect points at the end of a trick.
    */
-  collect_trick(): void {
+  private collect_trick(): void {
     for (let player of this.#players) {
       for (let [card, n] of this.#plays[player].gen_counts(this.#tr)) {
         if (card.point_value() > 0) {
@@ -674,7 +683,7 @@ export class ZPY {
    *
    * A delta of -1 indicates that the player was J'd.
    */
-  rank_up(player: ZPY.PlayerID, delta: number): void {
+  private rank_up(player: ZPY.PlayerID, delta: number): void {
     let meta = this.#ranks[player];
 
     for (let i = 0; i < delta; ++i) {
@@ -712,7 +721,7 @@ export class ZPY {
    *
    * Transitions to Phase.FINISH.
    */
-  finish_round(): void {
+  private finish_round(): void {
     let atk_points = this.#players.reduce(
       (total, p) => total + (
         this.#atk_team.has(p)
@@ -725,7 +734,7 @@ export class ZPY {
       // score the kitty to the attacking team
       let kitty_points = this.#kitty.reduce((n, c) => n + c.point_value(), 0);
       let multiplier = Math.max(
-        ...this.#plays[this.#winning].tractors.map(t => t.count)
+        ...this.winning_flight()!.tractors.map(t => t.count)
       );
       atk_points += kitty_points * (() => {
         switch (this.#rules.kitty) {

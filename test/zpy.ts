@@ -2,7 +2,7 @@ import {
   Suit, Rank, TrumpMeta, CardBase, Card, CardPile
 } from '../src/lib/cards';
 import {
-  CardTuple, Tractor, Flight, Hand
+  CardTuple, Tractor, Flight, Play, Hand
 } from '../src/lib/trick';
 import { ZPY } from '../src/lib/zpy';
 
