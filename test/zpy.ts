@@ -45,11 +45,13 @@ describe('ZPY', () => {
     expect(zpy.set_decks(a, 2)).to.be.undefined;
     expect(zpy.start_game(a)).to.be.undefined;
 
-    zpy.stack_deck(54, 57);
-    zpy.stack_deck(39, 48);
-    zpy.stack_deck(12, 15);
     zpy.stack_deck(6, 9); // nice
     zpy.stack_deck(9, 10);
+    zpy.stack_deck(12, 15);
+    zpy.stack_deck(35, 38);
+    zpy.stack_deck(39, 48);
+    zpy.stack_deck(54, 57);
+    zpy.stack_deck(5, 19);
 
     /////////////////////////////////////////////////////////////////
 
@@ -247,6 +249,136 @@ describe('ZPY', () => {
     /////////////////////////////////////////////////////////////////
 
     lead(e, [Suit.CLUBS, 8], [Suit.CLUBS, 8], [Suit.CLUBS, Rank.A]);
+
+    expect_err(
+      zpy.contest_fly(e, [new CardBase(Suit.CLUBS, Rank.A)]),
+      ZPY.WrongPlayerError
+    );
+    expect_err(
+      zpy.contest_fly(a, [
+        new CardBase(Suit.CLUBS, Rank.J),
+        new CardBase(Suit.CLUBS, Rank.J),
+      ]),
+      ZPY.InvalidPlayError, 'reveal not part of hand'
+    );
+    expect_err(
+      zpy.contest_fly(a, [
+        new CardBase(Suit.CLUBS, Rank.Q),
+        new CardBase(Suit.DIAMONDS, Rank.A),
+      ]),
+      ZPY.InvalidPlayError, 'reveal is multiple suits'
+    );
+    expect_err(
+      zpy.contest_fly(a, [
+        new CardBase(Suit.DIAMONDS, Rank.A),
+      ]),
+      ZPY.InvalidPlayError, 'reveal is the wrong suit'
+    );
+    expect_err(
+      zpy.contest_fly(a, [
+        new CardBase(Suit.CLUBS, Rank.Q),
+        new CardBase(Suit.CLUBS, 7),
+      ]),
+      ZPY.InvalidPlayError, 'reveal is structurally incoherent'
+    );
+    expect_err(
+      zpy.contest_fly(a, [
+        new CardBase(Suit.CLUBS, Rank.Q),
+      ]),
+      ZPY.InvalidPlayError, 'reveal does not contest flight'
+    );
+    expect_err(
+      zpy.contest_fly(a, [
+        new CardBase(Suit.CLUBS, 7),
+        new CardBase(Suit.CLUBS, 7),
+      ]),
+      ZPY.InvalidPlayError, 'reveal does not contest flight'
+    );
+
+    expect(zpy.contest_fly(a, [
+      new CardBase(Suit.CLUBS, Rank.Q),
+      new CardBase(Suit.CLUBS, Rank.Q),
+    ])).to.be.undefined;
+
+    follow(a, [Suit.CLUBS, Rank.Q], [Suit.CLUBS, Rank.Q]);
+    follow(b, [Suit.HEARTS, 2], [Suit.HEARTS, 2]);
+    follow(c, [Suit.CLUBS, 9], [Suit.CLUBS, 10]);
+    follow(d, [Suit.CLUBS, 3], [Suit.CLUBS, 4]);
+
+    /////////////////////////////////////////////////////////////////
+
+    lead(b, [Suit.SPADES, 5]);
+    follow(c, [Suit.SPADES, 9]);
+    follow(d, [Suit.SPADES, Rank.Q]);
+    follow(e, [Suit.SPADES, Rank.A]);
+    follow(a, [Suit.SPADES, Rank.J]);
+
+    lead(e, [Suit.CLUBS, Rank.A], [Suit.CLUBS, Rank.K]);
+
+    for (let p of [a, d, b, c]) {
+      expect(zpy.pass_contest(p)).to.be.undefined;
+    }
+    follow(a, [Suit.CLUBS, 7], [Suit.CLUBS, 7]);
+    follow(b, [Suit.SPADES, Rank.J], [Suit.HEARTS, 10]);
+    follow(c, [Suit.DIAMONDS, 7], [Suit.DIAMONDS, Rank.J]);
+    follow(d, [Suit.CLUBS, 9], [Suit.CLUBS, Rank.J]);
+
+    lead(e, [Suit.DIAMONDS, 10]);
+    follow(a, [Suit.DIAMONDS, Rank.A]);
+    follow(b, [Suit.HEARTS, Rank.A]);
+    follow(c, [Suit.DIAMONDS, Rank.Q]);
+    follow(d, [Suit.DIAMONDS, 5]);
+    console.log(zpy.toString(true));
+
+    lead(b, [Suit.HEARTS, 6]);
+    follow(c, [Suit.CLUBS, 2]);
+    follow(d, [Suit.HEARTS, 5]);
+    follow(e, [Suit.HEARTS, 3]);
+    follow(a, [Suit.HEARTS, 3]);
+
+    lead(c, [Suit.HEARTS, 5]);
+    follow(d, [Suit.SPADES, 2]);
+    follow(e, [Suit.HEARTS, 4]);
+    follow(a, [Suit.HEARTS, 7]);
+    follow(b, [Suit.HEARTS, 7]);
+
+    lead(d, [Suit.SPADES, 7]);
+    follow(e, [Suit.SPADES, Rank.Q]);
+    follow(a, [Suit.SPADES, 5]);
+    follow(b, [Suit.HEARTS, Rank.K]);
+    follow(c, [Suit.SPADES, 3]);
+
+    lead(b, [Suit.HEARTS, 9]);
+    follow(c, [Suit.DIAMONDS, 2]);
+    follow(d, [Suit.HEARTS, 4]);
+    follow(e, [Suit.HEARTS, 8]);
+    follow(a, [Suit.HEARTS, 8]);
+
+    lead(c, [Suit.SPADES, 4]);
+    follow(d, [Suit.SPADES, 8]);
+    follow(e, [Suit.SPADES, 7]);
+    follow(a, [Suit.SPADES, 10]);
+    follow(b, [Suit.HEARTS, Rank.J]);
+
+    lead(b, [Suit.TRUMP, Rank.S], [Suit.TRUMP, Rank.B], [Suit.TRUMP, Rank.B]);
+
+    for (let p of [a, c, d, e]) {
+      expect(zpy.pass_contest(p)).to.be.undefined;
+    }
+    follow(c, [Suit.HEARTS, 6], [Suit.HEARTS, 10], [Suit.TRUMP, Rank.S]);
+    follow(d, [Suit.HEARTS, 9], [Suit.HEARTS, Rank.A], [Suit.DIAMONDS, 10]);
+    follow(e, [Suit.HEARTS, Rank.K], [Suit.CLUBS, 2], [Suit.SPADES, 2]);
+    follow(a, [Suit.HEARTS, Rank.J], [Suit.HEARTS, Rank.Q], [Suit.DIAMONDS, 9]);
+
+    lead(b, [Suit.HEARTS, Rank.Q], [Suit.DIAMONDS, 2]);
+
+    for (let p of [a, c, d, e]) {
+      expect(zpy.pass_contest(p)).to.be.undefined;
+    }
+    follow(c, [Suit.SPADES, 8], [Suit.SPADES, Rank.K]);
+    follow(d, [Suit.CLUBS, Rank.K], [Suit.SPADES, Rank.K]);
+    follow(e, [Suit.DIAMONDS, 5], [Suit.DIAMONDS, 8]);
+    follow(a, [Suit.CLUBS, 5], [Suit.DIAMONDS, Rank.K]);
 
     console.log(zpy.toString(true));
   });

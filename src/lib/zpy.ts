@@ -182,7 +182,7 @@ export class ZPY {
    */
   private reset_round(starting: ZPY.PlayerID, is_host: boolean): void {
     ++this.#round;
-    this.#consensus = new Set();
+    this.#consensus.clear();
 
     this.#deck = this.shuffled_deck(this.#ndecks);
 
@@ -488,11 +488,7 @@ export class ZPY {
    * In addition to recording metadata, this function also performs friend
    * detection.
    */
-  private commit_play(
-    player: ZPY.PlayerID,
-    play: Play,
-    play_pile: CardPile,
-  ): void {
+  private commit_play(player: ZPY.PlayerID, play: Play): void {
     this.#plays[player] = play;
 
     // set `player` as the new winner if they're the first play or the current
@@ -505,6 +501,7 @@ export class ZPY {
     for (let [card, n] of play.gen_counts(this.#tr)) {
       for (let friend of this.#friends) {
         if (Card.identical(card, friend.card) &&
+            friend.nth > 0 &&
             (friend.nth -= n) <= 0) {
           friend.nth = 0;
           this.#host_team.add(player);
@@ -522,6 +519,16 @@ export class ZPY {
       }
     }
     this.#current = this.next_player_idx(this.#current);
+  }
+
+  /*
+   * Commit the lead play.
+   */
+  private commit_lead(player: ZPY.PlayerID, play: Play): void {
+    for (let count of play.gen_counts(this.#tr)) {
+      this.#hands[player].remove(...count);
+    }
+    this.commit_play(player, play);
   }
 
   /*
@@ -543,10 +550,7 @@ export class ZPY {
       // delay registering the play until Phase.FLY completes
       return;
     }
-    for (let count of play_pile) {
-      this.#hands[player].remove(...count);
-    }
-    this.commit_play(player, play, play_pile);
+    this.commit_lead(player, play);
 
     this.#phase = ZPY.Phase.FOLLOW;
   }
@@ -557,28 +561,38 @@ export class ZPY {
    * Contest a fly by revealing a play that would beat any component of it.
    * Transitions to Phase.GROUND.
    */
-  contest_fly(player: ZPY.PlayerID, reveal: Tractor): ZPY.Result {
+  contest_fly(player: ZPY.PlayerID, reveal: CardBase[]): ZPY.Result {
     if (player === this.#leader) {
       return new ZPY.WrongPlayerError('cannot contest own flight');
     }
-    if (!this.#hands[player].pile.contains(reveal.gen_counts(this.#tr))) {
+    let play = Play.extract(reveal, this.#tr);
+
+    if (!this.#hands[player].pile.contains(play.gen_counts(this.#tr))) {
       return new ZPY.InvalidPlayError('reveal not part of hand');
     }
+    let flight = play.fl();
+
+    if (!flight) {
+      return new ZPY.InvalidPlayError('reveal is multiple suits');
+    }
+    if (flight.v_suit !== this.#lead.v_suit) {
+      return new ZPY.InvalidPlayError('reveal is the wrong suit');
+    }
+    if (flight.tractors.length !== 1) {
+      return new ZPY.InvalidPlayError('reveal is structurally incoherent');
+    }
+    let the_tractor = flight.tractors[0];
+
     for (let component of this.#lead.tractors) {
-      if (Tractor.Shape.compare(reveal.shape, component.shape) !== 0 ||
-          Tractor.compare(reveal, component) < 0) {
+      if (Tractor.Shape.compare(the_tractor.shape, component.shape) !== 0 ||
+          Tractor.compare(the_tractor, component) < 0) {
         continue;
       }
       // we beat the flight; force the new flight
       this.#consensus.clear();
 
       this.#lead = new Flight([component]);
-
-      let play_pile = new CardPile(component.gen_cards(this.#tr), this.#tr);
-      for (let count of play_pile) {
-        this.#hands[this.#leader].remove(...count);
-      }
-      this.commit_play(this.#leader, this.#lead, play_pile);
+      this.commit_lead(this.#leader, this.#lead);
 
       this.#phase = ZPY.Phase.FOLLOW;
       return;
@@ -597,6 +611,8 @@ export class ZPY {
     if (this.#consensus.size !== this.#players.length) return;
 
     this.#consensus.clear();
+    this.commit_lead(this.#leader, this.#lead);
+
     this.#phase = ZPY.Phase.FOLLOW;
   }
 
@@ -636,7 +652,7 @@ export class ZPY {
         }
       }
     }
-    this.commit_play(player, play, play_pile);
+    this.commit_play(player, play);
 
     if (Object.keys(this.#plays).length === this.#players.length) {
       this.collect_trick();
@@ -736,7 +752,7 @@ export class ZPY {
     }
 
     // number of ranks the attacking team ascends
-    let delta = Math.floor(atk_points / (this.#ndecks * 20)) - 2;
+    let delta = Math.ceil(atk_points / (this.#ndecks * 20)) - 2;
     if (atk_points === 0) --delta;
 
     let winning_team = delta >= 0 ? this.#atk_team : this.#host_team;
@@ -879,8 +895,7 @@ ${o_map(this.#points,
 
       out += `
 
-${p}'s hand:
-${hand_pile.toString(color)}`;
+${p}'s hand: ${hand_pile.size > 0 ? '\n' + hand_pile.toString(color) : ''}`;
     }
     return out;
   }
