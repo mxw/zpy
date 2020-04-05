@@ -387,12 +387,13 @@ export class CardPile {
         (Suit.TRUMP + 1) * 13
       );
       this.#suit_counts[this.tr.suit] = this.#suit_counts[Suit.TRUMP];
-      this.#suit_counts[Suit.TRUMP] = 0;
 
       // adjust counts for jokers (we handle natural rank trumps below)
       let end = this.#counts.length;
-      this.#suit_counts[this.tr.suit] -= this.#counts[end - 1];
-      this.#suit_counts[this.tr.suit] -= this.#counts[end - 2];
+      let bigs = this.#counts[end - 2];
+      let smalls = this.#counts[end - 1];
+      this.#suit_counts[this.tr.suit] -= (bigs + smalls);
+      this.#suit_counts[Suit.TRUMP] = (bigs + smalls);
     }
     if (this.tr.rank <= Rank.A) {
       // move the old natural trumps back into their respective suits
@@ -469,7 +470,7 @@ export class CardPile {
         suit = card.v_suit;
 
         if (color) out += suit_to_color(suit);
-        out += suit_to_symbol(suit) + ':';
+        out += suit_to_symbol(suit) + '[' + this.count_suit(suit) + ']:';
       }
       out += ' ' + card.toString(color);
     }

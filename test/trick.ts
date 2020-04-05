@@ -436,9 +436,9 @@ describe('Hand#follow_with', () => {
     ], tr);
     expect(hand.follow_with(lead, play)[0]).to.be.true;
     expect(hand.pile.toString()).to.equal(`
-♦: 4♦
-♠: 8♠ 9♠
-☉: J♣ J♥
+♦[1]: 4♦
+♠[2]: 8♠ 9♠
+☉[2]: J♣ J♥
 `.trim()
     );
 
@@ -448,9 +448,9 @@ describe('Hand#follow_with', () => {
     ], tr);
     expect(hand.follow_with(lead, play)[0]).to.be.false;
     expect(hand.pile.toString()).to.equal(`
-♦: 4♦
-♠: 8♠
-☉: J♣ J♥
+♦[1]: 4♦
+♠[1]: 8♠
+☉[2]: J♣ J♥
 `.trim()
     );
 
@@ -463,8 +463,8 @@ describe('Hand#follow_with', () => {
     ], tr);
     expect(hand.follow_with(lead, play)[0]).to.be.true;
     expect(hand.pile.toString()).to.equal(`
-♦: 4♦
-☉: J♣ J♥
+♦[1]: 4♦
+☉[2]: J♣ J♥
 `.trim()
     );
 
@@ -477,8 +477,8 @@ describe('Hand#follow_with', () => {
     ], tr);
     expect(hand.follow_with(lead, play)[0]).to.be.true;
     expect(hand.pile.toString()).to.equal(`
-♦: 4♦
-☉: J♥
+♦[1]: 4♦
+☉[1]: J♥
 `.trim()
     );
   });
@@ -550,10 +550,10 @@ describe('Hand#follow_with', () => {
     ], tr);
     expect(hand.follow_with(lead, play)[0]).to.be.true;
     expect(hand.pile.toString()).to.equal(`
-♣: 7♣ J♣
-♦: 4♦ 4♦ 4♦ 6♦ 6♦ 6♦ 9♦ 9♦ 9♦ 10♦ 10♦
-♠: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
-☉: 2♥ 2♥ K♥ K♥ A♥ A♥ A♥ Q♥ Q♥
+♣[2]: 7♣ J♣
+♦[11]: 4♦ 4♦ 4♦ 6♦ 6♦ 6♦ 9♦ 9♦ 9♦ 10♦ 10♦
+♠[10]: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
+☉[9]: 2♥ 2♥ K♥ K♥ A♥ A♥ A♥ Q♥ Q♥
 `.trim()
     );
 
@@ -568,9 +568,9 @@ describe('Hand#follow_with', () => {
     ], tr);
     expect(hand.follow_with(lead, play)[0]).to.be.true;
     expect(hand.pile.toString()).to.equal(`
-♦: 4♦ 4♦ 4♦ 6♦ 6♦ 6♦ 9♦ 9♦ 9♦ 10♦ 10♦
-♠: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
-☉: 2♥ 2♥ K♥ K♥ A♥ A♥ A♥ Q♥ Q♥
+♦[11]: 4♦ 4♦ 4♦ 6♦ 6♦ 6♦ 9♦ 9♦ 9♦ 10♦ 10♦
+♠[10]: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
+☉[9]: 2♥ 2♥ K♥ K♥ A♥ A♥ A♥ Q♥ Q♥
 `.trim()
     );
 
@@ -587,9 +587,9 @@ describe('Hand#follow_with', () => {
     ], tr);
     expect(hand.follow_with(lead, play)[0]).to.be.false;
     expect(hand.pile.toString()).to.equal(`
-♦: 4♦ 6♦ 6♦ 6♦ 9♦ 9♦ 10♦ 10♦
-♠: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
-☉: 2♥ 2♥ K♥ K♥ A♥ A♥ A♥ Q♥ Q♥
+♦[8]: 4♦ 6♦ 6♦ 6♦ 9♦ 9♦ 10♦ 10♦
+♠[10]: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
+☉[9]: 2♥ 2♥ K♥ K♥ A♥ A♥ A♥ Q♥ Q♥
 `.trim()
     );
 
@@ -604,9 +604,9 @@ describe('Hand#follow_with', () => {
     ], tr);
     expect(hand.follow_with(lead, play)[0]).to.be.false;
     expect(hand.pile.toString()).to.equal(`
-♦: 6♦ 6♦ 6♦ 9♦ 9♦ 10♦
-♠: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
-☉: 2♥ 2♥ K♥ K♥ A♥ A♥ A♥ Q♥ Q♥
+♦[6]: 6♦ 6♦ 6♦ 9♦ 9♦ 10♦
+♠[10]: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
+☉[9]: 2♥ 2♥ K♥ K♥ A♥ A♥ A♥ Q♥ Q♥
 `.trim()
     );
 
@@ -625,9 +625,9 @@ describe('Hand#follow_with', () => {
     ], tr);
     expect(hand.follow_with(lead, play)[0]).to.be.true;
     expect(hand.pile.toString()).to.equal(`
-♦: 9♦ 9♦
-♠: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
-☉: 2♥ 2♥ K♥ K♥ A♥ A♥ A♥ Q♥ Q♥
+♦[2]: 9♦ 9♦
+♠[10]: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
+☉[9]: 2♥ 2♥ K♥ K♥ A♥ A♥ A♥ Q♥ Q♥
 `.trim()
     );
 
@@ -644,8 +644,8 @@ describe('Hand#follow_with', () => {
     ], tr);
     expect(hand.follow_with(lead, play)[0]).to.be.true;
     expect(hand.pile.toString()).to.equal(`
-♠: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
-☉: 2♥ K♥ K♥ A♥ A♥ A♥ Q♥ Q♥
+♠[10]: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
+☉[8]: 2♥ K♥ K♥ A♥ A♥ A♥ Q♥ Q♥
 `.trim()
     );
 
@@ -660,8 +660,8 @@ describe('Hand#follow_with', () => {
     ], tr);
     expect(hand.follow_with(lead, play)[0]).to.be.true;
     expect(hand.pile.toString()).to.equal(`
-♠: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
-☉: K♥ A♥ A♥ A♥ Q♥ Q♥
+♠[10]: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
+☉[6]: K♥ A♥ A♥ A♥ Q♥ Q♥
 `.trim()
     );
   });
@@ -753,12 +753,12 @@ describe('Hand#follow_with', () => {
       new Card(Suit.CLUBS, 7, tr),
     ], tr);
     let hand1_str =
-      '♣: 3♣ 3♣ 4♣ 4♣ 5♣ 5♣ 7♣ 7♣ 7♣ 8♣ 8♣ 8♣ 10♣ 10♣ J♣ J♣ J♣ K♣ K♣ K♣ A♣ A♣';
+      '♣[22]: 3♣ 3♣ 4♣ 4♣ 5♣ 5♣ 7♣ 7♣ 7♣ 8♣ 8♣ 8♣ 10♣ 10♣ J♣ J♣ J♣ K♣ K♣ K♣ A♣ A♣';
 
     expect(hand1.pile.toString()).to.equal(hand1_str);
 
     let [result, undo] = hand1.follow_with(lead, play);
-    expect(hand1.pile.toString()).to.equal('♣: 7♣ 7♣ 8♣ 8♣');
+    expect(hand1.pile.toString()).to.equal('♣[4]: 7♣ 7♣ 8♣ 8♣');
     expect(result).to.be.false;
 
     hand1.undo(play, undo);
