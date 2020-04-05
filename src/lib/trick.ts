@@ -134,7 +134,7 @@ export namespace Tractor {
  *
  * Plays are either flights or mixed-suit follows.
  */
-export interface Play {
+export abstract class Play {
   /*
    * Number of cards in the play.
    */
@@ -143,21 +143,25 @@ export interface Play {
   /*
    * Yield (card, count), or each card individually, for every card in `this`.
    */
-  gen_counts(tr: TrumpMeta): Generator<[Card, number], void>;
-  gen_cards(tr: TrumpMeta): Generator<Card, void>;
+  abstract gen_counts(tr: TrumpMeta): Generator<[Card, number], void>;
+  abstract gen_cards(tr: TrumpMeta): Generator<Card, void>;
 
   /*
    * Whether `this` beats `other`, assuming `this` has turn-order precedence.
    */
-  beats(other: Play): boolean;
+  abstract beats(other: Play): boolean;
 
   /*
    * Pretty-printer.
    */
-  toString(tr: TrumpMeta, color?: boolean): string;
-}
+  abstract toString(tr: TrumpMeta, color?: boolean): string;
 
-//export namespace Play {
+  /*
+   * Dynamic casts.
+   */
+  fl(): Flight | null { return (this instanceof Flight) ? this : null; }
+  ts(): Toss   | null { return (this instanceof Toss)   ? this : null; }
+
   /*
    * Greedily construct a play from a bunch of cards.
    *
@@ -172,22 +176,22 @@ export interface Play {
    * That said, the latter situation is very unlikely, and this will probably
    * predict the player's intent in most cases.
    */
-  function extract(cards: CardBase[], tr: TrumpMeta): Flight {
+  static extract(cards: CardBase[], tr: TrumpMeta): Play {
     assert(cards.length > 0);
 
     let pile = new CardPile(cards, tr);
 
-    //const suits = [
-    //  Suit.CLUBS,
-    //  Suit.DIAMONDS,
-    //  Suit.SPADES,
-    //  Suit.HEARTS,
-    //  Suit.TRUMP
-    //];
-		//if (!suits.every(s => pile.count_suit(s) === pile.size ||
-    //                      pile.count_suit(s) === 0)) {
-    //  return new Toss(cards);
-    //}
+    const suits = [
+      Suit.CLUBS,
+      Suit.DIAMONDS,
+      Suit.SPADES,
+      Suit.HEARTS,
+      Suit.TRUMP
+    ];
+		if (!suits.every(s => pile.count_suit(s) === pile.size ||
+                          pile.count_suit(s) === 0)) {
+      return new Toss(cards);
+    }
 
     let chunks : CardTuple[][] = [[]];
 
@@ -271,7 +275,7 @@ export interface Play {
     }
     return new Flight(tractors);
   }
-//}
+}
 
 /*
  * An arbitrary collection of tractors.
@@ -283,11 +287,12 @@ export interface Play {
  * For simplicity, all single-suit (and particularly lead) plays are considered
  * a flight, even if it's often degenerate (i.e., a single (n,m)-tractor).
  */
-export class Flight implements Play {
+export class Flight extends Play {
   readonly tractors: Tractor[];
   readonly count: number;
 
   constructor(tractors: Tractor[]) {
+    super();
     assert(tractors.length > 0);
     assert(tractors.every(t => t.v_suit === tractors[0].v_suit));
 
@@ -341,127 +346,16 @@ export class Flight implements Play {
     }
     return this.tractors.map(t => '[' + t.toString(tr, color) + ']').join('');
   }
-
-  static extract(cards: CardBase[], tr: TrumpMeta): Flight {
-    return extract(cards, tr);
-  }
-  /*
-  static extract(cards: CardBase[], tr: TrumpMeta): Flight {
-    let play = Play.extract(cards, tr);
-    assert(play instanceof Flight);
-    return play as Flight;
-  }
-  */
-  /* FAST VERSION
-  static extract(cards: CardBase[], tr: TrumpMeta): Flight {
-    assert(cards.length > 0);
-
-    let pile = new CardPile(cards, tr);
-
-    //const suits = [
-    //  Suit.CLUBS,
-    //  Suit.DIAMONDS,
-    //  Suit.SPADES,
-    //  Suit.HEARTS,
-    //  Suit.TRUMP
-    //];
-		//if (!suits.every(s => pile.count_suit(s) === pile.size ||
-    //                      pile.count_suit(s) === 0)) {
-    //  return new Toss(cards);
-    //}
-
-    let chunks : CardTuple[][] = [[]];
-
-    for (let [card, arity] of pile) {
-      let cur_chunk = chunks[chunks.length - 1];
-      let prev = cur_chunk[cur_chunk.length - 1];
-
-      let should_continue = !prev ||
-        (arity !== 1 && prev.arity !== 1 &&
-         tr.inc_rank(prev.card.v_rank) === card.v_rank);
-
-      if (!should_continue) {
-        cur_chunk = [];
-        chunks.push(cur_chunk);
-      }
-      cur_chunk.push(new CardTuple(card, arity));
-    }
-
-    let tractors : Tractor[] = [];
-    let total : number = 0;
-
-    for (let chunk of chunks) {
-      let base = chunk.reduce((base, tuple) => {
-        return Math.min(base, tuple.arity);
-      }, Number.POSITIVE_INFINITY);
-
-      // look for the highest water mark nontrivial subsequence.
-      let [begin, end, , ] = chunk.reduce(
-        ([begin, end, i, prev], tuple) => {
-          let new_begin = tuple.arity >= prev && prev > base;
-          let new_end = end <= begin && tuple.arity < chunk[begin].arity;
-          return [
-            // start index of the highest-arity subsequence
-            new_begin ? i - 1 : begin,
-            // end index of the highest-arity subsequence
-            new_end ? i : end,
-            // accumulator internals
-            i + 1, tuple.arity
-          ];
-        },
-        [-1, 0, 0, base]
-      );
-
-      if (begin >= 0) {
-        let len = chunk.length;
-
-        // partition the chunk up to three ways, and re-queue the parts that
-        // aren't our high water mark subsequence.
-        if (end <= begin) end = len;
-        if (begin > 0) chunks.push(chunk.slice(0, begin));
-        if (end < len) chunks.push(chunk.slice(end, len));
-
-        // make our subsequence the new current chunk.
-        chunk = chunk.slice(begin, end);
-        base = chunk.reduce((base, tuple) => {
-          return Math.min(base, tuple.arity);
-        }, Number.POSITIVE_INFINITY);
-      }
-
-      // at this point, `chunk` now contains a (chunk.length,base)-tractor,
-      // plus some singleton tuples.  start by registering the tractor...
-      tractors.push(new Tractor(
-        new Tractor.Shape(chunk.length, base),
-        chunk[0].card,
-        chunk.find(tuple => tuple.card.v_rank === Rank.N_off)?.card.osnt_suit
-      ));
-      total += chunk.length * base;
-
-      // ...then register the singletons.
-      for (let tuple of chunk) {
-        if (tuple.arity === base) continue;
-
-        let arity = tuple.arity - base;
-        tractors.push(new Tractor(
-          new Tractor.Shape(1, arity),
-          tuple.card,
-          tuple.card.osnt_suit
-        ));
-        total += arity;
-      }
-    }
-    return new Flight(tractors);
-  }
-  */
 }
 
 /*
  * A trivial, off-suit follow.
  */
-export class Toss implements Play {
+export class Toss extends Play {
   #cards: CardBase[];
 
   constructor(cards: CardBase[]) {
+    super();
     assert(cards.length > 0);
     this.#cards = cards;
   }

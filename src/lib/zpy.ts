@@ -110,22 +110,11 @@ export class ZPY {
     [this.#deck[i], this.#deck[j]] = [this.#deck[j], this.#deck[i]];
   }
 
-  /////////////////////////////////////////////////////////////////////////////
-
   /*
    * Get the index of the next player in play order.
    */
   private next_player_idx(idx: number): number {
     return ++idx < this.#players.length ? idx : 0;
-  }
-
-  /*
-   * The currently winning play as a Flight.
-   */
-  private winning_flight(): Flight | null {
-    if (!this.#winning) return null;
-    let play = this.#plays[this.#winning];
-    return play instanceof Flight ? play : (assert(false), null);
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -508,7 +497,8 @@ export class ZPY {
 
     // set `player` as the new winner if they're the first play or the current
     // winner fails to beat them
-    if (!this.#winning || !this.#plays[this.#winning].beats(play)) {
+    if (!this.#winning ||
+        !this.#plays[this.#winning].fl()!.beats(play)) {
       this.#winning = player;
     }
 
@@ -734,7 +724,7 @@ export class ZPY {
       // score the kitty to the attacking team
       let kitty_points = this.#kitty.reduce((n, c) => n + c.point_value(), 0);
       let multiplier = Math.max(
-        ...this.winning_flight()!.tractors.map(t => t.count)
+        ...this.#plays[this.#winning].fl()!.tractors.map(t => t.count)
       );
       atk_points += kitty_points * (() => {
         switch (this.#rules.kitty) {

@@ -7,19 +7,19 @@ import {
 
 import {expect} from 'chai';
 
-describe('Flight#extract', () => {
+describe('Play#extract', () => {
   it('extracts structure from a tiny pile of cards', () => {
     let tr = new TrumpMeta(Suit.CLUBS, Rank.Q);
     let cards = [
       new Card(Suit.SPADES, Rank.K, tr),
       new Card(Suit.SPADES, Rank.K, tr),
     ];
-    let flight = Flight.extract(cards, tr);
+    let play = Play.extract(cards, tr);
 
-    expect(flight.toString(tr)).to.equal(
+    expect(play.toString(tr)).to.equal(
       'K♠K♠'
     );
-    expect(flight.count).to.equal(cards.length);
+    expect(play.count).to.equal(cards.length);
   });
 
   it('extracts structure from a pile of cards', () => {
@@ -35,12 +35,12 @@ describe('Flight#extract', () => {
       new Card(Suit.CLUBS, 4, tr),
       new Card(Suit.CLUBS, Rank.A, tr),
     ];
-    let flight = Flight.extract(cards, tr);
+    let play = Play.extract(cards, tr);
 
-    expect(flight.toString(tr)).to.equal(
+    expect(play.toString(tr)).to.equal(
       '[2♣2♣3♣3♣4♣4♣][3♣3♣][A♣]'
     );
-    expect(flight.count).to.equal(cards.length);
+    expect(play.count).to.equal(cards.length);
   });
 
   it('extracts structure from a more complicated pile of cards', () => {
@@ -61,12 +61,12 @@ describe('Flight#extract', () => {
       new Card(Suit.DIAMONDS, 9, tr),
       new Card(Suit.DIAMONDS, 9, tr),
     ];
-    let flight = Flight.extract(cards, tr);
+    let play = Play.extract(cards, tr);
 
-    expect(flight.toString(tr)).to.equal(
+    expect(play.toString(tr)).to.equal(
       '[6♦6♦6♦6♦7♦7♦7♦7♦][8♦8♦9♦9♦][5♦5♦]'
     );
-    expect(flight.count).to.equal(cards.length);
+    expect(play.count).to.equal(cards.length);
   });
 
   it('extracts structure from discontiguous chunks with thicc tail', () => {
@@ -92,12 +92,12 @@ describe('Flight#extract', () => {
       new Card(Suit.SPADES, Rank.Q, tr),
       new Card(Suit.SPADES, Rank.Q, tr),
     ];
-    let flight = Flight.extract(cards, tr);
+    let play = Play.extract(cards, tr);
 
-    expect(flight.toString(tr)).to.equal(
+    expect(play.toString(tr)).to.equal(
       '[J♠J♠J♠J♠Q♠Q♠Q♠Q♠][9♠9♠9♠10♠10♠10♠][3♠3♠4♠4♠][6♠]'
     );
-    expect(flight.count).to.equal(cards.length);
+    expect(play.count).to.equal(cards.length);
   });
 
   it('extracts structure from natural trump tractors', () => {
@@ -113,12 +113,12 @@ describe('Flight#extract', () => {
       new Card(Suit.TRUMP,  Rank.B, tr),
       new Card(Suit.TRUMP,  Rank.B, tr),
     ];
-    let flight = Flight.extract(cards, tr);
+    let play = Play.extract(cards, tr);
 
-    expect(flight.toString(tr)).to.equal(
+    expect(play.toString(tr)).to.equal(
       '[A♥A♥J♣J♣J♥J♥][W☉W☉][Q♥]'
     );
-    expect(flight.count).to.equal(cards.length);
+    expect(play.count).to.equal(cards.length);
   });
 
   it('extracts structure from ambiguous natural trump tractors', () => {
@@ -144,22 +144,22 @@ describe('Flight#extract', () => {
       new Card(Suit.TRUMP,  Rank.B, tr),
       new Card(Suit.TRUMP,  Rank.B, tr),
     ];
-    let flight = Flight.extract(cards, tr);
+    let play = Play.extract(cards, tr);
 
-    expect(flight.toString(tr)).to.equal(
+    expect(play.toString(tr)).to.equal(
       '[w☉w☉w☉W☉W☉W☉][A♥A♥A♥J♣J♣J♣][J♠J♠J♥J♥][J♥][J♦]'
     );
-    expect(flight.count).to.equal(cards.length);
+    expect(play.count).to.equal(cards.length);
   });
 });
 
 describe('Flight#beats', () => {
   it('handles singleton tricks', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
-    let me = Flight.extract([
+    let me = Play.extract([
       new Card(Suit.CLUBS, 10, tr),
-    ], tr);
-    let you = Flight.extract([
+    ], tr).fl();
+    let you = Play.extract([
       new Card(Suit.CLUBS, Rank.Q, tr),
     ], tr);
     expect(me.beats(you)).to.be.false;
@@ -168,10 +168,10 @@ describe('Flight#beats', () => {
 
   it('handles suit mismatches', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
-    let me = Flight.extract([
+    let me = Play.extract([
       new Card(Suit.CLUBS, Rank.K, tr),
-    ], tr);
-    let you = Flight.extract([
+    ], tr).fl();
+    let you = Play.extract([
       new Card(Suit.DIAMONDS, Rank.Q, tr),
     ], tr);
     expect(me.beats(you)).to.be.true;
@@ -180,10 +180,10 @@ describe('Flight#beats', () => {
 
   it('handles trumping', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
-    let me = Flight.extract([
+    let me = Play.extract([
       new Card(Suit.HEARTS, 4, tr),
-    ], tr);
-    let you = Flight.extract([
+    ], tr).fl();
+    let you = Play.extract([
       new Card(Suit.SPADES, Rank.A, tr),
     ], tr);
 
@@ -193,11 +193,11 @@ describe('Flight#beats', () => {
 
   it('handles tuple vs. tuple', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
-    let me = Flight.extract([
+    let me = Play.extract([
       new Card(Suit.DIAMONDS, 7, tr),
       new Card(Suit.DIAMONDS, 7, tr),
-    ], tr);
-    let you = Flight.extract([
+    ], tr).fl();
+    let you = Play.extract([
       new Card(Suit.DIAMONDS, 9, tr),
       new Card(Suit.DIAMONDS, 9, tr),
     ], tr);
@@ -208,12 +208,12 @@ describe('Flight#beats', () => {
 
   it('handles tuple vs. non-tuple', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
-    let me = Flight.extract([
+    let me = Play.extract([
       new Card(Suit.DIAMONDS, 7, tr),
       new Card(Suit.DIAMONDS, 7, tr),
       new Card(Suit.DIAMONDS, 7, tr),
-    ], tr);
-    let you = Flight.extract([
+    ], tr).fl();
+    let you = Play.extract([
       new Card(Suit.DIAMONDS, 9, tr),
       new Card(Suit.DIAMONDS, 9, tr),
       new Card(Suit.DIAMONDS, Rank.A, tr),
@@ -225,13 +225,13 @@ describe('Flight#beats', () => {
 
   it('handles tractor vs. tractor', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
-    let me = Flight.extract([
+    let me = Play.extract([
       new Card(Suit.DIAMONDS, 7, tr),
       new Card(Suit.DIAMONDS, 7, tr),
       new Card(Suit.DIAMONDS, 8, tr),
       new Card(Suit.DIAMONDS, 8, tr),
-    ], tr);
-    let you = Flight.extract([
+    ], tr).fl();
+    let you = Play.extract([
       new Card(Suit.DIAMONDS, 8, tr),
       new Card(Suit.DIAMONDS, 8, tr),
       new Card(Suit.DIAMONDS, 9, tr),
@@ -244,15 +244,15 @@ describe('Flight#beats', () => {
 
   it('handles tractor vs. different tractor', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
-    let me = Flight.extract([
+    let me = Play.extract([
       new Card(Suit.DIAMONDS, 7, tr),
       new Card(Suit.DIAMONDS, 7, tr),
       new Card(Suit.DIAMONDS, 8, tr),
       new Card(Suit.DIAMONDS, 8, tr),
       new Card(Suit.DIAMONDS, 9, tr),
       new Card(Suit.DIAMONDS, 9, tr),
-    ], tr);
-    let you = Flight.extract([
+    ], tr).fl();
+    let you = Play.extract([
       new Card(Suit.DIAMONDS, 8, tr),
       new Card(Suit.DIAMONDS, 8, tr),
       new Card(Suit.DIAMONDS, 8, tr),
@@ -267,7 +267,7 @@ describe('Flight#beats', () => {
 
   it('handles flight vs. flight', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
-    let me = Flight.extract([
+    let me = Play.extract([
       new Card(Suit.DIAMONDS, 2, tr),
       new Card(Suit.DIAMONDS, 2, tr),
       new Card(Suit.DIAMONDS, 2, tr),
@@ -280,8 +280,8 @@ describe('Flight#beats', () => {
       new Card(Suit.DIAMONDS, 8, tr),
       new Card(Suit.DIAMONDS, 9, tr),
       new Card(Suit.DIAMONDS, 9, tr),
-    ], tr);
-    let you = Flight.extract([
+    ], tr).fl();
+    let you = Play.extract([
       new Card(Suit.DIAMONDS, 4, tr),
       new Card(Suit.DIAMONDS, 4, tr),
       new Card(Suit.DIAMONDS, 4, tr),
@@ -302,7 +302,7 @@ describe('Flight#beats', () => {
 
   it('handles flight vs. different flight', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
-    let me = Flight.extract([
+    let me = Play.extract([
       new Card(Suit.DIAMONDS, 2, tr),
       new Card(Suit.DIAMONDS, 2, tr),
       new Card(Suit.DIAMONDS, 2, tr),
@@ -315,8 +315,8 @@ describe('Flight#beats', () => {
       new Card(Suit.DIAMONDS, 8, tr),
       new Card(Suit.DIAMONDS, 9, tr),
       new Card(Suit.DIAMONDS, 9, tr),
-    ], tr);
-    let you = Flight.extract([
+    ], tr).fl();
+    let you = Play.extract([
       new Card(Suit.DIAMONDS, 4, tr),
       new Card(Suit.DIAMONDS, 4, tr),
       new Card(Suit.DIAMONDS, 4, tr),
@@ -337,7 +337,7 @@ describe('Flight#beats', () => {
 
   it('handles flight vs. trump flight', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
-    let me = Flight.extract([
+    let me = Play.extract([
       new Card(Suit.HEARTS, 2, tr),
       new Card(Suit.HEARTS, 2, tr),
       new Card(Suit.HEARTS, 2, tr),
@@ -350,8 +350,8 @@ describe('Flight#beats', () => {
       new Card(Suit.HEARTS, 8, tr),
       new Card(Suit.HEARTS, 9, tr),
       new Card(Suit.HEARTS, 9, tr),
-    ], tr);
-    let you = Flight.extract([
+    ], tr).fl();
+    let you = Play.extract([
       new Card(Suit.DIAMONDS, 4, tr),
       new Card(Suit.DIAMONDS, 4, tr),
       new Card(Suit.DIAMONDS, 4, tr),
@@ -372,7 +372,7 @@ describe('Flight#beats', () => {
 
   it('handles flight vs. failed trump flight', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
-    let me = Flight.extract([
+    let me = Play.extract([
       new Card(Suit.DIAMONDS, 2, tr),
       new Card(Suit.DIAMONDS, 2, tr),
       new Card(Suit.DIAMONDS, 2, tr),
@@ -385,8 +385,8 @@ describe('Flight#beats', () => {
       new Card(Suit.DIAMONDS, 8, tr),
       new Card(Suit.DIAMONDS, 9, tr),
       new Card(Suit.DIAMONDS, 9, tr),
-    ], tr);
-    let you = Flight.extract([
+    ], tr).fl();
+    let you = Play.extract([
       new Card(Suit.HEARTS, 4, tr),
       new Card(Suit.HEARTS, 4, tr),
       new Card(Suit.HEARTS, 4, tr),
@@ -422,9 +422,9 @@ describe('Hand#follow_with', () => {
     let play: CardPile;
 
     // invalid play: missing card
-    lead = Flight.extract([
+    lead = Play.extract([
       new Card(Suit.DIAMONDS, Rank.K, tr),
-    ], tr);
+    ], tr).fl();
     play = new CardPile([
       new Card(Suit.DIAMONDS, Rank.K, tr),
     ], tr);
@@ -455,9 +455,9 @@ describe('Hand#follow_with', () => {
     );
 
     // void-of-suit follow
-    lead = Flight.extract([
+    lead = Play.extract([
       new Card(Suit.CLUBS, Rank.K, tr),
-    ], tr);
+    ], tr).fl();
     play = new CardPile([
       new Card(Suit.SPADES, 8, tr),
     ], tr);
@@ -469,9 +469,9 @@ describe('Hand#follow_with', () => {
     );
 
     // natural trump follow
-    lead = Flight.extract([
+    lead = Play.extract([
       new Card(Suit.HEARTS, 4, tr),
-    ], tr);
+    ], tr).fl();
     play = new CardPile([
       new Card(Suit.CLUBS, Rank.J, tr),
     ], tr);
@@ -526,10 +526,10 @@ describe('Hand#follow_with', () => {
     let play: CardPile;
 
     // invalid play: count too low
-    lead = Flight.extract([
+    lead = Play.extract([
       new Card(Suit.DIAMONDS, Rank.K, tr),
       new Card(Suit.DIAMONDS, Rank.K, tr),
-    ], tr);
+    ], tr).fl();
     play = new CardPile([
       new Card(Suit.DIAMONDS, 3, tr),
     ], tr);
@@ -558,10 +558,10 @@ describe('Hand#follow_with', () => {
     );
 
     // correct failure to follow (no match)
-    lead = Flight.extract([
+    lead = Play.extract([
       new Card(Suit.CLUBS, Rank.J, tr),
       new Card(Suit.CLUBS, Rank.J, tr),
-    ], tr);
+    ], tr).fl();
     play = new CardPile([
       new Card(Suit.CLUBS, 7, tr),
       new Card(Suit.CLUBS, Rank.J, tr),
@@ -575,11 +575,11 @@ describe('Hand#follow_with', () => {
     );
 
     // failure to match triple
-    lead = Flight.extract([
+    lead = Play.extract([
       new Card(Suit.DIAMONDS, Rank.K, tr),
       new Card(Suit.DIAMONDS, Rank.K, tr),
       new Card(Suit.DIAMONDS, Rank.K, tr),
-    ], tr);
+    ], tr).fl();
     play = new CardPile([
       new Card(Suit.DIAMONDS, 4, tr),
       new Card(Suit.DIAMONDS, 4, tr),
@@ -594,10 +594,10 @@ describe('Hand#follow_with', () => {
     );
 
     // failure to match double
-    lead = Flight.extract([
+    lead = Play.extract([
       new Card(Suit.DIAMONDS, Rank.K, tr),
       new Card(Suit.DIAMONDS, Rank.K, tr),
-    ], tr);
+    ], tr).fl();
     play = new CardPile([
       new Card(Suit.DIAMONDS, 4, tr),
       new Card(Suit.DIAMONDS, 10, tr),
@@ -611,12 +611,12 @@ describe('Hand#follow_with', () => {
     );
 
     // correct best-effort follow
-    lead = Flight.extract([
+    lead = Play.extract([
       new Card(Suit.DIAMONDS, Rank.K, tr),
       new Card(Suit.DIAMONDS, Rank.K, tr),
       new Card(Suit.DIAMONDS, Rank.K, tr),
       new Card(Suit.DIAMONDS, Rank.K, tr),
-    ], tr);
+    ], tr).fl();
     play = new CardPile([
       new Card(Suit.DIAMONDS, 6, tr),
       new Card(Suit.DIAMONDS, 6, tr),
@@ -632,11 +632,11 @@ describe('Hand#follow_with', () => {
     );
 
     // correct partial void follow
-    lead = Flight.extract([
+    lead = Play.extract([
       new Card(Suit.DIAMONDS, Rank.K, tr),
       new Card(Suit.DIAMONDS, Rank.K, tr),
       new Card(Suit.DIAMONDS, Rank.K, tr),
-    ], tr);
+    ], tr).fl();
     play = new CardPile([
       new Card(Suit.DIAMONDS, 9, tr),
       new Card(Suit.DIAMONDS, 9, tr),
@@ -650,10 +650,10 @@ describe('Hand#follow_with', () => {
     );
 
     // correct total void follow
-    lead = Flight.extract([
+    lead = Play.extract([
       new Card(Suit.DIAMONDS, Rank.K, tr),
       new Card(Suit.DIAMONDS, Rank.K, tr),
-    ], tr);
+    ], tr).fl();
     play = new CardPile([
       new Card(Suit.HEARTS, 2, tr),
       new Card(Suit.HEARTS, Rank.K, tr),
@@ -698,7 +698,7 @@ describe('Hand#follow_with', () => {
     let lead: Flight;
     let play: CardPile;
 
-    lead = Flight.extract([
+    lead = Play.extract([
       new Card(Suit.CLUBS, 9, tr),
       new Card(Suit.CLUBS, 9, tr),
       new Card(Suit.CLUBS, 9, tr),
@@ -720,7 +720,7 @@ describe('Hand#follow_with', () => {
 
       new Card(Suit.CLUBS, Rank.K, tr),
       new Card(Suit.CLUBS, Rank.J, tr),
-    ], tr);
+    ], tr).fl();
 
     expect(lead.toString(tr)).to.equal(
       '[9♣9♣9♣10♣10♣10♣][4♣4♣5♣5♣6♣6♣7♣7♣][A♣A♣][K♣][J♣]'

@@ -174,17 +174,17 @@ describe('ZPY', () => {
     /////////////////////////////////////////////////////////////////
 
     let lead_impl = (p: ZPY.PlayerID, ...cards: [Suit, number][]) => {
-      return zpy.lead_play(p, Flight.extract(
+      return zpy.lead_play(p, Play.extract(
         cards.map(([suit, rank]) => new Card(suit, rank, zpy.tr)),
         zpy.tr
-      ));
+      ).fl());
     };
     let lead = (p: ZPY.PlayerID, ...cards: [Suit, number][]) => {
       expect(lead_impl(p, ...cards)).to.be.undefined;
     };
 
     let follow_impl = (p: ZPY.PlayerID, ...cards: [Suit, number][]) => {
-      return zpy.follow_lead(p, Flight.extract(
+      return zpy.follow_lead(p, Play.extract(
         cards.map(([suit, rank]) => new Card(suit, rank, zpy.tr)),
         zpy.tr
       ));
