@@ -28,7 +28,7 @@ export class ZPY {
   // all players; in turn order if #phase > INIT
   #players: ZPY.PlayerID[] = [];
   // rank information of each player; always valid
-  #ranks: ZPY.PlayerMap<{
+  #ranks: Record<ZPY.PlayerID, {
     rank: Rank,  // current rank
     start: Rank, // most recent starting rank
     last_host: Rank, // last hosted rank
@@ -39,7 +39,7 @@ export class ZPY {
   // round counter; > 0 iff #phase > INIT
   #round: number = 0;
   // playing to order index mapping; valid iff #phase > INIT
-  #order: ZPY.PlayerMap<number> = {};
+  #order: Record<ZPY.PlayerID, number> = {};
   // general-purpose player set for reaching consensus
   #consensus: Set<ZPY.PlayerID> = new Set();
 
@@ -50,7 +50,7 @@ export class ZPY {
   // list of successful trump bids made during DRAW; last one is the winner
   #bids: {player: ZPY.PlayerID, card: CardBase, n: number}[] = [];
   // players' hands as they are being drawn
-  #draws: ZPY.PlayerMap<CardPile> = {};
+  #draws: Record<ZPY.PlayerID, CardPile> = {};
   // current index into #players for draws, play, etc.
   #current: number = null;
 
@@ -59,9 +59,9 @@ export class ZPY {
   // trump selection for the current round; valid iff #phase > DRAW
   #tr: TrumpMeta = null;
   // hands; valid iff #phase > KITTY
-  #hands: ZPY.PlayerMap<Hand> = {};
+  #hands: Record<ZPY.PlayerID, Hand> = {};
   // each player's point cards; valid if #phase > FRIEND
-  #points: ZPY.PlayerMap<CardBase[]> = {};
+  #points: Record<ZPY.PlayerID, CardBase[]> = {};
   // friends declarations; valid iff #phase > FRIEND
   #friends: {card: Card, nth: number}[] = [];
   // number of times a friend has joined; valid iff #phase > FRIEND
@@ -75,7 +75,7 @@ export class ZPY {
   // lead play for the current trick; valid iff #phase > LEAD
   #lead: Flight | null = null;
   // all plays for the current trick; valid iff #phase > LEAD
-  #plays: ZPY.PlayerMap<Play> = {};
+  #plays: Record<ZPY.PlayerID, Play> = {};
   // current winning player
   #winning: ZPY.PlayerID | null = null;
 
@@ -906,8 +906,6 @@ ${p}'s hand: ${hand_pile.size > 0 ? '\n' + hand_pile.toString(color) : ''}`;
 export namespace ZPY {
   export type PlayerID = string;
 
-  export type PlayerMap<T> = { [key: string]: T };
-
   export enum RenegeRule {
     ACCUSE,   // reneges are tracked, but must be called out by other players
     FORBID,   // disallow plays that would result in a renege
@@ -990,12 +988,5 @@ export namespace ZPY {
   export class InvalidPlayError extends Error {
     constructor(msg?: string) { super(msg); }
   }
-  export type Result =
-      void
-    | InvalidArgError
-    | DuplicateActionError
-    | WrongPlayerError
-    | OutOfTurnError
-    | InvalidPlayError
-    ;
+  export type Result = Error | void;
 }

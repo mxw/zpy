@@ -51,7 +51,7 @@ export class GameClient<
   me: null | P.User = null;
 
   // the next unused transaction id
-  nextTxId: P.TxId = 0;
+  next_tx: P.TxId = 0;
 
   // update requests that are outstanding
   pending: Record<P.TxId, {
@@ -129,10 +129,7 @@ export class GameClient<
 
   // process an effect either as predicted or as the server instructs
   manifest(effect: Effect | P.ProtocolAction) {
-    let result = this.engine.apply_client(
-      this.state,
-      effect
-    );
+    let result = this.engine.apply_client(this.state, effect);
 
     if (this.engine.tUpdateError.is(result)) {
       console.error(result);
@@ -151,8 +148,7 @@ export class GameClient<
     assert(this.waitState === "sync");
     assert(this.state !== null);
 
-    let txId = this.nextTxId;
-    this.nextTxId += 1;
+    let tx = this.next_tx++;
     let predicted = this.engine.predict(this.state, intent);
 
     if (this.engine.tUpdateError.is(predicted)) {
@@ -165,7 +161,7 @@ export class GameClient<
       this.manifest(predicted);
     }
 
-    this.pending[txId] = {
+    this.pending[tx] = {
       predicted: (predicted !== null),
       intent: intent,
       eff: predicted
@@ -173,7 +169,7 @@ export class GameClient<
 
     this.socket.send(JSON.stringify({
       verb: "req:update",
-      tx: txId,
+      tx: tx,
       intent: intent,
     }));
   }
