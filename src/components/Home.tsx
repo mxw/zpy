@@ -1,8 +1,8 @@
 import * as React from "react"
 import axios from "axios"
 
-import { Session } from "./context.ts"
-import { Game } from "./Game.tsx"
+import { Session } from "components/context.ts"
+import { Game } from "components/Game.tsx"
 
 export const Home = (props: {}) => {
 

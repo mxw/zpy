@@ -1,7 +1,7 @@
 import * as React from "react"
 
-import { GameClient } from "../protocol/client.ts"
-import { CounterEngine } from "../trivial-engine.ts"
+import { GameClient } from "protocol/client.ts"
+import { CounterEngine } from "trivial-engine.ts"
 
 export const Game = (props: {gameId: string}) => {
 

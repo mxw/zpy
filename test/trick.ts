@@ -1,9 +1,9 @@
 import {
   Suit, Rank, TrumpMeta, CardBase, Card, CardPile
-} from '../src/lib/cards';
+} from 'lib/cards.ts';
 import {
   CardTuple, Tractor, Flight, Play, Hand
-} from '../src/lib/trick';
+} from 'lib/trick.ts';
 
 import {expect} from 'chai';
 

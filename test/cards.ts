@@ -1,6 +1,6 @@
 import {
   Suit, Rank, TrumpMeta, CardBase, Card, CardPile
-} from '../src/lib/cards';
+} from 'lib/cards.ts';
 
 import {expect} from 'chai';
 

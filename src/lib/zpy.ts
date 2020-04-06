@@ -4,13 +4,13 @@
 
 import {
   Suit, Rank, TrumpMeta, CardBase, Card, CardPile, rank_to_string
-} from './cards';
+} from 'lib/cards.ts';
 import {
   CardTuple, Tractor, Flight, Play, Hand
-} from './trick';
+} from 'lib/trick.ts';
 import {
   array_fill, array_shuffle, o_map
-} from './utils';
+} from 'lib/utils.ts';
 
 import {strict as assert} from 'assert';
 

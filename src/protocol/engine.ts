@@ -1,6 +1,6 @@
 import * as t from 'io-ts'
 
-import {ProtocolAction, User} from './protocol.ts'
+import {ProtocolAction, User} from 'protocol/protocol.ts'
 
 // the engine interface defines how the application being managed by the server
 // deals with state transitions as users join, leave, and otherwise interact.

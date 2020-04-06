@@ -1,14 +1,21 @@
 let path = require('path');
 let process = require('process');
-let nodeExternals = require('webpack-node-externals');
+let externals = require('webpack-node-externals');
 
-let resolvePath = (() => {
+let resolve_path = (() => {
   if (process.env.NODE_PATH === undefined) {
-    return [ "node_modules" ];
+    return [
+      'node_modules',
+      path.resolve(__dirname, 'src'),
+    ];
   } else {
-    return [ "node_modules", path.resolve(process.env.NODE_PATH) ];
+    return [
+      "node_modules",
+      path.resolve(process.env.NODE_PATH),
+      path.resolve(__dirname, 'src'),
+    ];
   }
-})()
+})();
 
 let common = {
   mode: "production",
@@ -31,9 +38,9 @@ let common = {
     ]
   },
 
-  resolve: {modules: resolvePath},
+  resolve: {modules: resolve_path},
 
-  resolveLoader: {modules: resolvePath}
+  resolveLoader: {modules: resolve_path}
 };
 
 let frontend = Object.assign({
@@ -50,7 +57,7 @@ let frontend = Object.assign({
 let backend = Object.assign({
   entry: "./src/app.ts",
   target: "node",
-  externals: [nodeExternals()],
+  externals: [externals()],
   output: {
     path: path.resolve(__dirname, "./dist/app")
   }

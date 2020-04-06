@@ -11,9 +11,9 @@
 
 import {
   Suit, Rank, TrumpMeta, CardBase, Card, CardPile
-} from './cards';
+} from 'lib/cards.ts';
 
-import {ansi, array_fill} from './utils';
+import {ansi, array_fill} from 'lib/utils.ts';
 
 import {strict as assert} from 'assert';
 

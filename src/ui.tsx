@@ -1,9 +1,9 @@
-import * as React from "react";
-import * as ReactDOM from "react-dom";
-import {BrowserRouter as Router, Switch, Route} from "react-router-dom";
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
+import {BrowserRouter as Router, Switch, Route} from 'react-router-dom';
 
-import { SessionProvider } from "./components/providers/SessionProvider.tsx"
-import { Home } from "./components/Home.tsx";
+import { SessionProvider } from 'components/providers/SessionProvider.tsx'
+import { Home } from 'components/Home.tsx';
 
 ReactDOM.render(
   <SessionProvider>

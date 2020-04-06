@@ -2,9 +2,9 @@
  * Webserver implementation, wrapped around a generic game engine.
  */
 
-import {Engine} from '../protocol/engine.ts'
-import * as Protocol from '../protocol/protocol.ts'
-import * as Session from './session.ts'
+import {Engine} from 'protocol/engine.ts'
+import * as Protocol from 'protocol/protocol.ts'
+import * as Session from 'server/session.ts'
 
 import * as WebSocket from 'ws'
 import * as Http from 'http'

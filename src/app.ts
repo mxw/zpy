@@ -1,7 +1,7 @@
-import { CounterEngine } from './trivial-engine.ts'
+import { CounterEngine } from 'trivial-engine.ts'
 
-import { GameServer } from './server/server.ts'
-import * as Session from './server/session.ts'
+import { GameServer } from 'server/server.ts'
+import * as Session from 'server/session.ts'
 
 import CookieParser from 'cookie-parser'
 import express from 'express'

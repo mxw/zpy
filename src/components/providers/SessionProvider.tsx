@@ -1,7 +1,7 @@
 import * as React from 'react'
 import axios from 'axios'
 
-import {Session} from "../context.ts"
+import {Session} from "components/context.ts"
 
 export const SessionProvider = (props: {children: JSX.Element[] | JSX.Element}) => {
 

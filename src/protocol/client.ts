@@ -1,5 +1,5 @@
-import * as Protocol from "./protocol.ts"
-import {Engine} from "./engine.ts"
+import * as Protocol from "protocol/protocol.ts"
+import {Engine} from "protocol/engine.ts"
 import assert from "assert"
 
 export class GameClient<Cfg, I, S, A, CS, E, UE, Eng extends Engine<Cfg, I, S, A, CS, E, UE>> {
