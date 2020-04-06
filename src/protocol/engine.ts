@@ -70,7 +70,7 @@ export interface Engine<
   // if the outcome is unknown
   predict: (state: ClientState, int: Intent) => Effect | UpdateError | null;
 
-  // same as apply, on the client side:
+  // same as apply, on the client side
   apply_client: (state: ClientState, eff: Effect | ProtocolAction) =>
     ClientState | UpdateError;
 

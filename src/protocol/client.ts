@@ -25,22 +25,22 @@ export class GameClient<
   socket: WebSocket;
 
   // the client engine state; null iff waitState is "pending-reset"
-  state: null | ClientState = null
+  state: null | ClientState = null;
 
   // whether we are synchronized w/ the server.
   //
   // interpretation:
-  //   - pending-reset: we are totally desynced--we are waiting
-  //                   for a reset reply
+  //   - pending-reset: we are totally desynced and waiting for a reset reply
   //   - sync: we are up to date
-  //   - sync: we are waiting for a reply to a update request, but otherwise
-  //           synchronized
+  //   - pending-update: we are waiting for a reply to an update request, but
+  //                     otherwise synchronized
   //   - disconnect: what it says on the tin
   //
   // legal transitions:
-  //        +-----------+-------------+
-  //        v           |             |
-  //  pending-reset -> sync <-> pending-update -> disconnect
+  //        +------------+--------------+
+  //        |            |              |
+  //        v            |              |
+  //  pending-reset --> sync <--> pending-update --> disconnect
   //
   waitState: "pending-reset" | "sync" | "pending-update" | "disconnect";
 
@@ -54,17 +54,16 @@ export class GameClient<
   nextTxId: P.TxId = 0;
 
   // update requests that are outstanding
-  type PendingUpdate = {
+  pending: Record<P.TxId, {
     intent: Intent;
     predicted: boolean
-    eff: null | E; // null iff predicted is false
-  };
-  pending: Record<P.TxId, PendingUpdate> = {};
+    eff: null | Effect; // null iff predicted is false
+  }> = {};
 
   // callbacks for react to use
-  onClose: null | ((client: this) => void) = null;
-  onUpdate: null | ((client: this, e: Effect | P.ProtocolAction) => void) = null;
-  onReset: null | ((client: this) => void) = null;
+  onClose: null | ((cl: this) => void) = null;
+  onUpdate: null | ((cl: this, e: Effect | P.ProtocolAction) => void) = null;
+  onReset: null | ((cl: this) => void) = null;
 
   // connect to the given gameId with the appropriate engine
   constructor(engine: Eng, gameId: string) {
@@ -90,50 +89,46 @@ export class GameClient<
         this.engine.tUpdateError
       );
 
-      if (tServerMessage.is(payload)) {
-        switch (payload.verb) {
-          case "hello":
-            this.me = payload.you;
-            this.socket.send(JSON.stringify({
-              verb: "req:reset"
-            }));
-            break;
-          case "bye":
-            this.socket.close();
-            if (this.onClose !== null) {
-              this.onClose(this);
+      if (!tServerMessage.is(payload)) return;
+
+      switch (payload.verb) {
+        case "hello":
+          this.me = payload.you;
+          this.socket.send(JSON.stringify({
+            verb: "req:reset"
+          }));
+          break;
+        case "bye":
+          this.socket.close();
+          this.onClose?.(this);
+          break
+        case "reset":
+          this.state = payload.state;
+          this.waitState = "sync";
+          this.users = payload.who;
+          this.onReset?.(this);
+          break;
+        case "update": {
+          assert(this.state !== null);
+          assert(this.waitState === "pending-update" ||
+                 this.waitState === "sync");
+          if (payload.tx !== null && payload.tx in this.pending) {
+            let pending = this.pending[payload.tx];
+            delete this.pending[payload.tx];
+            if (pending.predicted) {
+              // don't bother processing this update if we predicted it
+              break;
             }
-            break
-          case "reset":
-            this.state = payload.state;
-            this.waitState = "sync";
-            this.users = payload.who;
-            if (this.onReset !== null) {
-              this.onReset(this);
-            }
-            break;
-          case "update": {
-            assert(this.state !== null);
-            assert(this.waitState == "pending-update" ||
-              this.waitState == "sync");
-            if (payload.tx !== null && payload.tx in this.pending) {
-              let pending = this.pending[payload.tx];
-              delete this.pending[payload.tx];
-              if (pending.predicted) {
-                // don't bother processing this update if we predicted it
-                break;
-              }
-            }
-            this.processEffect(payload.effect);
-            break;
           }
+          this.manifest(payload.effect);
+          break;
         }
       }
     }
   }
 
   // process an effect either as predicted or as the server instructs
-  processEffect(effect: E | Protocol.ProtocolAction) {
+  manifest(effect: Effect | P.ProtocolAction) {
     let result = this.engine.apply_client(
       this.state,
       effect
@@ -145,9 +140,7 @@ export class GameClient<
     } else {
       this.state = result;
       this.waitState === "sync";
-      if (this.onUpdate !== null) {
-        this.onUpdate(this, effect);
-      }
+      this.onUpdate?.(this, effect);
     }
   }
 
@@ -169,7 +162,7 @@ export class GameClient<
     } else if (predicted === null) {
       this.waitState === "pending-update"
     } else {
-      this.processEffect(predicted);
+      this.manifest(predicted);
     }
 
     this.pending[txId] = {
