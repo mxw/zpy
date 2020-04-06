@@ -10,9 +10,11 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "axios": "*",
     "cookie-parser": "*",
     "react": "*",
     "react-dom": "*",
+    "react-router-dom": "*",
     "express": "*",
     "uuid": "*",
     "ws": "*"
@@ -27,9 +29,12 @@
     "source-map-loader": "*",
     "mocha": "*",
     "chai": "*",
+
+    "@types/axios": "*",
     "@types/cookie-parser": "*",
     "@types/react": "*",
     "@types/react-dom": "*",
+    "@types/react-router-dom": "*",
     "@types/express": "*",
     "@types/uuid": "*",
     "@types/ws": "*",
