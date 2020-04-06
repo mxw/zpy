@@ -1,33 +1,52 @@
-import * as Protocol from "protocol/protocol.ts"
+import * as P from "protocol/protocol.ts"
 import {Engine} from "protocol/engine.ts"
+
 import assert from "assert"
 
-export class GameClient<Cfg, I, S, A, CS, E, UE, Eng extends Engine<Cfg, I, S, A, CS, E, UE>> {
-
+export class GameClient<
+  Config,
+  Intent,
+  State,
+  Action,
+  ClientState,
+  Effect,
+  UpdateError,
+  Eng extends Engine<
+    Config,
+    Intent,
+    State,
+    Action,
+    ClientState,
+    Effect,
+    UpdateError
+  >
+> {
   engine: Eng;
   socket: WebSocket;
-  state: null | CS;
+  state: null | ClientState = null;
   waitState: "pending-reset" | "sync" | "pending-update" | "disconnect";
-  users: Protocol.User[];
-  me: null | Protocol.User;
-  nextTxId: Protocol.TxId;
-  pending: Record<Protocol.TxId, {intent: I, predicted: boolean, eff: null| E}>;
+  users: P.User[] = [];
+  me: null | P.User = null;
+  nextTxId: P.TxId = 0;
+  pending: Record<
+    P.TxId,
+    {
+      intent: Intent,
+      predicted: boolean,
+      eff: null | Effect
+    }
+  > = {};
 
-  onClose: null | ((client: this) => void);
-  onUpdate: null | ((client: this, e: E | Protocol.ProtocolAction) => void);
-  onReset: null | ((client: this) => void);
+  onClose:  null | ((client: this) => void) = null;
+  onUpdate: null | ((client: this, e: Effect | P.ProtocolAction) => void) = null;
+  onReset:  null | ((client: this) => void) = null;
 
   constructor(engine: Eng, gameId: string) {
     this.engine = engine;
-    this.socket = new WebSocket("ws://" + document.location.host + "/game/" + gameId + "/");
-    this.state = null
+    this.socket = new WebSocket(
+      "ws://" + document.location.host + "/game/" + gameId + "/"
+    );
     this.waitState = "pending-reset";
-    this.pending = {};
-    this.nextTxId = 0;
-    this.me = null;
-    this.onClose = null;
-    this.onUpdate = null;
-    this.onReset = null;
 
     this.socket.onopen = () => {
       this.socket.send(JSON.stringify({
@@ -38,7 +57,7 @@ export class GameClient<Cfg, I, S, A, CS, E, UE, Eng extends Engine<Cfg, I, S, A
 
     this.socket.onmessage = (ev: MessageEvent) => {
       let payload = JSON.parse(ev.data);
-      let tServerMessage = Protocol.tServerMessage(
+      let tServerMessage = P.tServerMessage(
         this.engine.tClientState,
         this.engine.tEffect,
         this.engine.tUpdateError
@@ -84,7 +103,7 @@ export class GameClient<Cfg, I, S, A, CS, E, UE, Eng extends Engine<Cfg, I, S, A
     }
   }
 
-  processEffect(effect: E | Protocol.ProtocolAction) {
+  processEffect(effect: Effect | P.ProtocolAction) {
     let result = this.engine.apply_client(
       this.state,
       effect
@@ -102,7 +121,7 @@ export class GameClient<Cfg, I, S, A, CS, E, UE, Eng extends Engine<Cfg, I, S, A
     }
   }
 
-  attempt(intent: I) {
+  attempt(intent: Intent) {
     assert(this.waitState === "sync");
     assert(this.state !== null);
 

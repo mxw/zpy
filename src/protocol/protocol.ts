@@ -6,7 +6,6 @@ import * as t from 'io-ts'
 // game-focused code (see Engine below)
 
 export type Version = number;
-export type UserId = number;
 
 export const tUser = t.type({
   id: t.number,
@@ -43,31 +42,45 @@ export const tRequestReset = t.type({
   verb: t.literal("req:reset"),
 });
 
-export const tReset = <ClientState extends t.Mixed>(cs: ClientState) => t.type({
-  verb: t.literal("reset"),
-  state: cs,
-  who: t.array(tUser),
-});
+export function tReset<
+  ClientState extends t.Mixed
+> (cs: ClientState) {
+  return t.type({
+    verb: t.literal("reset"),
+    state: cs,
+    who: t.array(tUser),
+  });
+}
 
-////////////////////////////////////////////////////////////////////////////////
+export function tRequestUpdate<
+  Intent extends t.Mixed
+> (int: Intent) {
+  return t.type({
+    verb: t.literal("req:update"),
+    tx: tTxId,
+    intent: int,
+  });
+}
 
-export const tRequestUpdate = <Intent extends t.Mixed>(int: Intent) => t.type({
-  verb: t.literal("req:update"),
-  tx: tTxId,
-  intent: int,
-});
+export function tUpdate<
+  Effect extends t.Mixed
+> (eff: Effect) {
+  return t.type({
+    verb: t.literal("update"),
+    tx: t.union([t.null, tTxId]),
+    effect: eff,
+  });
+}
 
-export const tUpdate = <Effect extends t.Mixed>(eff: Effect) => t.type({
-  verb: t.literal("update"),
-  tx: t.union([t.null, tTxId]),
-  effect: eff,
-});
-
-export const tUpdateReject = <UpdateError extends t.Mixed>(ue: UpdateError) => t.type({
-  verb: t.literal("update-reject"),
-  tx: tTxId,
-  reason: ue,
-});
+export function tUpdateReject<
+  UpdateError extends t.Mixed
+> (ue: UpdateError) {
+  return t.type({
+    verb: t.literal("update-reject"),
+    tx: tTxId,
+    reason: ue,
+  });
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -94,7 +107,7 @@ export type ProtocolAction = Join | Part;
 export function tServerMessage<
   ClientState extends t.Mixed,
   Effect extends t.Mixed,
-  UpdateError extends t.Mixed
+  UpdateError extends t.Mixed,
 > (cs: ClientState, eff: Effect, ue: UpdateError) {
   return t.union([
     tHello,
