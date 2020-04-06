@@ -1,3 +1,5 @@
+import * as t from 'io-ts';
+
 export type Config = undefined;
 export type State = number
 export type Action = "add";
@@ -6,6 +8,15 @@ export type ClientState = State;
 export type Effect = Action;
 
 export namespace CounterEngine {
+
+  export const tConfig = t.type({})
+  export const tState = t.number
+  export const tAction = t.literal("add")
+  export const tIntent = tAction
+  export const tEffect = tAction
+  export const tClientState = tState
+  export const tUpdateError = t.type({})
+
   export const init = (): State => {
     return 0;
   }
@@ -15,7 +26,10 @@ export namespace CounterEngine {
   }
 
   export const apply = (state: State, act: Action) => {
-    return state + 1;
+    if (tAction.is(act)) {
+      return state + 1;
+    }
+    return state;
   }
 
   export const predict = (state: ClientState, intent: Intent): Effect => {

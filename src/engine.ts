@@ -1,101 +1,6 @@
-// this file defines the protocol for communication between the clients and
-// server and also the interface between the protocol-focused code and the
-// game-focused code (see Engine below)
+import * as t from 'io-ts'
 
-export type Version = number;
-export type UserId = number;
-
-export interface User {
-  id: UserId;
-  nick?: string;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-export interface RequestHello {
-  verb: "req:hello";
-  nick: string;
-  principal: string;
-  token: string;
-};
-
-export interface Hello {
-  verb: "hello";
-  you: User;
-};
-
-export interface RequestBye {
-  verb: "req:bye";
-};
-
-export interface Bye {
-  verb: "bye";
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-export interface RequestReset {
-  verb: "req:reset";
-};
-
-export interface Reset<ClientState> {
-  verb: "reset";
-  version: Version;
-  state: ClientState;
-  who: User[];
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-export interface RequestUpdate<Intent> {
-  verb: "req:update";
-  base: Version;
-  intent: Intent;
-};
-
-export interface Update<Effect> {
-  verb: "update";
-  base: Version;
-  effect: Effect;
-};
-
-export interface UpdateReject<UpdateError> {
-  verb: "update-reject";
-  base: Version;
-  reason: UpdateError;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-// protocol actions are special actions that interact with the engine but
-// manipulate non-engine data. for now, just joins and parts
-
-export interface Join {
-  verb: "user:join";
-  who: User;
-};
-
-export interface Part {
-  verb: "user:part";
-  id: UserId;
-};
-
-export type ProtocolAction = Join | Part;
-
-////////////////////////////////////////////////////////////////////////////////
-
-export type ServerMessage<ClientState, Effect, UpdateError> =
-  Hello |
-  Bye |
-  Reset<ClientState> |
-  Update<Effect | ProtocolAction> |
-  UpdateReject<UpdateError>;
-
-export type ClientMessage<Intent> =
-  RequestHello |
-  RequestReset |
-  RequestUpdate<Intent> |
-  RequestBye;
+import {ProtocolAction, User, tClientMessage, tServerMessage} from './protocol.ts'
 
 // the engine interface defines how the application being managed by the server
 // deals with state transitions as users join, leave, and otherwise interact.
@@ -132,6 +37,15 @@ export type ClientMessage<Intent> =
 // and then redact--the results should be the same (though see below for a caveat)
 
 export interface Engine<Config, Intent, State, Action, ClientState, Effect, UpdateError> {
+  // reified nonsense for the type parameters:
+  tConfig: t.Type<Config, Config, unknown>,
+  tIntent: t.Type<Intent, Intent, unknown>,
+  tState: t.Type<State, State, unknown>,
+  tAction: t.Type<Action, Action, unknown>,
+  tClientState: t.Type<ClientState, ClientState, unknown>,
+  tEffect: t.Type<Effect, Effect, unknown>,
+  tUpdateError: t.Type<UpdateError, UpdateError, unknown>,
+
   // generate the initial engine state
   init: (options: Config) => State;
 
@@ -153,7 +67,7 @@ export interface Engine<Config, Intent, State, Action, ClientState, Effect, Upda
   // wait on the response of the server to discover that the result is "draw 4
   // of spades"
   applyClient: (state: ClientState, eff: Effect | ProtocolAction) =>
-    (ClientState | UpdateError | null);
+    (ClientState | UpdateError);
 
   // redact a server-side state/action into a client-side state/action for the
   // given recipient
