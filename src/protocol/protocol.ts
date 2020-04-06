@@ -7,6 +7,9 @@ import * as t from 'io-ts'
 
 export type Version = number;
 
+export const tUserId = t.number;
+export type UserId = number;
+
 export const tUser = t.type({
   id: t.number,
   nick: t.string,

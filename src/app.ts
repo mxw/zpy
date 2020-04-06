@@ -1,4 +1,4 @@
-import { CounterEngine } from 'trivial-engine.ts'
+import * as CardEngine from 'trivial-engine.ts'
 
 import { GameServer } from 'server/server.ts'
 import * as Session from 'server/session.ts'
@@ -13,11 +13,12 @@ let app = express();
 app.use('/', express.static("assets/html"))
 app.use('/static/js', express.static("dist/ui"))
 app.use('/static/style', express.static("assets/style"))
+app.use('/static/svg', express.static("assets/svg"))
 app.use(CookieParser());
 app.use(Session.middleware);
 
 let server = Http.createServer(app);
-let gs = new GameServer(CounterEngine, server);
+let gs = new GameServer(CardEngine, server);
 
 var activeGame: string | null = null;
 

@@ -129,7 +129,7 @@ export class GameClient<
 
   // process an effect either as predicted or as the server instructs
   manifest(effect: Effect | P.ProtocolAction) {
-    let result = this.engine.apply_client(this.state, effect);
+    let result = this.engine.apply_client(this.state, effect, this.me);
 
     if (this.engine.tUpdateError.is(result)) {
       console.error(result);
@@ -149,7 +149,7 @@ export class GameClient<
     assert(this.state !== null);
 
     let tx = this.next_tx++;
-    let predicted = this.engine.predict(this.state, intent);
+    let predicted = this.engine.predict(this.state, intent, this.me);
 
     if (this.engine.tUpdateError.is(predicted)) {
       console.error(predicted)

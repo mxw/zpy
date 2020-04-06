@@ -60,7 +60,7 @@ export interface Engine<
   init: (options: Config) => State;
 
   // lift a client-generated intent into an action that will be applied
-  listen: (state: State, int: Intent) => Action | UpdateError;
+  listen: (state: State, int: Intent, who: User) => Action | UpdateError;
 
   // compute the effect of an action on a given state or describe the reason why
   // the update is invalid, inapplicable, or otherwise problematic(TM)
@@ -68,10 +68,10 @@ export interface Engine<
 
   // predict the outcome of an intent based on the client state -- return null
   // if the outcome is unknown
-  predict: (state: ClientState, int: Intent) => Effect | UpdateError | null;
+  predict: (state: ClientState, int: Intent, me: User) => Effect | UpdateError | null;
 
   // same as apply, on the client side
-  apply_client: (state: ClientState, eff: Effect | ProtocolAction) =>
+  apply_client: (state: ClientState, eff: Effect | ProtocolAction, me: User) =>
     ClientState | UpdateError;
 
   // redact a server-side state/action into a client-side state/action for the

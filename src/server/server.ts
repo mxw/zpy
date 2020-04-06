@@ -117,7 +117,7 @@ class Game<Cfg, I, S, A, CS, Eff, UE,
       reason: act
     }));
 
-    let act = this.engine.listen(this.state, int);
+    let act = this.engine.listen(this.state, int, client.user);
     if (this.engine.tUpdateError.is(act)) {
       return bail(act);
     }
