@@ -31,7 +31,6 @@
     "chai": "*",
     "io-ts": "*",
     "fp-ts": "*",
-
     "@types/axios": "*",
     "@types/cookie-parser": "*",
     "@types/react": "*",

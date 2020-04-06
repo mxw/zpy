@@ -2,8 +2,8 @@
  * Webserver implementation, wrapped around a generic game engine.
  */
 
-import {Engine} from '../engine.ts'
-import * as Protocol from '../protocol.ts'
+import {Engine} from '../protocol/engine.ts'
+import * as Protocol from '../protocol/protocol.ts'
 import * as Session from './session.ts'
 
 import * as WebSocket from 'ws'
@@ -22,7 +22,7 @@ interface Client {
 };
 
 class Game<Cfg, I, S, A, CS, Eff, UE,
-          Eng extends Engine<Cfg, I, S, A, CS, Eff, UE>>
+           Eng extends Engine<Cfg, I, S, A, CS, Eff, UE>>
 {
   state: S;
   owner: Principal;
@@ -54,7 +54,7 @@ class Game<Cfg, I, S, A, CS, Eff, UE,
 
         let eff = Protocol.tProtocolAction.is(act)
           ? act
-          : this.engine.redactAction(this.state, act, client.user);
+          : this.engine.redact_action(this.state, act, client.user);
 
         let forTx = client === source ? tx : null;
         client.socket.send(JSON.stringify({

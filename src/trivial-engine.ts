@@ -33,12 +33,12 @@ export namespace CounterEngine {
   }
 
   export const predict = (state: ClientState, intent: Intent): Effect => {
-    return redactAction(state, listen(state, intent))
+    return redact_action(state, listen(state, intent))
   }
-  export const applyClient = (state: ClientState, eff: Effect): ClientState => {
+  export const apply_client = (state: ClientState, eff: Effect): ClientState => {
     return apply(state, eff);
   }
 
   export const redact = (s: State): ClientState => s;
-  export const redactAction = (s: State, a: Action): Effect => a;
+  export const redact_action = (s: State, a: Action): Effect => a;
 }

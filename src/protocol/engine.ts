@@ -1,50 +1,60 @@
 import * as t from 'io-ts'
 
-import {ProtocolAction, User, tClientMessage, tServerMessage} from './protocol.ts'
+import {ProtocolAction, User} from './protocol.ts'
 
 // the engine interface defines how the application being managed by the server
 // deals with state transitions as users join, leave, and otherwise interact.
-// it also encodes the way the game requieres information to be hidden.
+// it also encodes the way the game requires information to be hidden.
 //
 // the types State and Action define the game state and possible transitions,
 // respectively; while ClientState and ClientAction define the state and
 // possible transitions as they are visible by a particular user.
 //
-// the functions redact and redactAction define the mapping from the
+// the functions redact and redact_action define the mapping from the
 // globally-knowledgeable State and Action to their client-side counterparts.
 // protocol actions should be viewed as if they redact to themselves.
 //
-// the functions apply and applyClient define the way that actions affect a
+// the functions apply and apply_client define the way that actions affect a
 // given game state.
 //
 // in particular, this diagram commutes:
 //
 //  Intent
-//     |      \
-//     |       \
-//  listen      predict
-//     |                \___________
-//     v                            v
-//  Action ----redactAction-->    Effect
-//     |                            |
-//     |                            |
-//   apply                      clientApply
+//     |    \
+//     |     \
+//  listen     predict
+//     |               \____________
 //     |                            |
 //     v                            v
-//  State  ------redact----->  ClientState
+//  Action ----redact_action----> Effect
+//     |                            |
+//     |                            |
+//   apply                     apply_client
+//     |                            |
+//     v                            v
+//   State ------redact------> ClientState
 //
-// that is, it should not matter if you redact and use clientApply or use apply
-// and then redact--the results should be the same (though see below for a caveat)
+// that is, it should not matter if you redact and use apply_client or use
+// apply and then redact---the results should be the same (though see below for
+// a caveat).
 
-export interface Engine<Config, Intent, State, Action, ClientState, Effect, UpdateError> {
+export interface Engine<
+  Config,
+  Intent,
+  State,
+  Action,
+  ClientState,
+  Effect,
+  UpdateError
+> {
   // reified nonsense for the type parameters:
-  tConfig: t.Type<Config, Config, unknown>,
-  tIntent: t.Type<Intent, Intent, unknown>,
-  tState: t.Type<State, State, unknown>,
-  tAction: t.Type<Action, Action, unknown>,
-  tClientState: t.Type<ClientState, ClientState, unknown>,
-  tEffect: t.Type<Effect, Effect, unknown>,
-  tUpdateError: t.Type<UpdateError, UpdateError, unknown>,
+  tConfig: t.Type<Config, Config, unknown>;
+  tIntent: t.Type<Intent, Intent, unknown>;
+  tState: t.Type<State, State, unknown>;
+  tAction: t.Type<Action, Action, unknown>;
+  tClientState: t.Type<ClientState, ClientState, unknown>;
+  tEffect: t.Type<Effect, Effect, unknown>;
+  tUpdateError: t.Type<UpdateError, UpdateError, unknown>;
 
   // generate the initial engine state
   init: (options: Config) => State;
@@ -66,11 +76,11 @@ export interface Engine<Config, Intent, State, Action, ClientState, Effect, Upda
   // available on the client--e.g. if the action is "draw card" and we need to
   // wait on the response of the server to discover that the result is "draw 4
   // of spades"
-  applyClient: (state: ClientState, eff: Effect | ProtocolAction) =>
-    (ClientState | UpdateError);
+  apply_client: (state: ClientState, eff: Effect | ProtocolAction) =>
+    ClientState | UpdateError | null;
 
   // redact a server-side state/action into a client-side state/action for the
   // given recipient
   redact: (state: State, who: User) => ClientState;
-  redactAction: (state: State, act: Action, who: User) => Effect;
+  redact_action: (state: State, act: Action, who: User) => Effect;
 };

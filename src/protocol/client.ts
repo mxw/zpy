@@ -85,7 +85,7 @@ export class GameClient<Cfg, I, S, A, CS, E, UE, Eng extends Engine<Cfg, I, S, A
   }
 
   processEffect(effect: E | Protocol.ProtocolAction) {
-    let result = this.engine.applyClient(
+    let result = this.engine.apply_client(
       this.state,
       effect
     );
