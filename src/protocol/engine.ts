@@ -70,14 +70,9 @@ export interface Engine<
   // if the outcome is unknown
   predict: (state: ClientState, int: Intent) => Effect | UpdateError | null;
 
-  // same as apply, on the client side, except:
-  //
-  // returns null iff the resulting state is indeterminate based on information
-  // available on the client--e.g. if the action is "draw card" and we need to
-  // wait on the response of the server to discover that the result is "draw 4
-  // of spades"
+  // same as apply, on the client side:
   apply_client: (state: ClientState, eff: Effect | ProtocolAction) =>
-    ClientState | UpdateError | null;
+    ClientState | UpdateError;
 
   // redact a server-side state/action into a client-side state/action for the
   // given recipient

@@ -23,24 +23,50 @@ export class GameClient<
 > {
   engine: Eng;
   socket: WebSocket;
-  state: null | ClientState = null;
+
+  // the client engine state; null iff waitState is "pending-reset"
+  state: null | ClientState = null
+
+  // whether we are synchronized w/ the server.
+  //
+  // interpretation:
+  //   - pending-reset: we are totally desynced--we are waiting
+  //                   for a reset reply
+  //   - sync: we are up to date
+  //   - sync: we are waiting for a reply to a update request, but otherwise
+  //           synchronized
+  //   - disconnect: what it says on the tin
+  //
+  // legal transitions:
+  //        +-----------+-------------+
+  //        v           |             |
+  //  pending-reset -> sync <-> pending-update -> disconnect
+  //
   waitState: "pending-reset" | "sync" | "pending-update" | "disconnect";
+
+  // all users on the server; empty iff waitState is "pending-reset"
   users: P.User[] = [];
+
+  // this client's user; null iff waitState is "pending-reset"
   me: null | P.User = null;
+
+  // the next unused transaction id
   nextTxId: P.TxId = 0;
-  pending: Record<
-    P.TxId,
-    {
-      intent: Intent,
-      predicted: boolean,
-      eff: null | Effect
-    }
-  > = {};
 
-  onClose:  null | ((client: this) => void) = null;
+  // update requests that are outstanding
+  type PendingUpdate = {
+    intent: Intent;
+    predicted: boolean
+    eff: null | E; // null iff predicted is false
+  };
+  pending: Record<P.TxId, PendingUpdate> = {};
+
+  // callbacks for react to use
+  onClose: null | ((client: this) => void) = null;
   onUpdate: null | ((client: this, e: Effect | P.ProtocolAction) => void) = null;
-  onReset:  null | ((client: this) => void) = null;
+  onReset: null | ((client: this) => void) = null;
 
+  // connect to the given gameId with the appropriate engine
   constructor(engine: Eng, gameId: string) {
     this.engine = engine;
     this.socket = new WebSocket(
@@ -49,6 +75,7 @@ export class GameClient<
     this.waitState = "pending-reset";
 
     this.socket.onopen = () => {
+      // on connect we must send hello
       this.socket.send(JSON.stringify({
         verb: "req:hello",
         nick: "jgriego"
@@ -87,6 +114,8 @@ export class GameClient<
             break;
           case "update": {
             assert(this.state !== null);
+            assert(this.waitState == "pending-update" ||
+              this.waitState == "sync");
             if (payload.tx !== null && payload.tx in this.pending) {
               let pending = this.pending[payload.tx];
               delete this.pending[payload.tx];
@@ -103,7 +132,8 @@ export class GameClient<
     }
   }
 
-  processEffect(effect: Effect | P.ProtocolAction) {
+  // process an effect either as predicted or as the server instructs
+  processEffect(effect: E | Protocol.ProtocolAction) {
     let result = this.engine.apply_client(
       this.state,
       effect
@@ -121,7 +151,10 @@ export class GameClient<
     }
   }
 
+  // attempt to carry out an intent; synchronizing this state w/ the server
   attempt(intent: Intent) {
+    // TODO we could queue updates locally if we're desynced
+    // but it's not necessary for ZPY--it's easier to pretend it can't happen
     assert(this.waitState === "sync");
     assert(this.state !== null);
 

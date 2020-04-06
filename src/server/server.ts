@@ -21,6 +21,11 @@ interface Client {
   socket: WebSocket;
 };
 
+
+// the server-side protocol monkey
+//
+// this manages the network communication w/ the clients and shovels updates
+// into the game engine as appropriate.
 class Game<Cfg, I, S, A, CS, Eff, UE,
            Eng extends Engine<Cfg, I, S, A, CS, Eff, UE>>
 {
@@ -31,6 +36,8 @@ class Game<Cfg, I, S, A, CS, Eff, UE,
   engine: Eng;
   next_id: number
 
+  // start a new game w/ no players; the principal identifies the player who
+  // will be marked as a host once they join
   constructor(engine: Eng, owner: Principal, config: Cfg) {
     this.engine = engine
     this.config = config
@@ -40,6 +47,15 @@ class Game<Cfg, I, S, A, CS, Eff, UE,
     this.next_id = 0;
   }
 
+  // try to apply the given action originating with a particular client and
+  // transaction. the provided source and transaction id are used to mark the
+  // update message as a reply to the appropriate client
+  //
+  // if source is set, tx must also be set. If neither is set, the action
+  // originated from the server
+  //
+  // a return value of null indicates success; if the engine returns an error on
+  // `apply`, it is forward as the return value
   processUpdate(act: A | Protocol.ProtocolAction,
                 source: null | Client,
                 tx: null | Protocol.TxId): UE | null {
@@ -68,6 +84,8 @@ class Game<Cfg, I, S, A, CS, Eff, UE,
     }
   }
 
+  // process a hello message from a client. this marks them as present but not
+  // yet synchronized; they won't receive updates until they ask for a reset
   hello(client: Client, nick: string) {
     let user = {
       id: this.next_id,
@@ -89,6 +107,9 @@ class Game<Cfg, I, S, A, CS, Eff, UE,
     }));
   }
 
+  // process an update request from a client. the response will be marked w/ the
+  // transaction id provided here; either as an update messsage after we handle
+  // the update or as an update-reject message
   update(client: Client, tx: Protocol.TxId, int: I) {
     let bail = (ue: UE) => client.socket.send(JSON.stringify({
       verb: "update-reject",
@@ -107,6 +128,8 @@ class Game<Cfg, I, S, A, CS, Eff, UE,
     }
   }
 
+  // process a reset request from a client; we simply need to forward that
+  // client's state
   reset(client: Client) {
     let cs = this.engine.redact(this.state, client.user);
     client.sync = true;
@@ -117,12 +140,17 @@ class Game<Cfg, I, S, A, CS, Eff, UE,
     }));
   }
 
+  // after we are finished w/ a client session, close their socket and remove
+  // them from the list of clients
+  //
+  // TODO this should also be responsible for processing leaves if necessary
   disposeClient(client: Client) {
     client.sync = false;
     client.socket.close();
     this.clients.splice(this.clients.indexOf(client));
   }
 
+  // process a bye request from a client. simply reply 'bye' and disconnect
   bye(client: Client) {
     client.socket.send(JSON.stringify({
       verb: "bye"
@@ -130,11 +158,14 @@ class Game<Cfg, I, S, A, CS, Eff, UE,
     this.disposeClient(client);
   }
 
+  // kick a naughty client by sending them 'bye' and disconnecting
   kick(client: Client, reason: string) {
     console.log("kick: " + reason);
     this.bye(client)
   }
 
+  // handle a new connection for the given session and websocket;
+  // the game takes ownership of the websocket at this point
   connect(session: Session.Session, sock: WebSocket) {
     let client: Client = {
       principal: session.id,
@@ -163,12 +194,16 @@ class Game<Cfg, I, S, A, CS, Eff, UE,
   }
 }
 
+
+// a websocket server that can handle multiple games for a given engine
 export class GameServer<Cfg, I, S, A, CS, E, UE,
-                        Eng extends Engine<Cfg, I, S, A, CS, E, UE>> {
+                        Eng extends Engine<Cfg, I, S, A, CS, E, UE>>
+{
   engine: Eng;
   ws: WebSocket.Server;
   games: Record<GameId, Game<Cfg, I, S, A, CS, E, UE, Eng>>;
 
+  // attach to the provided http server to handle upgrade requests.
   constructor(engine: Eng, server: Http.Server) {
     this.engine = engine;
     this.ws = new WebSocket.Server({noServer: true});
@@ -239,6 +274,8 @@ export class GameServer<Cfg, I, S, A, CS, E, UE,
                               });
   }
 
+  // make a new room for a game with the given owner.
+  // returns the game id
   public beginGame(
     cfg: Cfg,
     owner: Principal
