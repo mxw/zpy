@@ -211,7 +211,6 @@ export abstract class Play {
     }
 
     let tractors : Tractor[] = [];
-    let total : number = 0;
 
     for (let chunk of chunks) {
       let base = chunk.reduce((base, tuple) => {
@@ -258,7 +257,6 @@ export abstract class Play {
         chunk[0].card,
         chunk.find(tuple => tuple.card.v_rank === Rank.N_off)?.card.osnt_suit
       ));
-      total += chunk.length * base;
 
       // ...then register the singletons.
       for (let tuple of chunk) {
@@ -270,7 +268,6 @@ export abstract class Play {
           tuple.card,
           tuple.card.osnt_suit
         ));
-        total += arity;
       }
     }
     return new Flight(tractors);
@@ -423,7 +420,7 @@ export class Hand {
   #I_osnt: Hand.Node[][][] = [];  // v_suit -> suit -> [nodes]
 
   constructor(readonly pile: CardPile) {
-    let p : {v_suit?: Suit, v_rank?: number} = {};
+    let p : {v_suit?: Suit, v_rank?: Rank} = {};
 
     for (let [card, n] of this.pile) {
       if (p.v_suit !== card.v_suit) {
@@ -867,11 +864,7 @@ export class Hand {
    * this.#I.  If it's not set, the result may be a temporary, so mutations
    * should not be attempted.
    */
-  private I(
-    v_suit: Suit,
-    v_rank: number,
-    suit?: Suit,
-  ): Hand.Node[] {
+  private I(v_suit: Suit, v_rank: Rank, suit?: Suit): Hand.Node[] {
     if (suit === null || suit === undefined) {
       return v_rank === Rank.N_off
         ? [].concat.apply([], this.#I_osnt[v_suit])

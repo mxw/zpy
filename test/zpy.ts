@@ -175,23 +175,23 @@ describe('ZPY', () => {
 
     /////////////////////////////////////////////////////////////////
 
-    let lead_impl = (p: ZPY.PlayerID, ...cards: [Suit, number][]) => {
+    let lead_impl = (p: ZPY.PlayerID, ...cards: [Suit, Rank][]) => {
       return zpy.lead_play(p, Play.extract(
         cards.map(([suit, rank]) => new Card(suit, rank, zpy.tr)),
         zpy.tr
       ).fl());
     };
-    let lead = (p: ZPY.PlayerID, ...cards: [Suit, number][]) => {
+    let lead = (p: ZPY.PlayerID, ...cards: [Suit, Rank][]) => {
       expect(lead_impl(p, ...cards)).to.be.undefined;
     };
 
-    let follow_impl = (p: ZPY.PlayerID, ...cards: [Suit, number][]) => {
+    let follow_impl = (p: ZPY.PlayerID, ...cards: [Suit, Rank][]) => {
       return zpy.follow_lead(p, Play.extract(
         cards.map(([suit, rank]) => new Card(suit, rank, zpy.tr)),
         zpy.tr
       ));
     };
-    let follow = (p: ZPY.PlayerID, ...cards: [Suit, number][]) => {
+    let follow = (p: ZPY.PlayerID, ...cards: [Suit, Rank][]) => {
       expect(follow_impl(p, ...cards)).to.be.undefined;
     };
 

@@ -29,9 +29,9 @@ export class ZPY {
   #players: ZPY.PlayerID[] = [];
   // rank information of each player; always valid
   #ranks: ZPY.PlayerMap<{
-    rank: number,  // current rank
-    start: number, // most recent starting rank
-    last_host: number, // last hosted rank
+    rank: Rank,  // current rank
+    start: Rank, // most recent starting rank
+    last_host: Rank, // last hosted rank
   }> = {};
   // number of decks
   #ndecks: number = 0;
@@ -161,7 +161,7 @@ export class ZPY {
     let deck: CardBase[] = [];
 
     for (let i = 0; i < n; ++i) {
-      for (let suit of [Suit.CLUBS, Suit.DIAMONDS, Suit.SPADES, Suit.HEARTS]) {
+      for (let suit of CardBase.SUITS) {
         for (let rank = 2; rank <= Rank.A; ++rank) {
           deck.push(new CardBase(suit, rank));
         }

@@ -49,27 +49,29 @@ function suit_to_color(suit: Suit): string {
  * Ranks corresponding to the off- and on-suit non-joker natural trumps are
  * included here.
  */
-export const Rank = {
-  J:     11,  // jack
-  Q:     12,  // queen
-  K:     13,  // king
-  A:     14,  // ace
-  N_off: 15,
-  N_on:  16,
-  S:     17,  // small joker
-  B:     18,  // big joker
+export enum Rank {
+  J = 11,  // jack
+  Q = 12,  // queen
+  K = 13,  // king
+  A = 14,  // ace
+  N_off = 15,
+  N_on  = 16,
+  S = 17,  // small joker
+  B = 18,  // big joker
 }
 
-export function rank_to_string(rank: number) {
+export function rank_to_string(rank: Rank) {
   if (rank <= 10) return '' + rank;
-  if (rank == Rank.J) return 'J';
-  if (rank == Rank.Q) return 'Q';
-  if (rank == Rank.K) return 'K';
-  if (rank == Rank.A) return 'A';
-  if (rank == Rank.N_off) return 'n';
-  if (rank == Rank.N_on) return 'N';
-  if (rank == Rank.S) return 'w';
-  if (rank == Rank.B) return 'W';
+  switch (rank) {
+    case Rank.J: return 'J';
+    case Rank.Q: return 'Q';
+    case Rank.K: return 'K';
+    case Rank.A: return 'A';
+    case Rank.N_off: return 'n';
+    case Rank.N_on: return 'N';
+    case Rank.S: return 'w';
+    case Rank.B: return 'W';
+  }
 }
 
 /*
@@ -83,13 +85,13 @@ export function rank_to_string(rank: number) {
 export class TrumpMeta {
   constructor(
     readonly suit: Suit,
-    readonly rank: number
+    readonly rank: Rank,
   ) {}
 
   /*
    * Virtualize/devirtualize a (suit, rank) pair.
    */
-  virt(suit: Suit, rank: number): [Suit, number] {
+  virt(suit: Suit, rank: Rank): [Suit, Rank] {
     return suit === this.suit
       ? (rank === this.rank && this.rank <= Rank.A
           ? [Suit.TRUMP, Rank.N_on]
@@ -101,7 +103,7 @@ export class TrumpMeta {
         )
       ;
   }
-  devirt(suit: Suit, rank: number, osnt_suit?: Suit): [Suit, number] {
+  devirt(suit: Suit, rank: Rank, osnt_suit?: Suit): [Suit, Rank] {
     switch (rank) {
       case Rank.N_off:
         assert(typeof osnt_suit === 'number');
@@ -120,7 +122,7 @@ export class TrumpMeta {
    *
    * This will happily keep incrementing past joker.
    */
-  inc_rank(rank: number): number {
+  inc_rank(rank: Rank): Rank {
     return rank + 1 === this.rank ? rank + 2 : rank + 1;
   }
 
@@ -135,7 +137,7 @@ export class TrumpMeta {
 export class CardBase {
   constructor(
     readonly suit: Suit,
-    readonly rank: number
+    readonly rank: Rank,
   ) {
     // natural trumps are not valid
     assert(rank !== Rank.N_off && rank !== Rank.N_on);
@@ -186,10 +188,10 @@ export class CardBase {
  * Essentially a raw playing card with "trumpiness" baked in.
  */
 export class Card extends CardBase {
-  readonly v_suit: Suit;   // virtual (trump-aware) suit
-  readonly v_rank: number; // virtual (trump-aware) rank
+  readonly v_suit: Suit; // virtual (trump-aware) suit
+  readonly v_rank: Rank; // virtual (trump-aware) rank
 
-  constructor(suit: Suit, rank: number, tr: TrumpMeta) {
+  constructor(suit: Suit, rank: Rank, tr: TrumpMeta) {
     super(suit, rank);
     [this.v_suit, this.v_rank] = tr.virt(suit, rank);
   }
@@ -456,7 +458,7 @@ export class CardPile {
     this.#tr = tr;
   }
 
-  private static index_of(suit: Suit, rank: number): number {
+  private static index_of(suit: Suit, rank: Rank): number {
     return suit * 13 + rank - 2;  // 1 for ace offset, 1 for 0-index
   }
 
