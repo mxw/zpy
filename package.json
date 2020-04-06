@@ -6,7 +6,7 @@
   "scripts": {
     "build": "webpack",
     "test": "mocha -r ts-node/register test/**/*.ts",
-    "run": "node --enable-source-maps ./dist/app/main.js"
+    "server": "node --enable-source-maps ./dist/app/main.js"
   },
   "author": "",
   "license": "MIT",
