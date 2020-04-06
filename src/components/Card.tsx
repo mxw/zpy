@@ -33,11 +33,14 @@ export type CardProps = {
   position: "absolute" | "fixed" | "relative";
   x: number;
   y: number;
+
+  [more:string]: any;
 }
 
-export const Card = (props: CardProps) => {
+export const Card = (props: CardProps ) => {
 
-  let width = props.width;
+  let {card, width, position, x, y, ...more} = props;
+
   let height = width / aspect_ratio;
 
   let svg_width = width / card_to_bounding_box_x;
@@ -48,13 +51,13 @@ export const Card = (props: CardProps) => {
 
   let border_radius = Math.ceil(border_radius_x_ratio * width + 1);
 
-  let svg = "url(/static/svg/cards/" + props.card + ".svg)";
+  let svg = "url(/static/svg/cards/" + card + ".svg)";
 
 
   return <div style={{
     position: props.position,
-    top: props.y,
-    left: props.x,
+    top: y,
+    left: x,
     width: width,
     height: height,
     backgroundImage: svg,
@@ -63,7 +66,9 @@ export const Card = (props: CardProps) => {
     borderRadius: border_radius + "px",
     boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.4)",
     border: "solid black 1px",
-  }}/>
+  }}
+    {...more}
+  />
 
 }
 

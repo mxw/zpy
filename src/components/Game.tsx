@@ -1,5 +1,6 @@
 import * as React from "react"
 
+import { SendIntent } from "components/context.ts"
 import { GameClient } from "protocol/client.ts"
 import * as CardEngine from "trivial-engine.ts"
 import { Board } from "components/Board.tsx"
@@ -23,6 +24,12 @@ export const Game = (props: {gameId: string}) => {
   if (gameState === null) {
     return <div>waiting</div>;
   } else {
-    return <Board state={gameState}/>
+    let sendIntent = (intent: CardEngine.Intent) => {
+      client.attempt(intent);
+    }
+
+    return <SendIntent.Provider value={sendIntent}>
+      <Board state={gameState}/>
+    </SendIntent.Provider>
   }
 }

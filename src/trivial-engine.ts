@@ -56,7 +56,7 @@ export const tIntent = t.union([
     y: t.number
   }),
 ])
-type Intent = t.TypeOf<typeof tIntent>;
+export type Intent = t.TypeOf<typeof tIntent>;
 
 export const tEffect = tAction
 export type Effect = Action
@@ -84,7 +84,7 @@ export const init = (): State => {
     y: 100,
     holder: null
   },{
-    id: 0,
+    id: 1,
     card: "dq",
     x: 120,
     y: 40,
