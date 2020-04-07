@@ -18,7 +18,7 @@ app.use(CookieParser());
 app.use(Session.middleware);
 
 let server = Http.createServer(app);
-let gs = new GameServer(CardEngine, server);
+let gs = new GameServer(CardEngine, server, "game");
 
 var activeGame: string | null = null;
 
@@ -35,6 +35,6 @@ app.get('/api/activeGame', (req, res) => {
 server.listen(8080, () => {
   console.log("listening on port 8080");
 
-  activeGame = gs.beginGame(undefined, "jgriego");
+  activeGame = gs.begin_game(undefined, "jgriego");
   console.log(activeGame);
 })

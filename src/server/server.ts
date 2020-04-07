@@ -3,7 +3,7 @@
  */
 
 import {Engine} from 'protocol/engine.ts'
-import * as Protocol from 'protocol/protocol.ts'
+import * as P from 'protocol/protocol.ts'
 import * as Session from 'server/session.ts'
 
 import * as WebSocket from 'ws'
@@ -16,69 +16,82 @@ export type Principal = Session.Id;
 
 interface Client {
   principal: Principal;
-  user: Protocol.User | null;
+  user: P.User | null;
   sync: boolean;
   socket: WebSocket;
 };
-
 
 // the server-side protocol monkey
 //
 // this manages the network communication w/ the clients and shovels updates
 // into the game engine as appropriate.
-class Game<Cfg, I, S, A, CS, Eff, UE,
-           Eng extends Engine<Cfg, I, S, A, CS, Eff, UE>>
-{
-  state: S;
-  owner: Principal;
-  clients: Client[];
-  config: Cfg;
+class Game<
+  Config,
+  Intent,
+  State,
+  Action,
+  ClientState,
+  Effect,
+  UpdateError,
+  Eng extends Engine<
+    Config,
+    Intent,
+    State,
+    Action,
+    ClientState,
+    Effect,
+    UpdateError
+  >
+> {
   engine: Eng;
-  next_id: number
+  config: Config;
+  owner: Principal;
+  state: State;
+  clients: Client[] = [];
+  next_id: number = 0;
 
   // start a new game w/ no players; the principal identifies the player who
   // will be marked as a host once they join
-  constructor(engine: Eng, owner: Principal, config: Cfg) {
-    this.engine = engine
-    this.config = config
-    this.owner = owner
-    this.state = this.engine.init(config)
-    this.clients = [];
-    this.next_id = 0;
+  constructor(engine: Eng, owner: Principal, config: Config) {
+    this.engine = engine;
+    this.config = config;
+    this.owner = owner;
+    this.state = this.engine.init(config);
   }
 
   // try to apply the given action originating with a particular client and
   // transaction. the provided source and transaction id are used to mark the
-  // update message as a reply to the appropriate client
+  // update message as a reply to the appropriate client.
   //
-  // if source is set, tx must also be set. If neither is set, the action
-  // originated from the server
+  // if `source` is set, `tx` must also be set. if neither is set, the action
+  // originated from the server.
   //
-  // a return value of null indicates success; if the engine returns an error on
-  // `apply`, it is forward as the return value
-  processUpdate(act: A | Protocol.ProtocolAction,
-                source: null | Client,
-                tx: null | Protocol.TxId): UE | null {
+  // a return value of null indicates success; if the engine returns an error
+  // on `apply`, it is forward as the return value
+  process_update(
+    act: Action | P.ProtocolAction,
+    source: null | Client,
+    tx: null | P.TxId
+  ): UpdateError | null {
     let newstate = this.engine.apply(this.state, act);
-    if (this.engine.tUpdateError.is(newstate)) {
-      return newstate;
-    } else {
-      this.state = newstate;
+    if (this.engine.tUpdateError.is(newstate)) return newstate;
 
-      for (let client of this.clients) {
-        if (!client.sync) continue;
+    this.state = newstate;
 
-        let eff = Protocol.tProtocolAction.is(act)
-          ? act
-          : this.engine.redact_action(this.state, act, client.user);
+    for (let client of this.clients) {
+      if (!client.sync) continue;
 
-        let forTx = client === source ? tx : null;
-        client.socket.send(JSON.stringify({
-          verb: "update",
-          tx: forTx,
-          effect: eff
-        }));
-      }
+      let eff = P.tProtocolAction.is(act)
+        ? act
+        : this.engine.redact_action(this.state, act, client.user);
+
+      let for_tx = client === source ? tx : null;
+
+      client.socket.send(JSON.stringify({
+        verb: "update",
+        tx: for_tx,
+        effect: eff,
+      }));
 
       return null;
     }
@@ -86,15 +99,13 @@ class Game<Cfg, I, S, A, CS, Eff, UE,
 
   // process a hello message from a client. this marks them as present but not
   // yet synchronized; they won't receive updates until they ask for a reset
-  hello(client: Client, nick: string) {
+  hello(client: Client, nick: string): void {
     let user = {
-      id: this.next_id,
-      nick: nick
+      id: this.next_id++,
+      nick: nick,
     };
 
-    this.next_id += 1;
-
-    let res = this.processUpdate({
+    let res = this.process_update({
       verb: 'user:join',
       who: user,
     }, client, null);
@@ -103,18 +114,18 @@ class Game<Cfg, I, S, A, CS, Eff, UE,
     client.user = user;
     client.socket.send(JSON.stringify({
       verb: "hello",
-      you: user
+      you: user,
     }));
   }
 
   // process an update request from a client. the response will be marked w/ the
   // transaction id provided here; either as an update messsage after we handle
   // the update or as an update-reject message
-  update(client: Client, tx: Protocol.TxId, int: I) {
-    let bail = (ue: UE) => client.socket.send(JSON.stringify({
+  update(client: Client, tx: P.TxId, int: Intent) {
+    let bail = (ue: UpdateError) => client.socket.send(JSON.stringify({
       verb: "update-reject",
       tx: tx,
-      reason: act
+      reason: act,
     }));
 
     let act = this.engine.listen(this.state, int, client.user);
@@ -122,7 +133,7 @@ class Game<Cfg, I, S, A, CS, Eff, UE,
       return bail(act);
     }
 
-    let err = this.processUpdate(act, client, tx);
+    let err = this.process_update(act, client, tx);
     if (err !== null) {
       return bail(err);
     }
@@ -136,7 +147,7 @@ class Game<Cfg, I, S, A, CS, Eff, UE,
     client.socket.send(JSON.stringify({
       verb: "reset",
       state: cs,
-      who: this.clients.map(cli => cli.user)
+      who: this.clients.map(cli => cli.user),
     }));
   }
 
@@ -144,7 +155,7 @@ class Game<Cfg, I, S, A, CS, Eff, UE,
   // them from the list of clients
   //
   // TODO this should also be responsible for processing leaves if necessary
-  disposeClient(client: Client) {
+  dispose(client: Client) {
     client.sync = false;
     client.socket.close();
     this.clients.splice(this.clients.indexOf(client));
@@ -155,7 +166,7 @@ class Game<Cfg, I, S, A, CS, Eff, UE,
     client.socket.send(JSON.stringify({
       verb: "bye"
     }));
-    this.disposeClient(client);
+    this.dispose(client);
   }
 
   // kick a naughty client by sending them 'bye' and disconnecting
@@ -164,28 +175,28 @@ class Game<Cfg, I, S, A, CS, Eff, UE,
     this.bye(client)
   }
 
-  // handle a new connection for the given session and websocket;
-  // the game takes ownership of the websocket at this point
+  // handle a new connection for the given session and websocket; the game
+  // takes ownership of the websocket at this point
   connect(session: Session.Session, sock: WebSocket) {
     let client: Client = {
       principal: session.id,
       user: null,
       sync: false,
-      socket: sock
+      socket: sock,
     };
 
     this.clients.push(client);
 
     sock.on('message', (data: string) => {
-      let payload = JSON.parse(data);
-      let tClientMessage = Protocol.tClientMessage(this.engine.tIntent);
+      let d = JSON.parse(data);
+      let tClientMessage = P.tClientMessage(this.engine.tIntent);
 
-      if (tClientMessage.is(payload)) {
-        switch (payload.verb) {
+      if (tClientMessage.is(d)) {
+        switch (d.verb) {
           case "req:bye": this.bye(client); break;
-          case "req:hello": this.hello(client, payload.nick); break;
+          case "req:hello": this.hello(client, d.nick); break;
           case "req:reset": this.reset(client); break
-          case "req:update": this.update(client, payload.tx, payload.intent); break;
+          case "req:update": this.update(client, d.tx, d.intent); break;
         }
       } else {
         this.kick(client, "invalid msg");
@@ -194,47 +205,62 @@ class Game<Cfg, I, S, A, CS, Eff, UE,
   }
 }
 
-
 // a websocket server that can handle multiple games for a given engine
-export class GameServer<Cfg, I, S, A, CS, E, UE,
-                        Eng extends Engine<Cfg, I, S, A, CS, E, UE>>
-{
+export class GameServer<
+  Config,
+  Intent,
+  State,
+  Action,
+  ClientState,
+  Effect,
+  UpdateError,
+  Eng extends Engine<
+    Config,
+    Intent,
+    State,
+    Action,
+    ClientState,
+    Effect,
+    UpdateError
+  >
+> {
   engine: Eng;
   ws: WebSocket.Server;
-  games: Record<GameId, Game<Cfg, I, S, A, CS, E, UE, Eng>>;
+  games: Record<
+    GameId,
+    Game<Config, Intent, State, Action, ClientState, Effect, UpdateError, Eng>
+  > = {};
 
   // attach to the provided http server to handle upgrade requests.
-  constructor(engine: Eng, server: Http.Server) {
+  constructor(engine: Eng, server: Http.Server, url_pref: string) {
     this.engine = engine;
     this.ws = new WebSocket.Server({noServer: true});
-    this.games = {};
 
     server.on('upgrade', async (req: Http.IncomingMessage, sock, head) => {
       let bail = (reason: string) => {
         console.log(reason)
         sock.write('HTTP/1.1 400 Bad Request\r\n' +
-            'X-Reason: ' + reason + '' +
-            '\r\n');
+                   'X-Reason: ' + reason + '\r\n');
         sock.destroy();
         return;
       };
 
       // is the url cromulent
-      let matches = req.url.match(/^\/game\/([^\/]*)\/$/);
+      let matches = req.url.match(`^\/${url_pref}\/([^\/]*)\/$`);
       if (matches === null) {
         return bail("invalid uri");
       }
 
       // is the game a real thing
-      let gameId = matches[1];
-      if (!(gameId in this.games)) {
-        return bail("no such game: " + gameId);
+      let game_id = matches[1];
+      if (!(game_id in this.games)) {
+        return bail("no such game: " + game_id);
       }
-      let game = this.games[gameId];
+      let game = this.games[game_id];
 
       // is this someone we know about
-      var id: string | null = null;
-      var token: string | null = null;
+      let id: string | null = null;
+      let token: string | null = null;
 
       for (let c of req.headers.cookie.split(';')) {
         // sketchy cookie parsing let's gooooo
@@ -252,7 +278,7 @@ export class GameServer<Cfg, I, S, A, CS, E, UE,
         return bail("no principal provided (log in first)");
       }
 
-      let session = Session.getSession(id);
+      let session = Session.get(id);
       if (session === null) {
         return bail("no session " + id);
       }
@@ -262,26 +288,27 @@ export class GameServer<Cfg, I, S, A, CS, E, UE,
       }
 
       this.ws.handleUpgrade(req, sock, head, async (ws: WebSocket) => {
-        this.ws.emit('connection', ws, req, game, session)
+        this.ws.emit('connection', ws, req, game, session);
       });
     });
 
-    this.ws.on('connection', (ws: WebSocket,
-                              req: Http.IncomingMessage,
-                              game: Game<Cfg, I, S, A, CS, E, UE, Eng>,
-                              session: Session.Session) => {
-                                return game.connect(session, ws);
-                              });
+    this.ws.on('connection', (
+      ws: WebSocket,
+      req: Http.IncomingMessage,
+      game: Game<Config, Intent, State, Action,
+                 ClientState, Effect, UpdateError, Eng>,
+      session: Session.Session
+    ) => {
+      return game.connect(session, ws);
+    });
   }
 
-  // make a new room for a game with the given owner.
-  // returns the game id
-  public beginGame(
-    cfg: Cfg,
-    owner: Principal
+  // make a new room for a game with the given owner. returns the game id.
+  public begin_game(
+    cfg: Config,
+    owner: Principal,
   ): GameId {
     let id = Uuid.v4();
-    let state = this.engine.init(cfg);
     this.games[id] = new Game(this.engine, owner, cfg);
     return id;
   }

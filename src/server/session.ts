@@ -10,28 +10,19 @@ export interface Session {
 
 let activeSessions: Record<Id, Session> = {};
 
-export function newSession(): Session {
+export function make(): Session {
   let id = Uuid.v4();
   let token = Crypto.randomBytes(64).toString("hex");
-
-  let session = {id, token};
-
-  activeSessions[id] = session;
-
-  return session;
+  return activeSessions[id] = {id, token};
 }
 
-export function getSession(id: Id): Session | null {
-  if (id in activeSessions) {
-    return activeSessions[id];
-  } else {
-    return null;
-  }
+export function get(id: Id): Session | null {
+  return (id in activeSessions) ? activeSessions[id] : null;
 }
 
 export function middleware(req: any, res: any, next: any) {
   let bail = () => {
-    let session = newSession();
+    let session = make();
     res.cookie("id", session.id);
     res.cookie("token", session.token);
     req.session = session;
@@ -43,7 +34,7 @@ export function middleware(req: any, res: any, next: any) {
   if (id === undefined) return bail();
   if (token === undefined) return bail();
 
-  let session = getSession(id);
+  let session = get(id);
   if (session === null) return bail();
 
   if (session.token !== token) return bail();
