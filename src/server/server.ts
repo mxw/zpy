@@ -92,9 +92,8 @@ class Game<
         tx: for_tx,
         effect: eff,
       }));
-
-      return null;
     }
+    return null;
   }
 
   // process a hello message from a client. this marks them as present but not
@@ -246,7 +245,7 @@ export class GameServer<
       };
 
       // is the url cromulent
-      let matches = req.url.match(`^\/${url_pref}\/([^\/]*)\/$`);
+      let matches = req.url.match(`^\/${url_pref}\/([^\\\/]*)\/$`);
       if (matches === null) {
         return bail("invalid uri");
       }
