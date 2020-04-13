@@ -2,3 +2,4 @@ dist
 node_modules
 node-env.nix
 node-packages.*.nix
+result
