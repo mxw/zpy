@@ -29,10 +29,12 @@ export const tAction = t.union([
   }),
   t.type({
     verb: t.literal('drop'),
+    actor: P.tUserId,
     target: tCardId,
   }),
   t.type({
     verb: t.literal('move'),
+    actor: P.tUserId,
     target: tCardId,
     x: t.number,
     y: t.number
@@ -66,13 +68,16 @@ export type ClientState = State
 
 export const tUpdateError = t.union([
   t.type({
-    why: t.literal('already-grabbed'),
+    why: t.literal('already-held'),
     who: P.tUserId,
   }),
   t.type({
     why: t.literal('not-held'),
     target: tCardId,
-  })
+  }),
+  t.type({
+    why: t.literal('nonsense')
+  }),
 ])
 export type UpdateError = t.TypeOf<typeof tUpdateError>;
 
@@ -95,25 +100,69 @@ export const init = (): State => {
 export const listen = (state: State, intent: Intent, who: P.User) => {
   switch(intent.verb) {
     case 'grab':
+    case 'drop':
       return {
         verb: intent.verb,
         target: intent.target,
         actor: who.id
       };
-    case 'drop':
     case 'move':
-      return intent;
+      return {
+        verb: intent.verb,
+        actor: who.id,
+        target: intent.target,
+        x: intent.x,
+        y: intent.y
+      }
   }
 }
 
-export const apply = (state: State, act: Action) => {
-  return state;
+export const apply = (state: State, act: Action | P.ProtocolAction): State | UpdateError => {
+  switch (act.verb) {
+    case 'user:join':
+    case 'user:part':
+      return state
+    case 'grab': {
+      let c = state.cards[act.target];
+      if (c === null) {
+        return {why: 'nonsense'};
+      }
+      if (c.holder === null) {
+        c.holder = act.actor;
+        return state;
+      }
+      return {why: 'already-held', who: c.holder};
+    } break;
+    case 'drop': {
+      let c = state.cards[act.target];
+      if (c === null) {
+        return {why: 'nonsense'};
+      }
+      if (c.holder !== act.actor) {
+        return {why: 'not-held', target: c.id};
+      }
+      c.holder = null;
+      return state;
+    } break;
+    case 'move': {
+      let c = state.cards[act.target];
+      if (c === null) {
+        return {why: 'nonsense'};
+      }
+      if (c.holder !== act.actor) {
+        return {why: 'not-held', target: c.id};
+      }
+      c.x = act.x;
+      c.y = act.y;
+      return state;
+    }
+  }
 }
 
 export const predict = (state: ClientState, intent: Intent, me: P.User): Effect => {
   return redact_action(state, listen(state, intent, me), me)
 }
-export const apply_client = (state: ClientState, eff: Effect, me: P.User): ClientState => {
+export const apply_client = (state: ClientState, eff: Effect, me: P.User): ClientState | UpdateError => {
   return apply(state, eff);
 }
 

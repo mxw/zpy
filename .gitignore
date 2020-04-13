@@ -1,5 +1,4 @@
 dist
 node_modules
-default.nix
 node-env.nix
-node-packages.nix
+node-packages.*.nix

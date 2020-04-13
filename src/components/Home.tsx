@@ -1,17 +1,19 @@
 import * as React from "react"
 import axios from "axios"
 
-import { Session } from "components/context.ts"
-import { Game } from "components/Game.tsx"
+import { GameUI } from "components/trivial-engine/GameUI.tsx"
 
 export const Home = (props: {}) => {
-
-  let session = React.useContext(Session);
+  let [session, setSession] = React.useState<string | null>(null);
   let [gameId, setGameId] = React.useState<string | null>(null);
 
   if (session === null) {
+    axios.get('/api/session')
+         .then(response => {
+           setSession(response.data);
+         });
     return <div>waiting</div>
-  };
+  }
 
   if (gameId === null) {
     axios.get("/api/activeGame")
@@ -21,5 +23,5 @@ export const Home = (props: {}) => {
     return <div>waiting</div>
   }
 
-  return <Game gameId={gameId}/>
+  return <GameUI gameId={gameId}/>
 }
