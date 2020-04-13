@@ -1,3 +1,5 @@
+import {isOk, isErr} from "utils/result.ts"
+
 import * as P from "protocol/protocol.ts"
 import {Engine} from "protocol/engine.ts"
 
@@ -131,11 +133,11 @@ export class GameClient<
   manifest(effect: Effect | P.ProtocolAction) {
     let result = this.engine.apply_client(this.state, effect, this.me);
 
-    if (this.engine.tUpdateError.is(result)) {
-      console.error(result);
+    if (isErr(result)) {
+      console.error(result.err);
       assert(false);
     } else {
-      this.state = result;
+      this.state = result.ok;
       this.waitState === "sync";
       this.onUpdate?.(this, effect);
     }
@@ -151,20 +153,20 @@ export class GameClient<
     let tx = this.next_tx++;
     let predicted = this.engine.predict(this.state, intent, this.me);
 
-    if (this.engine.tUpdateError.is(predicted)) {
-      console.error(predicted)
+    if (predicted === null) {
+      this.waitState === "pending-update"
+    } else if (isErr(predicted)) {
+      console.error(predicted.err)
       assert(false);
       return
-    } else if (predicted === null) {
-      this.waitState === "pending-update"
     } else {
-      this.manifest(predicted);
+      this.manifest(predicted.ok);
     }
 
     this.pending[tx] = {
       predicted: (predicted !== null),
       intent: intent,
-      eff: predicted
+      eff: (predicted as null | {ok: Effect})?.ok
     };
 
     this.socket.send(JSON.stringify({

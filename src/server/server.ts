@@ -2,6 +2,8 @@
  * Webserver implementation, wrapped around a generic game engine.
  */
 
+import {isOk, isErr} from 'utils/result.ts'
+
 import {Engine} from 'protocol/engine.ts'
 import * as P from 'protocol/protocol.ts'
 import * as Session from 'server/session.ts'
@@ -74,9 +76,9 @@ class Game<
     tx: null | P.TxId
   ): UpdateError | null {
     let newstate = this.engine.apply(this.state, act);
-    if (this.engine.tUpdateError.is(newstate)) return newstate;
+    if (isErr(newstate)) return newstate.err;
 
-    this.state = newstate;
+    this.state = newstate.ok;
 
     for (let client of this.clients) {
       if (!client.sync) continue;
@@ -128,11 +130,11 @@ class Game<
     }));
 
     let act = this.engine.listen(this.state, int, client.user);
-    if (this.engine.tUpdateError.is(act)) {
-      return bail(act);
+    if (isErr(act)) {
+      return bail(act.err);
     }
 
-    let err = this.process_update(act, client, tx);
+    let err = this.process_update(act.ok, client, tx);
     if (err !== null) {
       return bail(err);
     }

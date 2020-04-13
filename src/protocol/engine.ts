@@ -1,6 +1,7 @@
 import * as t from 'io-ts'
 
 import {ProtocolAction, User} from 'protocol/protocol.ts'
+import {Result} from 'utils/result.ts'
 
 // the engine interface defines how the application being managed by the server
 // deals with state transitions as users join, leave, and otherwise interact.
@@ -60,19 +61,18 @@ export interface Engine<
   init: (options: Config) => State;
 
   // lift a client-generated intent into an action that will be applied
-  listen: (state: State, int: Intent, who: User) => Action | UpdateError;
+  listen: (state: State, int: Intent, who: User) => Result<Action, UpdateError>;
 
   // compute the effect of an action on a given state or describe the reason why
   // the update is invalid, inapplicable, or otherwise problematic(TM)
-  apply: (state: State, act: Action | ProtocolAction) => State | UpdateError;
+  apply: (state: State, act: Action | ProtocolAction) => Result<State, UpdateError>;
 
   // predict the outcome of an intent based on the client state -- return null
   // if the outcome is unknown
-  predict: (state: ClientState, int: Intent, me: User) => Effect | UpdateError | null;
+  predict: (state: ClientState, int: Intent, me: User) => null | Result<Effect, UpdateError>;
 
   // same as apply, on the client side
-  apply_client: (state: ClientState, eff: Effect | ProtocolAction, me: User) =>
-    ClientState | UpdateError;
+  apply_client: (state: ClientState, eff: Effect | ProtocolAction, me: User) => Result<ClientState, UpdateError>;
 
   // redact a server-side state/action into a client-side state/action for the
   // given recipient
