@@ -15,17 +15,6 @@ import * as C from 'io-ts/lib/Codec'
 
 type TypeOf<T> = T extends C.Codec<infer A> ? A : never;
 
-function C_union<A extends ReadonlyArray<unknown>>(
-  ...members: { [K in keyof A]: C.Codec<A[K]> }
-): C.Codec<A[number]> {
-  return C.sum('_tag')(Object.fromEntries(
-    members.map((codec, i) => ['' + i, C.type({
-      _tag: C.literal('' + i),
-      val: codec,
-    })])
-  ));
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 
 export type Version = number;
@@ -44,69 +33,6 @@ export type TxID = number;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-export const RequestHello = C.type({
-  verb: C.literal("req:hello"),
-  nick: C.string,
-});
-
-export const Hello = C.type({
-  verb: C.literal("hello"),
-  you: User,
-});
-
-export const RequestBye = C.type({
-  verb: C.literal("req:bye"),
-});
-
-export const Bye = C.type({
-  verb: C.literal("bye"),
-});
-
-export const RequestReset = C.type({
-  verb: C.literal("req:reset"),
-});
-
-export function Reset<
-  ClientState extends C.Codec<any>
-> (cs: ClientState) {
-  return C.type({
-    verb: C.literal("reset"),
-    state: cs,
-    who: C.array(User),
-  });
-}
-
-export function RequestUpdate<
-  Intent extends C.Codec<any>
-> (int: Intent) {
-  return C.type({
-    verb: C.literal("req:update"),
-    tx: TxID,
-    intent: int,
-  });
-}
-
-export function Update<
-  Effect extends C.Codec<any>
-> (eff: Effect) {
-  return C.type({
-    verb: C.literal("update"),
-    tx: C.nullable(TxID),
-    effect: eff,
-  });
-}
-
-export function UpdateReject<
-  UpdateError extends C.Codec<any>
-> (ue: UpdateError) {
-  return C.type({
-    verb: C.literal("reject"),
-    tx: TxID,
-    reason: ue,
-  });
-}
-
-///////////////////////////////////////////////////////////////////////////////
 /*
  * protocol actions are special actions that interact with the engine but
  * manipulate non-engine data.  for now, just joins and parts.
@@ -132,6 +58,98 @@ export type ProtocolAction = Join | Part;
 
 ///////////////////////////////////////////////////////////////////////////////
 
+export const RequestHello = C.type({
+  verb: C.literal("req:hello"),
+  nick: C.string,
+});
+type RequestHello = TypeOf<typeof RequestHello>;
+
+export const Hello = C.type({
+  verb: C.literal("hello"),
+  you: User,
+});
+type Hello = TypeOf<typeof Hello>;
+
+export const RequestBye = C.type({
+  verb: C.literal("req:bye"),
+});
+type RequestBye = TypeOf<typeof RequestBye>;
+
+export const Bye = C.type({
+  verb: C.literal("bye"),
+});
+type Bye = TypeOf<typeof Bye>;
+
+export const RequestReset = C.type({
+  verb: C.literal("req:reset"),
+});
+type RequestReset = TypeOf<typeof RequestReset>;
+
+export function Reset<
+  ClientState extends C.Codec<any>
+> (cs: ClientState) {
+  return C.type({
+    verb: C.literal("reset"),
+    state: cs,
+    who: C.array(User),
+  });
+}
+type Reset<CS> = {
+  verb: "reset",
+  state: CS,
+  who: User[],
+};
+
+export function RequestUpdate<
+  Intent extends C.Codec<any>
+> (int: Intent) {
+  return C.type({
+    verb: C.literal("req:update"),
+    tx: TxID,
+    intent: int,
+  });
+};
+type RequestUpdate<Int> = {
+  verb: "req:update",
+  tx: TxID,
+  intent: Int
+};
+
+export function Update<
+  Effect extends C.Codec<any>
+> (eff: Effect) {
+  return C.type({
+    verb: C.literal("update"),
+    tx: C.nullable(TxID),
+    effect: C.sum("kind")({
+      protocol: C.type({kind: C.literal("protocol"), eff: ProtocolAction}),
+      engine: C.type({kind: C.literal("engine"), eff: eff}),
+    }),
+  });
+}
+type Update<Eff> = {
+  verb: "update",
+  tx: null | TxID,
+  effect: {kind: "protocol", eff: ProtocolAction} | {kind: "engine", eff: Eff},
+};
+
+export function UpdateReject<
+  UpdateError extends C.Codec<any>
+> (ue: UpdateError) {
+  return C.type({
+    verb: C.literal("reject"),
+    tx: TxID,
+    reason: ue,
+  });
+}
+type UpdateReject<UE> = {
+  verb: "reject",
+  tx: TxID,
+  reason: UE
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
 export function ServerMessage<
   ClientState extends C.Codec<any>,
   Effect extends C.Codec<any>,
@@ -141,10 +159,14 @@ export function ServerMessage<
     hello:  Hello,
     bye:    Bye,
     reset:  Reset(cs),
-    update: Update(C_union(eff, ProtocolAction)),
+    update: Update(eff),
     reject: UpdateReject(ue)
   });
 }
+export type ServerMessage<CS, Eff, UE> =
+  | Hello | Bye | Reset<CS>
+  | Update<Eff>
+  | UpdateReject<UE>;
 
 export function ClientMessage<
   Intent extends C.Codec<any>
@@ -156,6 +178,8 @@ export function ClientMessage<
     'req:update': RequestUpdate(int)
   });
 }
+export type ClientMessage<Int> =
+  RequestHello | RequestBye | RequestReset | RequestUpdate<Int>;
 
 ///////////////////////////////////////////////////////////////////////////////
 /*
