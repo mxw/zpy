@@ -18,7 +18,7 @@
     "express": "*",
     "uuid": "*",
     "ws": "*",
-    "io-ts": "*",
+    "io-ts": ">=2.2",
     "fp-ts": "*"
   },
   "devDependencies": {
@@ -26,7 +26,6 @@
     "react": "*",
     "react-dom": "*",
     "react-router-dom": "*",
-
     "typescript": "*",
     "webpack": "*",
     "webpack-cli": "*",
@@ -36,7 +35,6 @@
     "source-map-loader": "*",
     "mocha": "*",
     "chai": "*",
-
     "@types/axios": "*",
     "@types/cookie-parser": "*",
     "@types/react": "*",
