@@ -1,7 +1,6 @@
 import {isOk, isErr} from "utils/result.ts"
 
 import * as P from "protocol/protocol.ts"
-import * as C from "io-ts/lib/Codec"
 import {Engine} from "protocol/engine.ts"
 
 import assert from "assert"
@@ -93,7 +92,9 @@ export class GameClient<
         this.engine.UpdateError
       );
 
-      P.on_decode(ServerMessage, payload, (msg: P.ServerMessage<ClientState, Effect, UpdateError>) => {
+      P.on_decode(ServerMessage, payload, (
+        msg: P.ServerMessage<ClientState, Effect, UpdateError>
+      ) => {
         switch (msg.verb) {
           case "hello":
             this.me = msg.you;

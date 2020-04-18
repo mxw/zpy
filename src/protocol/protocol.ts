@@ -32,7 +32,6 @@ export const TxID = C.number;
 export type TxID = number;
 
 ///////////////////////////////////////////////////////////////////////////////
-
 /*
  * protocol actions are special actions that interact with the engine but
  * manipulate non-engine data.  for now, just joins and parts.
@@ -94,9 +93,9 @@ export function Reset<
     who: C.array(User),
   });
 }
-type Reset<CS> = {
+type Reset<ClientState> = {
   verb: "reset",
-  state: CS,
+  state: ClientState,
   who: User[],
 };
 
@@ -109,10 +108,10 @@ export function RequestUpdate<
     intent: int,
   });
 };
-type RequestUpdate<Int> = {
+type RequestUpdate<Intent> = {
   verb: "req:update",
   tx: TxID,
-  intent: Int
+  intent: Intent,
 };
 
 export function Update<
@@ -122,15 +121,29 @@ export function Update<
     verb: C.literal("update"),
     tx: C.nullable(TxID),
     effect: C.sum("kind")({
-      protocol: C.type({kind: C.literal("protocol"), eff: ProtocolAction}),
-      engine: C.type({kind: C.literal("engine"), eff: eff}),
+      protocol: C.type({
+        kind: C.literal("protocol"),
+        eff: ProtocolAction
+      }),
+      engine: C.type({
+        kind: C.literal("engine"),
+        eff: eff
+      }),
     }),
   });
 }
-type Update<Eff> = {
+type Update<Effect> = {
   verb: "update",
   tx: null | TxID,
-  effect: {kind: "protocol", eff: ProtocolAction} | {kind: "engine", eff: Eff},
+  effect:
+    | {
+      kind: "protocol",
+      eff: ProtocolAction
+    }
+    | {
+      kind: "engine",
+      eff: Effect
+    },
 };
 
 export function UpdateReject<
@@ -142,10 +155,10 @@ export function UpdateReject<
     reason: ue,
   });
 }
-type UpdateReject<UE> = {
+type UpdateReject<UpdateError> = {
   verb: "reject",
   tx: TxID,
-  reason: UE
+  reason: UpdateError,
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -163,10 +176,8 @@ export function ServerMessage<
     reject: UpdateReject(ue)
   });
 }
-export type ServerMessage<CS, Eff, UE> =
-  | Hello | Bye | Reset<CS>
-  | Update<Eff>
-  | UpdateReject<UE>;
+export type ServerMessage<ClientState, Effect, UpdateError> =
+  Hello | Bye | Reset<ClientState> | Update<Effect> | UpdateReject<UpdateError>;
 
 export function ClientMessage<
   Intent extends C.Codec<any>
@@ -178,8 +189,8 @@ export function ClientMessage<
     'req:update': RequestUpdate(int)
   });
 }
-export type ClientMessage<Int> =
-  RequestHello | RequestBye | RequestReset | RequestUpdate<Int>;
+export type ClientMessage<Intent> =
+  RequestHello | RequestBye | RequestReset | RequestUpdate<Intent>;
 
 ///////////////////////////////////////////////////////////////////////////////
 /*
