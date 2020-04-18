@@ -1,137 +1,166 @@
-import * as WebSocket from 'ws'
-import * as t from 'io-ts'
+/*
+ * toplevel protocol for communication between the server and clients.
+ */
 
-// this file defines the protocol for communication between the clients and
-// server and also the interface between the protocol-focused code and the
-// game-focused code (see Engine below)
+import { pipe } from 'fp-ts/lib/pipeable'
+import { fold } from 'fp-ts/lib/Either'
+
+import * as t from 'io-ts'
+import * as C from 'io-ts/lib/Codec'
+
+///////////////////////////////////////////////////////////////////////////////
+/*
+ * band-aids for io-ts.
+ */
+
+type TypeOf<T> = T extends C.Codec<infer A> ? A : never;
+
+///////////////////////////////////////////////////////////////////////////////
 
 export type Version = number;
 
-export const tUserId = t.number;
-export type UserId = number;
+export const UserID = C.number;
+export type UserID = number;
 
-export const tUser = t.type({
-  id: t.number,
-  nick: t.string,
+export const User = C.type({
+  id: C.number,
+  nick: C.string,
 });
-export type User = t.TypeOf<typeof tUser>;
+export type User = TypeOf<typeof User>;
 
-export const tTxId = t.number;
-export type TxId = number;
+export const TxID = C.number;
+export type TxID = number;
 
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
-export const tRequestHello = t.type({
-  verb: t.literal("req:hello"),
-  nick: t.string,
-});
-
-export const tHello = t.type({
-  verb: t.literal("hello"),
-  you: tUser,
+export const RequestHello = C.type({
+  verb: C.literal("req:hello"),
+  nick: C.string,
 });
 
-export const tRequestBye = t.type({
-  verb: t.literal("req:bye"),
+export const Hello = C.type({
+  verb: C.literal("hello"),
+  you: User,
 });
 
-export const tBye = t.type({
-  verb: t.literal("bye"),
+export const RequestBye = C.type({
+  verb: C.literal("req:bye"),
 });
 
-////////////////////////////////////////////////////////////////////////////////
-
-export const tRequestReset = t.type({
-  verb: t.literal("req:reset"),
+export const Bye = C.type({
+  verb: C.literal("bye"),
 });
 
-export function tReset<
-  ClientState extends t.Mixed
+export const RequestReset = C.type({
+  verb: C.literal("req:reset"),
+});
+
+export function Reset<
+  ClientState extends C.Codec<any>
 > (cs: ClientState) {
-  return t.type({
-    verb: t.literal("reset"),
+  return C.type({
+    verb: C.literal("reset"),
     state: cs,
-    who: t.array(tUser),
+    who: C.array(User),
   });
 }
 
-export function tRequestUpdate<
-  Intent extends t.Mixed
+export function RequestUpdate<
+  Intent extends C.Codec<any>
 > (int: Intent) {
-  return t.type({
-    verb: t.literal("req:update"),
-    tx: tTxId,
+  return C.type({
+    verb: C.literal("req:update"),
+    tx: TxID,
     intent: int,
   });
 }
 
-export function tUpdate<
-  Effect extends t.Mixed
+export function Update<
+  Effect extends C.Codec<any>
 > (eff: Effect) {
-  return t.type({
-    verb: t.literal("update"),
-    tx: t.union([t.null, tTxId]),
+  return C.type({
+    verb: C.literal("update"),
+    tx: C.nullable(TxID),
     effect: eff,
   });
 }
 
-export function tUpdateReject<
-  UpdateError extends t.Mixed
+export function UpdateReject<
+  UpdateError extends C.Codec<any>
 > (ue: UpdateError) {
-  return t.type({
-    verb: t.literal("update-reject"),
-    tx: tTxId,
+  return C.type({
+    verb: C.literal("reject"),
+    tx: TxID,
     reason: ue,
   });
 }
 
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/*
+ * protocol actions are special actions that interact with the engine but
+ * manipulate non-engine data.  for now, just joins and parts.
+ */
 
-// protocol actions are special actions that interact with the engine but
-// manipulate non-engine data. for now, just joins and parts
-
-export const tJoin = t.type({
-  verb: t.literal("user:join"),
-  who: tUser,
+export const Join = C.type({
+  verb: C.literal("user:join"),
+  who: User,
 });
-export type Join = t.TypeOf<typeof tJoin>
+export type Join = TypeOf<typeof Join>
 
-export const tPart = t.type({
-  verb: t.literal("user:part"),
-  id: t.number,
+export const Part = C.type({
+  verb: C.literal("user:part"),
+  id: C.number,
 });
-export type Part = t.TypeOf<typeof tPart>
+export type Part = TypeOf<typeof Part>
 
-export const tProtocolAction = t.union([tJoin, tPart]);
+export const ProtocolAction = C.sum('verb')({
+  'user:join': Join,
+  'user:part': Part,
+});
 export type ProtocolAction = Join | Part;
 
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
-export function tServerMessage<
-  ClientState extends t.Mixed,
-  Effect extends t.Mixed,
-  UpdateError extends t.Mixed,
+export function ServerMessage<
+  ClientState extends C.Codec<any>,
+  Effect extends C.Codec<any>,
+  UpdateError extends C.Codec<any>,
 > (cs: ClientState, eff: Effect, ue: UpdateError) {
-  return t.union([
-    tHello,
-    tBye,
-    tReset(cs),
-    tUpdate(t.union([eff, tProtocolAction])),
-    tUpdateReject(ue)
-  ]);
+  return C.sum('verb')({
+    hello:  Hello,
+    bye:    Bye,
+    reset:  Reset(cs),
+    update: Update(eff),  // TODO: need to union in ProtocolAction here
+    reject: UpdateReject(ue)
+  });
 }
 
-export function tClientMessage<
-  Intent extends t.Mixed
+export function ClientMessage<
+  Intent extends C.Codec<any>
 > (int: Intent) {
-  return t.union([
-    tRequestHello,
-    tRequestBye,
-    tRequestReset,
-    tRequestUpdate(int)
-  ]);
+  return C.sum('verb')({
+    'req:hello': RequestHello,
+    'req:bye': RequestBye,
+    'req:reset': RequestReset,
+    'req:update': RequestUpdate(int)
+  });
 }
 
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/*
+ * interface for interacting with decode results.
+ *
+ * io-ts just leaks its fp-ts representations; this hides them again.
+ */
 
-
+export function on_decode<R1, R2, Codec extends C.Codec<any>>(
+  codec: Codec,
+  input: unknown,
+  onsuccess: (value: TypeOf<Codec>) => R1,
+  onfail?: R2 | (() => R2),
+): R1 | R2 {
+  return pipe(codec.decode(input), fold(
+    (_): R1 | R2 => onfail instanceof Function ? onfail() : onfail,
+    (v): R1 | R2 => onsuccess(v)
+  ));
+}

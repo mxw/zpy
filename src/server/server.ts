@@ -73,7 +73,7 @@ class Game<
   process_update(
     act: Action | P.ProtocolAction,
     source: null | Client,
-    tx: null | P.TxId
+    tx: null | P.TxID
   ): UpdateError | null {
     let newstate = this.engine.apply(this.state, act);
     if (isErr(newstate)) return newstate.err;
@@ -83,10 +83,12 @@ class Game<
     for (let client of this.clients) {
       if (!client.sync) continue;
 
-      let eff = P.tProtocolAction.is(act)
-        ? act
-        : this.engine.redact_action(this.state, act, client.user);
-
+      let eff = P.on_decode(
+        this.engine.Action,
+        act,
+        act => this.engine.redact_action(this.state, act, client.user),
+        act as P.ProtocolAction
+      );
       let for_tx = client === source ? tx : null;
 
       client.socket.send(JSON.stringify({
@@ -122,7 +124,7 @@ class Game<
   // process an update request from a client. the response will be marked w/ the
   // transaction id provided here; either as an update messsage after we handle
   // the update or as an update-reject message
-  update(client: Client, tx: P.TxId, int: Intent) {
+  update(client: Client, tx: P.TxID, int: Intent) {
     let bail = (ue: UpdateError) => client.socket.send(JSON.stringify({
       verb: "update-reject",
       tx: tx,
@@ -190,18 +192,18 @@ class Game<
 
     sock.on('message', (data: string) => {
       let d = JSON.parse(data);
-      let tClientMessage = P.tClientMessage(this.engine.tIntent);
+      let ClientMessage = P.ClientMessage(this.engine.Intent);
 
-      if (tClientMessage.is(d)) {
+      P.on_decode(ClientMessage, d, msg => {
         switch (d.verb) {
           case "req:bye": this.bye(client); break;
           case "req:hello": this.hello(client, d.nick); break;
           case "req:reset": this.reset(client); break
           case "req:update": this.update(client, d.tx, d.intent); break;
         }
-      } else {
+      }, () => {
         this.kick(client, "invalid msg");
-      }
+      });
     })
   }
 }

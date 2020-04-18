@@ -53,10 +53,10 @@ export class GameClient<
   me: null | P.User = null;
 
   // the next unused transaction id
-  next_tx: P.TxId = 0;
+  next_tx: P.TxID = 0;
 
   // update requests that are outstanding
-  pending: Record<P.TxId, {
+  pending: Record<P.TxID, {
     intent: Intent;
     predicted: boolean
     eff: null | Effect; // null iff predicted is false
@@ -85,47 +85,48 @@ export class GameClient<
 
     this.socket.onmessage = (ev: MessageEvent) => {
       let payload = JSON.parse(ev.data);
-      let tServerMessage = P.tServerMessage(
-        this.engine.tClientState,
-        this.engine.tEffect,
-        this.engine.tUpdateError
+
+      let ServerMessage = P.ServerMessage(
+        this.engine.ClientState,
+        this.engine.Effect,
+        this.engine.UpdateError
       );
 
-      if (!tServerMessage.is(payload)) return;
-
-      switch (payload.verb) {
-        case "hello":
-          this.me = payload.you;
-          this.socket.send(JSON.stringify({
-            verb: "req:reset"
-          }));
-          break;
-        case "bye":
-          this.socket.close();
-          this.onClose?.(this);
-          break
-        case "reset":
-          this.state = payload.state;
-          this.waitState = "sync";
-          this.users = payload.who;
-          this.onReset?.(this);
-          break;
-        case "update": {
-          assert(this.state !== null);
-          assert(this.waitState === "pending-update" ||
-                 this.waitState === "sync");
-          if (payload.tx !== null && payload.tx in this.pending) {
-            let pending = this.pending[payload.tx];
-            delete this.pending[payload.tx];
-            if (pending.predicted) {
-              // don't bother processing this update if we predicted it
-              break;
+      P.on_decode(ServerMessage, payload, msg => {
+        switch (msg.verb) {
+          case "hello":
+            this.me = msg.you;
+            this.socket.send(JSON.stringify({
+              verb: "req:reset"
+            }));
+            break;
+          case "bye":
+            this.socket.close();
+            this.onClose?.(this);
+            break
+          case "reset":
+            this.state = msg.state;
+            this.waitState = "sync";
+            this.users = msg.who;
+            this.onReset?.(this);
+            break;
+          case "update": {
+            assert(this.state !== null);
+            assert(this.waitState === "pending-update" ||
+                   this.waitState === "sync");
+            if (msg.tx !== null && msg.tx in this.pending) {
+              let pending = this.pending[msg.tx];
+              delete this.pending[msg.tx];
+              if (pending.predicted) {
+                // don't bother processing this update if we predicted it
+                break;
+              }
             }
+            this.manifest(msg.effect);
+            break;
           }
-          this.manifest(payload.effect);
-          break;
         }
-      }
+      });
     }
   }
 

@@ -1,86 +1,91 @@
-import * as t from 'io-ts';
 import * as P from 'protocol/protocol.ts';
 import { Result, Ok, Err, assertOk } from 'utils/result.ts'
 
-export const tConfig = t.nullType;
-export type Config = t.TypeOf<typeof tConfig>;
+import * as C from 'io-ts/lib/Codec'
 
-export const tCardId = t.number;
-export type CardId = number;
+type TypeOf<T> = T extends C.Codec<infer A> ? A : never;
 
-export const tCard = t.type({
-  id: tCardId,
-  card: t.string,
-  x: t.number,
-  y: t.number,
-  holder: t.union([t.null, P.tUserId])
+///////////////////////////////////////////////////////////////////////////////
+
+export const Config = C.literal(null);
+export type Config = TypeOf<typeof Config>;
+
+export const CardID = C.number;
+export type CardID = number;
+
+export const Card = C.type({
+  id: CardID,
+  card: C.string,
+  x: C.number,
+  y: C.number,
+  holder: C.nullable(P.UserID),
 });
-export type Card = t.TypeOf<typeof tCard>;
+export type Card = TypeOf<typeof Card>;
 
-export const tState = t.type({
-  cards: t.array(tCard)
+export const State = C.type({
+  cards: C.array(Card)
 });
-export type State = t.TypeOf<typeof tState>;
+export type State = TypeOf<typeof State>;
 
-export const tAction = t.union([
-  t.type({
-    verb: t.literal('grab'),
-    actor: P.tUserId,
-    target: tCardId,
+export const Action = C.sum('verb')({
+  grab: C.type({
+    verb: C.literal('grab'),
+    actor: P.UserID,
+    target: CardID,
   }),
-  t.type({
-    verb: t.literal('drop'),
-    actor: P.tUserId,
-    target: tCardId,
+  drop: C.type({
+    verb: C.literal('drop'),
+    actor: P.UserID,
+    target: CardID,
   }),
-  t.type({
-    verb: t.literal('move'),
-    actor: P.tUserId,
-    target: tCardId,
-    x: t.number,
-    y: t.number
-  })
-]);
-export type Action = t.TypeOf<typeof tAction>;
+  move: C.type({
+    verb: C.literal('move'),
+    actor: P.UserID,
+    target: CardID,
+    x: C.number,
+    y: C.number,
+  }),
+});
+export type Action = TypeOf<typeof Action>;
 
-export const tIntent = t.union([
-  t.type({
-    verb: t.literal('grab'),
-    target: tCardId
+export const Intent = C.sum('verb')({
+  grab: C.type({
+    verb: C.literal('grab'),
+    target: CardID
   }),
-  t.type({
-    verb: t.literal('drop'),
-    target: tCardId
+  drop: C.type({
+    verb: C.literal('drop'),
+    target: CardID
   }),
-  t.type({
-    verb: t.literal('move'),
-    target: tCardId,
-    x: t.number,
-    y: t.number
+  move: C.type({
+    verb: C.literal('move'),
+    target: CardID,
+    x: C.number,
+    y: C.number,
   }),
-])
-export type Intent = t.TypeOf<typeof tIntent>;
+});
+export type Intent = TypeOf<typeof Intent>;
 
-export const tEffect = tAction
-export type Effect = Action
+export const Effect = Action;
+export type Effect = Action;
 
-export const tClientState = tState
-export type ClientState = State
+export const ClientState = State;
+export type ClientState = State;
 
-export const tUpdateError = t.union([
-  t.type({
-    why: t.literal('already-held'),
-    who: P.tUserId,
+export const UpdateError = C.sum('why')({
+  'already-held': C.type({
+    why: C.literal('already-held'),
+    who: P.UserID,
   }),
-  t.type({
-    why: t.literal('not-held'),
-    target: tCardId,
+  'not-held': C.type({
+    why: C.literal('not-held'),
+    target: CardID,
   }),
-  t.type({
-    why: t.literal('nonsense')
+  nonsense: C.type({
+    why: C.literal('nonsense')
   }),
-])
-export type UpdateError = t.TypeOf<typeof tUpdateError>;
+});
+export type UpdateError = TypeOf<typeof UpdateError>;
 
 export const init = (): State => {
   return {cards: [{
@@ -98,27 +103,32 @@ export const init = (): State => {
   }]};
 }
 
-export const listen = (state: State, intent: Intent, who: P.User): Result<Action, UpdateError> => {
+export const listen = (
+  state: State,
+  intent: Intent,
+  who: P.User
+): Result<Action, UpdateError> => {
   switch(intent.verb) {
     case 'grab':
-    case 'drop':
-      return Ok({
-        verb: intent.verb,
-        target: intent.target,
-        actor: who.id
-      });
-    case 'move':
-      return Ok({
-        verb: intent.verb,
-        actor: who.id,
-        target: intent.target,
-        x: intent.x,
-        y: intent.y
-      });
+    case 'drop': return Ok({
+      verb: intent.verb,
+      target: intent.target,
+      actor: who.id,
+    });
+    case 'move': return Ok({
+      verb: intent.verb,
+      actor: who.id,
+      target: intent.target,
+      x: intent.x,
+      y: intent.y,
+    });
   }
 }
 
-export const apply = (state: State, act: Action | P.ProtocolAction): Result<State, UpdateError> => {
+export const apply = (
+  state: State,
+  act: Action | P.ProtocolAction
+): Result<State, UpdateError> => {
   switch (act.verb) {
     case 'user:join':
     case 'user:part':
@@ -163,10 +173,18 @@ export const apply = (state: State, act: Action | P.ProtocolAction): Result<Stat
   }
 }
 
-export const predict = (state: ClientState, intent: Intent, me: P.User): Result<Effect, UpdateError> => {
+export const predict = (
+  state: ClientState,
+  intent: Intent,
+  me: P.User
+): Result<Effect, UpdateError> => {
   return Ok(redact_action(state, assertOk(listen(state, intent, me)), me));
 }
-export const apply_client = (state: ClientState, eff: Effect, me: P.User): Result<ClientState, UpdateError> => {
+export const apply_client = (
+  state: ClientState,
+  eff: Effect,
+  me: P.User
+): Result<ClientState, UpdateError> => {
   return apply(state, eff);
 }
 
