@@ -139,9 +139,9 @@ export function ClientMessage<
   Intent extends C.Codec<any>
 > (int: Intent) {
   return C.sum('verb')({
-    'req:hello': RequestHello,
-    'req:bye': RequestBye,
-    'req:reset': RequestReset,
+    'req:hello':  RequestHello,
+    'req:bye':    RequestBye,
+    'req:reset':  RequestReset,
     'req:update': RequestUpdate(int)
   });
 }
