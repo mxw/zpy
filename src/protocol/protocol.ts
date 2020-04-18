@@ -15,6 +15,17 @@ import * as C from 'io-ts/lib/Codec'
 
 type TypeOf<T> = T extends C.Codec<infer A> ? A : never;
 
+function C_union<A extends ReadonlyArray<unknown>>(
+  ...members: { [K in keyof A]: C.Codec<A[K]> }
+): C.Codec<A[number]> {
+  return C.sum('_tag')(Object.fromEntries(
+    members.map((codec, i) => ['' + i, C.type({
+      _tag: C.literal('' + i),
+      val: codec,
+    })])
+  ));
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 export type Version = number;
@@ -130,7 +141,7 @@ export function ServerMessage<
     hello:  Hello,
     bye:    Bye,
     reset:  Reset(cs),
-    update: Update(eff),  // TODO: need to union in ProtocolAction here
+    update: Update(C_union(eff, ProtocolAction)),
     reject: UpdateReject(ue)
   });
 }

@@ -122,7 +122,7 @@ export class GameClient<
                 break;
               }
             }
-            this.manifest(msg.effect);
+            this.manifest(msg.effect.val);
             break;
           }
         }
