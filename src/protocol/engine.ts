@@ -54,9 +54,9 @@ export interface Engine<
   Config: Codec<Config>;
   Intent: Codec<Intent>;
   State: Codec<State>;
-  Action: Codec<Action>;
+  Action: (state: State) => Codec<Action>;
   ClientState: Codec<ClientState>;
-  Effect: Codec<Effect>;
+  Effect: (state: ClientState) => Codec<Effect>;
   UpdateError: Codec<UpdateError>;
 
   // generate the initial engine state

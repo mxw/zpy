@@ -84,7 +84,7 @@ class Game<
       if (!client.sync) continue;
 
       let eff = P.on_decode(
-        this.engine.Action,
+        this.engine.Action(this.state),
         act,
         act => this.engine.redact_action(this.state, act, client.user),
         act as P.ProtocolAction

@@ -59,6 +59,23 @@ export class Tractor {
   ) {}
 
   /*
+   * Check whether this tractor overflows.
+   */
+  validate(tr: TrumpMeta) {
+    if (this.osnt_suit === Suit.TRUMP ||
+        this.osnt_suit === tr.suit) {
+      return false;
+    }
+    let i = 0;
+
+    for (let [c, _] of this.gen_counts(tr)) {
+      // if we hit big joker, it must be the last card in the tractor
+      if (++i < this.length && c.rank === Rank.B) return false;
+    }
+    return true;
+  }
+
+  /*
    * Property getters.
    */
   get length(): number { return this.shape.len; }
@@ -290,8 +307,7 @@ export class Flight extends Play {
 
   constructor(tractors: Tractor[]) {
     super();
-    assert(tractors.length > 0);
-    assert(tractors.every(t => t.v_suit === tractors[0].v_suit));
+    assert(Flight.validate(tractors));
 
     this.tractors = tractors.sort((l, r) => {
       let shape_cmp = Tractor.Shape.compare(l.shape, r.shape);
@@ -299,6 +315,11 @@ export class Flight extends Play {
       return -Tractor.compare(l, r);
     });
     this.count = this.tractors.reduce((sum, t) => sum + t.count, 0);
+  }
+
+  static validate(tractors: Tractor[]) {
+    return tractors.length > 0 &&
+           tractors.every(t => t.v_suit === tractors[0].v_suit);
   }
 
   get v_suit(): Suit { return this.tractors[0].v_suit; }
@@ -349,21 +370,18 @@ export class Flight extends Play {
  * A trivial, off-suit follow.
  */
 export class Toss extends Play {
-  #cards: CardBase[];
-
-  constructor(cards: CardBase[]) {
+  constructor(readonly cards: CardBase[]) {
     super();
     assert(cards.length > 0);
-    this.#cards = cards;
   }
 
-  get count(): number { return this.#cards.length; }
+  get count(): number { return this.cards.length; }
 
   * gen_counts(tr: TrumpMeta): Generator<[Card, number], void> {
-    for (let c of this.#cards) yield [new Card(c.suit, c.rank, tr), 1];
+    for (let c of this.cards) yield [new Card(c.suit, c.rank, tr), 1];
   }
   * gen_cards(tr: TrumpMeta): Generator<Card, void> {
-    for (let c of this.#cards) yield new Card(c.suit, c.rank, tr);
+    for (let c of this.cards) yield new Card(c.suit, c.rank, tr);
   }
 
   beats(other: Play): boolean {
@@ -372,7 +390,7 @@ export class Toss extends Play {
   }
 
   toString(tr: TrumpMeta, color: boolean = false): string {
-    return this.#cards.map(c => `[${c.toString(color)}]`).join('');
+    return this.cards.map(c => `[${c.toString(color)}]`).join('');
   }
 }
 

@@ -27,7 +27,7 @@ export const State = C.type({
 });
 export type State = TypeOf<typeof State>;
 
-export const Action = C.sum('verb')({
+export const Action_ = C.sum('verb')({
   grab: C.type({
     verb: C.literal('grab'),
     actor: P.UserID,
@@ -46,7 +46,8 @@ export const Action = C.sum('verb')({
     y: C.number,
   }),
 });
-export type Action = TypeOf<typeof Action>;
+export const Action = (_: State) => Action_;
+export type Action = TypeOf<typeof Action_>;
 
 export const Intent = C.sum('verb')({
   grab: C.type({

@@ -88,7 +88,7 @@ export class GameClient<
 
       let ServerMessage = P.ServerMessage(
         this.engine.ClientState,
-        this.engine.Effect,
+        this.engine.Effect(this.state),
         this.engine.UpdateError
       );
 

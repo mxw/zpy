@@ -3,18 +3,22 @@
  */
 
 import { pipe } from 'fp-ts/lib/pipeable'
-import { fold } from 'fp-ts/lib/Either'
+import { fold, left, right } from 'fp-ts/lib/Either'
 
 import * as t from 'io-ts'
 import * as C from 'io-ts/lib/Codec'
 import * as D from 'io-ts/lib/Decoder'
+import * as E from 'io-ts/lib/Encoder'
 
 ///////////////////////////////////////////////////////////////////////////////
 /*
  * band-aids for io-ts.
  */
 
-type TypeOf<T> = T extends C.Codec<infer A> ? A : never;
+export type TypeOf<T> = T extends C.Codec<infer A> ? A : never;
+
+export const success = <A>(a: A) => right(a);
+export const failure = (s: string) => left(s);
 
 export function Enum<E>(
   e: Record<string, string | number>
