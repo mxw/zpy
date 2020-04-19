@@ -28,13 +28,15 @@ export type Config = ZPY.RuleModifiers;
 
 const PlayerID = C.string;
 
-const trivial = <L extends string> (literal: L) => C.type({
-  action: C.literal(literal),
-  args: C.tuple(PlayerID),
-});
+function trivial<L extends string> (literal: L): C.Codec<{action: L, args: [string]}> {
+  return C.type({
+    action: C.literal(literal),
+    args: C.tuple(PlayerID),
+  });
+}
 
 export const Action = C.sum('action')({
-  'add_player': trivial('add_player' as const),
+  'add_player': trivial('add_player'),
   'set_decks': C.type({
     action: C.literal('set_decks'),
     args: C.tuple(PlayerID, C.number),
