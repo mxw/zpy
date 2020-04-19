@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "webpack",
-    "test": "mocha -r ts-node/register test/**/*.ts",
+    "test": "mocha -r ts-node/register -r tsconfig-paths/register test/**/*.ts",
     "server": "node --enable-source-maps ./dist/app/main.js"
   },
   "files": [
@@ -33,6 +33,7 @@
     "webpack-node-externals": "*",
     "ts-loader": "*",
     "ts-node": "*",
+    "tsconfig-paths": "*",
     "source-map-loader": "*",
     "mocha": "*",
     "chai": "*",

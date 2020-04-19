@@ -5,6 +5,10 @@
     "noImplicitAny": true,
     "module": "commonjs",
     "esModuleInterop": true,
+    "baseUrl": ".",
+    "paths": {
+      "*": ["*", "src/*"]
+    },
     "target": "es2019",
     "jsx": "react"
   }
