@@ -7,6 +7,7 @@ import { fold } from 'fp-ts/lib/Either'
 
 import * as t from 'io-ts'
 import * as C from 'io-ts/lib/Codec'
+import * as D from 'io-ts/lib/Decoder'
 
 ///////////////////////////////////////////////////////////////////////////////
 /*
@@ -14,6 +15,17 @@ import * as C from 'io-ts/lib/Codec'
  */
 
 type TypeOf<T> = T extends C.Codec<infer A> ? A : never;
+
+export function Enum<E>(
+  e: Record<string, string | number>
+): C.Codec<E> {
+  let is_e = (u: unknown): u is E => Object.values<unknown>(e).includes(u);
+
+  return {
+    decode: (u: unknown) => is_e(u) ? D.success(u) : D.failure(''),
+    encode: (e: E) => e
+  };
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 
