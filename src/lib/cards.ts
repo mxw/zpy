@@ -21,7 +21,7 @@ export enum Suit {
   TRUMP,
 }
 
-function suit_to_symbol(suit: Suit): string {
+export function suit_to_symbol(suit: Suit): string {
   switch (suit) {
     case Suit.CLUBS: return '♣';
     case Suit.DIAMONDS: return '♦';
@@ -50,6 +50,15 @@ function suit_to_color(suit: Suit): string {
  * included here.
  */
 export enum Rank {
+  R2 = 2,
+  R3 = 3,
+  R4 = 4,
+  R5 = 5,
+  R6 = 6,
+  R7 = 7,
+  R8 = 8,
+  R9 = 9,
+  R10 = 10,
   J = 11,  // jack
   Q = 12,  // queen
   K = 13,  // king
@@ -139,14 +148,7 @@ export class CardBase {
     readonly suit: Suit,
     readonly rank: Rank,
   ) {
-    // natural trumps are not valid
-    assert(rank !== Rank.N_off && rank !== Rank.N_on);
-    // trump <=> joker
-    assert(suit !== Suit.TRUMP || rank >= Rank.S);
-    assert(!(rank >= Rank.S) || suit === Suit.TRUMP);
-    // not trump <=> not joker
-    assert(suit === Suit.TRUMP || rank <= Rank.A);
-    assert(!(rank <= Rank.A) || suit !== Suit.TRUMP);
+    assert(CardBase.validate(suit, rank));
   }
 
   static readonly SUITS = [
@@ -155,6 +157,19 @@ export class CardBase {
     Suit.SPADES,
     Suit.HEARTS,
   ];
+
+  static validate(suit: Suit, rank: Rank) {
+    return (true
+      // natural trumps are not valid
+      && (rank !== Rank.N_off && rank !== Rank.N_on)
+      // trump <=> joker
+      && (suit !== Suit.TRUMP || rank >= Rank.S)
+      && (!(rank >= Rank.S) || suit === Suit.TRUMP)
+      // not trump <=> not joker
+      && (suit === Suit.TRUMP || rank <= Rank.A)
+      && (!(rank <= Rank.A) || suit !== Suit.TRUMP)
+    );
+  }
 
   static same(l: CardBase, r: CardBase): boolean {
     return l.suit === r.suit && l.rank === r.rank;
@@ -194,6 +209,10 @@ export class Card extends CardBase {
   constructor(suit: Suit, rank: Rank, tr: TrumpMeta) {
     super(suit, rank);
     [this.v_suit, this.v_rank] = tr.virt(suit, rank);
+  }
+
+  static from(cb: CardBase, tr: TrumpMeta): Card {
+    return (cb instanceof Card) ? cb : new Card(cb.suit, cb.rank, tr);
   }
 
   /*
@@ -250,11 +269,7 @@ export class CardPile {
     this.#suit_counts = array_fill(5, 0);
     this.#counts_osnt = array_fill(4, 0);
     this.#tr = tr;
-
-    for (let cb of cards) {
-      let c = (cb instanceof Card) ? cb : new Card(cb.suit, cb.rank, tr);
-      this.insert(c);
-    }
+    for (let cb of cards) this.insert(Card.from(cb, tr));
   }
 
   /*
@@ -324,10 +339,12 @@ export class CardPile {
   /*
    * Get, add to, or deduct from the count of `card` in `this`.
    */
-  count(c: Card): number {
+  count(cb: CardBase): number {
+    let c = Card.from(cb, this.#tr);
     return this.#counts[CardPile.index_of(c.v_suit, c.v_rank)];
   }
-  insert(c: Card, n: number = 1): void {
+  insert(cb: CardBase, n: number = 1): void {
+    let c = Card.from(cb, this.#tr);
     this.#total += n;
     this.#suit_counts[c.v_suit] += n;
     if (c.v_rank === Rank.N_off) {
@@ -335,7 +352,8 @@ export class CardPile {
     }
     this.#counts[CardPile.index_of(c.v_suit, c.v_rank)] += n;
   }
-  remove(c: Card, n: number = 1): void {
+  remove(cb: CardBase, n: number = 1): void {
+    let c = Card.from(cb, this.#tr);
     assert(this.count(c) >= n);
     this.#total -= n;
     this.#suit_counts[c.v_suit] -= n;
