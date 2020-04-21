@@ -1,5 +1,5 @@
 import * as P from 'protocol/protocol.ts';
-import { Result, Ok, Err, assertOk } from 'utils/result.ts'
+import { Result, OK, Err, assertOK } from 'utils/result.ts'
 
 import * as C from 'io-ts/lib/Codec'
 
@@ -111,12 +111,12 @@ export const listen = (
 ): Result<Action, UpdateError> => {
   switch(intent.verb) {
     case 'grab':
-    case 'drop': return Ok({
+    case 'drop': return OK({
       verb: intent.verb,
       target: intent.target,
       actor: who.id,
     });
-    case 'move': return Ok({
+    case 'move': return OK({
       verb: intent.verb,
       actor: who.id,
       target: intent.target,
@@ -133,7 +133,7 @@ export const apply = (
   switch (act.verb) {
     case 'user:join':
     case 'user:part':
-      return Ok(state);
+      return OK(state);
 
     case 'grab': {
       let c = state.cards[act.target];
@@ -142,7 +142,7 @@ export const apply = (
       }
       if (c.holder === null) {
         c.holder = act.actor;
-        return Ok(state);
+        return OK(state);
       }
       return Err({why: 'already-held', who: c.holder});
     } break;
@@ -156,7 +156,7 @@ export const apply = (
         return Err({why: 'not-held', target: c.id});
       }
       c.holder = null;
-      return Ok(state);
+      return OK(state);
     } break;
 
     case 'move': {
@@ -169,7 +169,7 @@ export const apply = (
       }
       c.x = act.x;
       c.y = act.y;
-      return Ok(state);
+      return OK(state);
     }
   }
 }
@@ -179,7 +179,7 @@ export const predict = (
   intent: Intent,
   me: P.User
 ): Result<Effect, UpdateError> => {
-  return Ok(redact_action(state, assertOk(listen(state, intent, me)), me));
+  return OK(manifest(state, assertOK(listen(state, intent, me)), me));
 }
 export const apply_client = (
   state: ClientState,
@@ -190,4 +190,4 @@ export const apply_client = (
 }
 
 export const redact = (s: State, who: P.User): ClientState => s;
-export const redact_action = (s: State, a: Action, who: P.User): Effect => a;
+export const manifest = (s: State, a: Action, who: P.User): Effect => a;

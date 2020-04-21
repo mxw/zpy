@@ -1,4 +1,4 @@
-import {isOk, isErr} from "utils/result.ts"
+import {isOK, isErr} from "utils/result.ts"
 
 import * as P from "protocol/protocol.ts"
 import {Engine} from "protocol/engine.ts"

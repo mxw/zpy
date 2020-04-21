@@ -10,7 +10,7 @@ import {
 } from 'lib/trick.ts';
 import {
   array_fill, array_shuffle, o_map
-} from 'lib/utils.ts';
+} from 'utils/array.ts';
 
 import {strict as assert} from 'assert';
 
@@ -988,5 +988,5 @@ export namespace ZPY {
   export class InvalidPlayError extends Error {
     constructor(msg?: string) { super(msg); }
   }
-  export type Result = Error | void;
+  export type Result<T = void> = T | Error;
 }

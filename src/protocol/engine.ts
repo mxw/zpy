@@ -7,9 +7,9 @@
  * respectively; while ClientState and ClientAction define the state and
  * possible transitions as they are visible by a particular user.
  *
- * the functions redact and redact_action define the mapping from the
- * globally-knowledgeable State and Action to their client-side counterparts.
- * protocol actions should be viewed as if they redact to themselves.
+ * the functions redact and manifest define the mapping from the globally-
+ * knowledgeable State and Action to their client-side counterparts.  protocol
+ * actions should be viewed as if they redact to themselves.
  *
  * the functions apply and apply_client define the way that actions affect a
  * given game state.
@@ -23,7 +23,7 @@
  *     |               \____________
  *     |                            |
  *     v                            v
- *  Action ----redact_action----> Effect
+ *  Action -----manifest--------> Effect
  *     |                            |
  *     |                            |
  *   apply                     apply_client
@@ -94,5 +94,5 @@ export interface Engine<
   // redact a server-side state/action into a client-side state/action for the
   // given recipient
   redact: (state: State, who: User) => ClientState;
-  redact_action: (state: State, act: Action, who: User) => Effect;
+  manifest: (state: State, act: Action, who: User) => Effect;
 };

@@ -13,7 +13,8 @@ import {
   Suit, Rank, TrumpMeta, CardBase, Card, CardPile
 } from 'lib/cards.ts';
 
-import {ansi, array_fill} from 'lib/utils.ts';
+import { array_fill } from 'utils/array.ts';
+import { ansi } from 'utils/string.ts';
 
 import {strict as assert} from 'assert';
 

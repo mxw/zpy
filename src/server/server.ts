@@ -2,7 +2,7 @@
  * Webserver implementation, wrapped around a generic game engine.
  */
 
-import {isOk, isErr} from 'utils/result.ts'
+import {isOK, isErr} from 'utils/result.ts'
 
 import {Engine} from 'protocol/engine.ts'
 import * as P from 'protocol/protocol.ts'
@@ -86,7 +86,7 @@ class Game<
       let eff = P.on_decode(
         this.engine.Action(this.state),
         act,
-        act => this.engine.redact_action(this.state, act, client.user),
+        act => this.engine.manifest(this.state, act, client.user),
         act as P.ProtocolAction
       );
       let for_tx = client === source ? tx : null;
