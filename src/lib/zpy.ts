@@ -45,6 +45,8 @@ export class ZPY {
 
   // contents of the deck; null iff #phase !== DRAW
   #deck: CardBase[] = [];
+  // size of the deck; maintained because contents are hidden
+  #deck_sz: number = 0;
   // kitty; set before DRAW, replaced by KITTY, consumed by FINISH
   #kitty: CardBase[] = [];
   // list of successful trump bids made during DRAW; last one is the winner
@@ -111,6 +113,16 @@ export class ZPY {
   }
 
   /*
+   * Whether we are authorized to see private data for `player`.
+   *
+   * Clients won't even have this data available; this just makes things
+   * nullsafe and the like.
+   */
+  private can_see(player: ZPY.PlayerID): boolean {
+    return this.#identity === null || this.#identity === player;
+  }
+
+  /*
    * Get the index of the next player in play order.
    */
   private next_player_idx(idx: number): number {
@@ -120,7 +132,7 @@ export class ZPY {
   /////////////////////////////////////////////////////////////////////////////
 
   /*
-   * Phase.INIT : Action.ADD_PLAYER
+   * Phase.INIT : {Action,Effect}.add_player
    *
    * Add a player to the game.  The first player added is the game owner.
    */
@@ -140,7 +152,7 @@ export class ZPY {
   }
 
   /*
-   * Phase.INIT : Action.SET_DECKS
+   * Phase.INIT : {Action,Effect}.set_decks
    *
    * Set the number of decks.  Game owner only.
    */
@@ -175,6 +187,16 @@ export class ZPY {
   }
 
   /*
+   * Draw a card from #deck.
+   */
+  private draw(): CardBase {
+    assert(this.#deck.length === this.#deck_sz);
+    assert(this.#deck.length > 0);
+    --this.#deck_sz;
+    return this.#deck.pop();
+  }
+
+  /*
    * Helper for resetting round state; used by multiple phases/actions.
    *
    * This includes: incrementing the round counter, shuffling the deck, setting
@@ -184,18 +206,20 @@ export class ZPY {
     ++this.#round;
     this.#consensus.clear();
 
-    this.#deck = this.shuffled_deck(this.#ndecks);
+    if (this.#identity === null) {
+      this.#deck = this.shuffled_deck(this.#ndecks);
+      this.#deck_sz = this.#deck.length;
 
-    let kitty_sz = this.#deck.length % this.nplayers;
-    if (kitty_sz === 0) kitty_sz = this.nplayers;
-    while (kitty_sz > 10) kitty_sz -= this.nplayers;
-    while (kitty_sz <= 4) kitty_sz += this.nplayers;
+      let kitty_sz = this.#deck.length % this.nplayers;
+      if (kitty_sz === 0) kitty_sz = this.nplayers;
+      while (kitty_sz > 10) kitty_sz -= this.nplayers;
+      while (kitty_sz <= 4) kitty_sz += this.nplayers;
 
-    this.#kitty = [];
-    for (let i = 0; i < kitty_sz; ++i) {
-      this.#kitty.push(this.#deck.pop());
+      this.#kitty = [];
+      for (let i = 0; i < kitty_sz; ++i) {
+        this.#kitty.push(this.draw());
+      }
     }
-
     this.#bids = [];
     this.#draws = {};
     this.#current = this.#order[starting];
@@ -217,26 +241,35 @@ export class ZPY {
     this.#winning = null;
 
     for (let p of this.#players) {
-      this.#draws[p] = new CardPile([], this.#tr);
+      if (this.can_see(p)) {
+        this.#draws[p] = new CardPile([], this.#tr);
+      }
       this.#points[p] = [];
     }
   }
 
   /*
-   * Phase.INIT : Action.START_GAME
+   * Phase.INIT : Action.start_game
+   * Phase.INIT : Effect.init_game
    *
    * Start the game and transition to Phase.DRAW.  Game owner only.
    */
-  start_game(player: ZPY.PlayerID): ZPY.Result {
+  start_game(player: ZPY.PlayerID): ZPY.Result<[ZPY.PlayerID[]]> {
     if (player !== this.#owner) {
       return new ZPY.WrongPlayerError('game owner only');
     }
     if (this.nplayers < 4) {
       return new ZPY.InvalidPlayError('must have at least 4 players');
     }
-    if (!this.#debug) {
-      this.#players = array_shuffle(this.#players);
-    }
+    let players = !this.#debug
+      ? array_shuffle(this.#players)
+      : this.#players;
+
+    this.init_game(player, players);
+    return [players];
+  }
+  init_game(player: ZPY.PlayerID, players: ZPY.PlayerID[]): ZPY.Result {
+    this.#players = players;
     for (let i = 0; i < this.nplayers; ++i) {
       this.#order[this.#players[i]] = i;
     }
@@ -245,32 +278,41 @@ export class ZPY {
   }
 
   /*
-   * Phase.DRAW : Action.DRAW_CARD
+   * Phase.DRAW : Action.draw_card
+   * Phase.DRAW : Effect.add_to_hand
    *
    * Draw a card for the player in question.  Transition to Phase.PREPARE if
    * the deck empties.
    */
-  draw_card(player: ZPY.PlayerID): ZPY.Result {
+  draw_card(player: ZPY.PlayerID): ZPY.Result<[CardBase]> {
     if (player !== this.#players[this.#current]) {
       return new ZPY.OutOfTurnError();
     }
-    let c = this.#deck.pop();
-    this.#draws[player].insert(new Card(c.suit, c.rank, this.#tr));
+    let cb = this.draw();
+    this.add_to_hand(player, cb);
+    return [cb];
+  }
+  add_to_hand(player: ZPY.PlayerID, cb: CardBase): ZPY.Result {
+    if (this.can_see(player)) this.#draws[player].insert(cb);
 
-    if (this.#deck.length === 0) {
+    if (this.#deck_sz === 0) {
       this.#phase = ZPY.Phase.PREPARE;
     }
     this.#current = this.next_player_idx(this.#current);
   }
 
   /*
-   * Phase.DRAW : Action.BID_TRUMP
-   * Phase.PREPARE : Action.BID_TRUMP
+   * Phase.{DRAW,PREPARE} : Action.bid_trump
+   * Phase.{DRAW,PREPARE} : Effect.secure_bid
    *
    * Place a bid for a trump.  This also reindexes each player's current draw
    * pile and changes the current trump selection.
    */
-  bid_trump(player: ZPY.PlayerID, card: CardBase, n: number): ZPY.Result {
+  bid_trump(
+    player: ZPY.PlayerID,
+    card: CardBase,
+    n: number
+  ): ZPY.Result<[CardBase, number]> {
     if (n < 1) {
       return new ZPY.InvalidArgError('bid is empty');
     }
@@ -289,9 +331,8 @@ export class ZPY {
     }
 
     let commit_bid = () => {
-      this.#bids.push({player, card, n});
-      this.#tr = new TrumpMeta(card.suit, card.rank);
-      for (let p in this.#draws) this.#draws[p].rehash(this.#tr);
+      this.secure_bid(player, card, n);
+      return [card, n]
     };
 
     if (this.#bids.length === 0) {
@@ -315,9 +356,15 @@ export class ZPY {
     }
     return new ZPY.InvalidPlayError('bid too low');
   }
+  secure_bid(player: ZPY.PlayerID, card: CardBase, n: number): ZPY.Result {
+    this.#bids.push({player, card, n});
+    this.#tr = new TrumpMeta(card.suit, card.rank);
+    for (let p in this.#draws) this.#draws[p].rehash(this.#tr);
+  }
 
   /*
-   * Phase.PREPARE : Action.REQUEST_REDEAL
+   * Phase.PREPARE : Action.request_redeal
+   * Phase.PREPARE : Effect.redeal
    *
    * Request a redeal.  Only valid if the player has fewer than #ndecks * 5
    * points in hand.
@@ -330,13 +377,15 @@ export class ZPY {
     if (points > this.#ndecks * 5) {
       return new ZPY.InvalidPlayError('too many points for redeal');
     }
-
+    this.redeal(player);
+  }
+  redeal(player: ZPY.PlayerID): ZPY.Result {
     this.reset_round(player, false);
     this.#phase = ZPY.Phase.DRAW;
   }
 
   /*
-   * Phase.PREPARE : Action.READY
+   * Phase.PREPARE : Action.ready
    *
    * The player has no more bids or redeals to make.  Once everyone is ready,
    * the round can begin, and we transition to Phase.KITTY.
@@ -345,7 +394,7 @@ export class ZPY {
    * However, if no trump has been set, we have to flip the cards in the kitty
    * in order and use that to determine the trump.
    */
-  ready(player: ZPY.PlayerID): ZPY.Result {
+  ready(player: ZPY.PlayerID): ZPY.Result<[CardBase[]]> {
     this.#consensus.add(player);
     if (this.#consensus.size !== this.#players.length) return;
 
@@ -361,31 +410,54 @@ export class ZPY {
     if (this.#bids.length === 0) {
       // if there's no host, the starting player becomes host
       this.#host = this.#host ?? this.#players[this.#current];
+      this.#ranks[this.#host].last_host = this.#ranks[this.#host].rank;
 
-      let rank = this.#ranks[this.#host].last_host
-               = this.#ranks[this.#host].rank;
-
-      // the natural-trump-only TrumpMeta works for comparisons here
-      let ctx_tr = new TrumpMeta(Suit.TRUMP, rank);
-
-      let card = this.#kitty.reduce((highest: Card, c: CardBase) => {
-        let card = new Card(c.suit, c.rank, ctx_tr);
-        if (!highest) return card;
-        return card.rank > highest.rank ? card : highest;
-      }, null);
-
-      this.#tr = new TrumpMeta(card.suit, card.rank);
-      for (let p in this.#draws) this.#draws[p].rehash(this.#tr);
+      this.reveal_kitty(this.#host, this.#kitty);
     }
+    this.receive_kitty(this.#host, this.#kitty);
+    return this.#kitty;
+  }
 
-    for (let c of this.#kitty) {
-      this.#draws[this.#host].insert(new Card(c.suit, c.rank, this.#tr));
-    }
+  /*
+   * Phase.PREPARE : Effect.reveal_kitty
+   *
+   * Flip the kitty and use it to determine the trump.
+   */
+  reveal_kitty(player: ZPY.PlayerID, kitty: CardBase[]): ZPY.Result {
+    let rank = this.#ranks[this.#host].rank;
+
+    // the natural-trump-only TrumpMeta works for comparisons here
+    let ctx_tr = new TrumpMeta(Suit.TRUMP, rank);
+
+    let card = kitty.reduce((highest: Card, c: CardBase) => {
+      let card = new Card(c.suit, c.rank, ctx_tr);
+      if (!highest) return card;
+      return card.rank > highest.rank ? card : highest;
+    }, null);
+
+    this.#tr = new TrumpMeta(card.suit, card.rank);
+    for (let p in this.#draws) this.#draws[p].rehash(this.#tr);
+
+    this.#kitty = kitty;
     this.#phase = ZPY.Phase.KITTY;
   }
 
   /*
-   * Phase.KITTY : Action.REPLACE_KITTY
+   * Phase.PREPARE : Effect.receive_kitty
+   *
+   * Dump the kitty into the host's hand.
+   */
+  receive_kitty(player: ZPY.PlayerID, kitty: CardBase[]): ZPY.Result {
+    for (let c of kitty) {
+      this.#draws[player].insert(new Card(c.suit, c.rank, this.#tr));
+    }
+    this.#kitty = kitty;
+    this.#phase = ZPY.Phase.KITTY;
+  }
+
+  /*
+   * Phase.KITTY : {Action,Effect}.replace_kitty
+   * Phase.KITTY : Effect.seal_hand
    *
    * The host discards their kitty.  We Hand-ify every player's draw pile, and
    * transition to Phase.FRIEND.
@@ -408,15 +480,20 @@ export class ZPY {
     }
     this.#kitty = kitty;
 
+    this.seal_hand(player);
+  }
+  seal_hand(player: ZPY.PlayerID): ZPY.Result {
     for (let p of this.#players) {
-      this.#hands[p] = new Hand(this.#draws[p]);
+      if (this.can_see(p)) {
+        this.#hands[p] = new Hand(this.#draws[p]);
+      }
     }
     this.#draws = {}; // clear this, mostly to prevent bugs
     this.#phase = ZPY.Phase.FRIEND;
   }
 
   /*
-   * Phase.FRIEND : Action.CALL_FRIENDS
+   * Phase.FRIEND : {Action,Effect}.call_friends
    *
    * The host calls their friends, and we transition to Phase.LEAD, where
    * gameplay actually begins.
@@ -470,7 +547,7 @@ export class ZPY {
   private init_play(
     player: ZPY.PlayerID,
     play: Play,
-  ): ZPY.Result | CardPile {
+  ): ZPY.Error | CardPile {
     if (player !== this.#players[this.#current]) {
       return new ZPY.OutOfTurnError();
     }
@@ -532,16 +609,21 @@ export class ZPY {
   }
 
   /*
-   * Phase.LEAD : Action.LEAD_PLAY
+   * Phase.LEAD : {Action,Effect}.lead_play
+   * Phase.LEAD : Effect.observe_lead
    *
    * Play a card, a tuple, a tractor, a flight---anything your heart desires!
    * If the leader plays a nontrivial flight, transition to Phase.FLY, else to
    * Phase.FOLLOW.
    */
-  lead_play(player: ZPY.PlayerID, play: Flight): ZPY.Result {
+  lead_play(player: ZPY.PlayerID, play: Flight): ZPY.Result<[Flight]> {
     let play_pile = this.init_play(player, play);
-    if (!(play_pile instanceof CardPile)) return play_pile;
+    if (play_pile instanceof ZPY.Error) return play_pile;
 
+    this.observe_lead(player, play);
+    return [play];
+  }
+  observe_lead(player: ZPY.PlayerID, play: Flight): ZPY.Result {
     this.#lead = play;
 
     if (play.tractors.length > 1) {
@@ -556,12 +638,16 @@ export class ZPY {
   }
 
   /*
-   * Phase.FLY : Action.CONTEST_FLY
+   * Phase.FLY : Action.contest_fly
+   * Phase.FLY : Effect.reject_fly
    *
    * Contest a fly by revealing a play that would beat any component of it.
-   * Transitions to Phase.GROUND.
+   * Transitions to Phase.FOLLOW.
    */
-  contest_fly(player: ZPY.PlayerID, reveal: CardBase[]): ZPY.Result {
+  contest_fly(
+    player: ZPY.PlayerID,
+    reveal: CardBase[]
+  ): ZPY.Result<[CardBase[], Tractor]> {
     if (player === this.#leader) {
       return new ZPY.WrongPlayerError('cannot contest own flight');
     }
@@ -588,16 +674,23 @@ export class ZPY {
           Tractor.compare(the_tractor, component) < 0) {
         continue;
       }
-      // we beat the flight; force the new flight
-      this.#consensus.clear();
-
-      this.#lead = new Flight([component]);
-      this.commit_lead(this.#leader, this.#lead);
-
-      this.#phase = ZPY.Phase.FOLLOW;
-      return;
+      this.reject_fly(player, reveal, component);
+      return [reveal, component];
     }
     return new ZPY.InvalidPlayError('reveal does not contest flight');
+  }
+  reject_fly(
+    player: ZPY.PlayerID,
+    reveal: CardBase[],
+    component: Tractor
+  ): ZPY.Result {
+    // we beat the flight; force the new flight
+    this.#consensus.clear();
+
+    this.#lead = new Flight([component]);
+    this.commit_lead(this.#leader, this.#lead);
+
+    this.#phase = ZPY.Phase.FOLLOW;
   }
 
   /*
@@ -617,19 +710,29 @@ export class ZPY {
   }
 
   /*
-   * Phase.FOLLOW : Action.FOLLOW_PLAY
+   * Phase.FOLLOW : Action.follow_play
+   * Phase.FOLLOW : Effect.observe_follow
    *
    * Follow the #lead.  Handles end-of-trick point collection if everyone has
    * played.  Transitions to either Phase.LEAD, or Phase.FINISH if the round
    * has ended.
    */
-  follow_lead(player: ZPY.PlayerID, play: Play): ZPY.Result {
+  follow_lead(player: ZPY.PlayerID, play: Play): ZPY.Result<[Play]> {
     let play_pile = this.init_play(player, play);
-    if (!(play_pile instanceof CardPile)) return play_pile;
+    if (play_pile instanceof ZPY.Error) return play_pile;
 
     if (play.count !== this.#lead.count) {
       return new ZPY.InvalidPlayError('incorrectly sized play');
     }
+    this.observe_follow(player, play, play_pile);
+    return [play];
+  }
+  observe_follow(
+    player: ZPY.PlayerID,
+    play: Play,
+    play_pile?: CardPile,
+  ): ZPY.Result {
+    play_pile = play_pile ?? new CardPile(play.gen_cards(this.#tr), this.#tr);
 
     let [correct, undo] = this.#hands[player].follow_with(
       this.#lead, play_pile
@@ -673,7 +776,8 @@ export class ZPY {
       }
     }
     if (this.#hands[this.#leader].pile.size === 0) {
-      return this.finish_round();
+      this.#phase = ZPY.Phase.FINISH;
+      return;
     }
     this.#leader = this.#winning;
     this.#current = this.#order[this.#leader];
@@ -723,11 +827,21 @@ export class ZPY {
   }
 
   /*
-   * Score and finish up the round.
+   * Phase.FINISH : Action.end_round
+   * Phase.FINISH : Effect.finish
    *
-   * Transitions to Phase.FINISH.
+   * Score and finish up the round.  Transitions to Phase.WAIT.
    */
-  private finish_round(): void {
+  end_round(player: ZPY.PlayerID): ZPY.Result<[CardBase[]]> {
+    if (player !== this.#host) {
+      return new ZPY.WrongPlayerError('host only');
+    }
+    this.finish(player, this.#kitty);
+    return [this.#kitty];
+  }
+  finish(player: ZPY.PlayerID, kitty: CardBase[]): ZPY.Result {
+    this.#kitty = kitty;
+
     let atk_points = this.#players.reduce(
       (total, p) => total + (
         this.#atk_team.has(p)
@@ -770,15 +884,15 @@ export class ZPY {
       }
       next_idx = this.next_player_idx(next_idx);
     }
-    this.#phase = ZPY.Phase.FINISH;
+    this.#phase = ZPY.Phase.WAIT;
   }
 
   /*
-   * Phase.FINISH : Action.START_ROUND
+   * Phase.WAIT : {Action,Effect}.next_round
    *
    * Start a new round.
    */
-  start_round(player: ZPY.PlayerID): ZPY.Result {
+  next_round(player: ZPY.PlayerID): ZPY.Result {
     if (player !== this.#owner) {
       return new ZPY.WrongPlayerError('host only');
     }
@@ -808,14 +922,16 @@ export class ZPY {
     copy.#order     = this.#order;
     copy.#consensus = this.#consensus;
 
-    // #deck and other players' #draws are redacted
-    copy.#draws[player] = this.#draws[player];
+    // #deck is redacted, but not #deck_sz
+    copy.#deck_sz = this.#deck_sz;
     if (this.#phase == ZPY.Phase.KITTY &&
         this.#bids.length === 0) {
       // kitty is public during Phase.KITTY iff no one bid
       copy.#kitty = this.#kitty;
     }
     copy.#bids    = this.#bids;
+    // other players' #draws are redacted
+    copy.#draws[player] = this.#draws[player];
     copy.#current = this.#current;
 
     copy.#host = this.#host;
@@ -937,36 +1053,8 @@ export namespace ZPY {
     LEAD,    // player leading a trick
     FLY,     // waiting to see if a lead flies
     FOLLOW,  // players following a lead
-    FINISH,  // end-of-round; players can leave
-  }
-
-  export enum Action {
-    // Phase.INIT
-    ADD_PLAYER,
-    SET_DECKS,
-    START_GAME,
-    // Phase.DRAW
-    DRAW_CARD,
-    BID_TRUMP,
-    // Phase.PREPARE
- /* BID_TRUMP, */
-    REQUEST_REDEAL,
-    READY,
-    // Phase.KITTY
-    REPLACE_KITTY,
-    // Phase.FRIEND
-    CALL_FRIENDS,
-    // Phase.LEAD
-    LEAD_PLAY,
-    // Phase.FLY
-    CONTEST_FLY,
-    PASS_CONTEST,
-    // Phase.FOLLOW
-    FOLLOW_PLAY,
-    // Phase.FINISH
- /* REMOVE_PLAYER, // TODO */
- /* INTRODUCE_PLAYER, // TODO */
-    START_ROUND,
+    FINISH,  // end-of-round; waiting to decide victor
+    WAIT,    // between rounds; players can leave
   }
 
   export class Error {

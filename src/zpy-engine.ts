@@ -174,53 +174,141 @@ const PlayerID = C.string;
 
 const trivial = <L extends string> (
   literal: L
-): C.Codec<{action: L, args: [string]}> => C.type({
-  action: C.literal(literal),
+): C.Codec<{motion: L, args: [string]}> => C.type({
+  motion: C.literal(literal),
   args: C.tuple(PlayerID),
 });
 
 const card_arr = <L extends string> (
   literal: L
-): C.Codec<{action: L, args: [string, CardBase[]]}> => C.type({
-  action: C.literal(literal),
+): C.Codec<{motion: L, args: [string, CardBase[]]}> => C.type({
+  motion: C.literal(literal),
   args: C.tuple(PlayerID, C.array(cd_CardBase)),
 });
 
-export const Action = (tr: TrumpMeta) => C.sum('action')({
-  'add_player': trivial('add_player'),
-  'set_decks': C.type({
-    action: C.literal('set_decks'),
-    args: C.tuple(PlayerID, C.number),
-  }),
-  'start_game': trivial('start_game'),
-  'draw_card': trivial('draw_card'),
-  'bid_trump': C.type({
-    action: C.literal('bid_trump'),
-    args: C.tuple(PlayerID, cd_CardBase, C.number),
-  }),
-  'request_redeal': trivial('request_redeal'),
-  'ready': trivial('ready'),
-  'replace_kitty': card_arr('replace_kitty'),
-  'call_friends': C.type({
-    action: C.literal('call_friends'),
-    args: C.tuple(PlayerID, C.array(C.tuple(cd_CardBase, C.number))),
-  }),
-  'lead_play': C.type({
-    action: C.literal('lead_play'),
-    args: C.tuple(PlayerID, cd_Flight(tr)),
-  }),
-  'contest_fly': card_arr('contest_fly'),
-  'pass_contest': trivial('pass_contest'),
-  'follow_lead': C.type({
-    action: C.literal('follow_lead'),
-    args: C.tuple(PlayerID, cd_Play(tr)),
-  }),
-  'start_round': trivial('start_round'),
+namespace A {
+
+export const add_player = trivial('add_player');
+
+export const set_decks = C.type({
+  motion: C.literal('set_decks'),
+  args: C.tuple(PlayerID, C.number),
 });
-export type Action = P.TypeOf<typeof Action>;
+
+export const start_game = trivial('start_game');
+export const init_game = C.type({
+  motion: C.literal('init_game'),
+  args: C.tuple(PlayerID, C.array(PlayerID)),
+});
+
+export const draw_card = trivial('draw_card');
+export const add_to_hand = C.type({
+  motion: C.literal('add_to_hand'),
+  args: C.tuple(PlayerID, cd_CardBase),
+});
+
+export const bid_trump = C.type({
+  motion: C.literal('bid_trump'),
+  args: C.tuple(PlayerID, cd_CardBase, C.number),
+});
+export const secure_bid = C.type({
+  motion: C.literal('secure_bid'),
+  args: C.tuple(PlayerID, cd_CardBase, C.number),
+});
+
+export const request_redeal = trivial('request_redeal');
+export const redeal = trivial('redeal');
+export const ready = trivial('ready');
+
+export const reveal_kitty = card_arr('reveal_kitty');
+export const receive_kitty = card_arr('receive_kitty');
+export const replace_kitty = card_arr('replace_kitty');
+
+export const seal_hand = trivial('seal_hand');
+
+export const call_friends = C.type({
+  motion: C.literal('call_friends'),
+  args: C.tuple(PlayerID, C.array(C.tuple(cd_CardBase, C.number))),
+});
+
+export const lead_play = (tr: TrumpMeta) => C.type({
+  motion: C.literal('lead_play'),
+  args: C.tuple(PlayerID, cd_Flight(tr)),
+});
+export const observe_lead = (tr: TrumpMeta) => C.type({
+  motion: C.literal('observe_lead'),
+  args: C.tuple(PlayerID, cd_Flight(tr)),
+});
+
+export const contest_fly = card_arr('contest_fly');
+export const pass_contest = trivial('pass_contest');
+export const reject_fly = (tr: TrumpMeta) => C.type({
+  motion: C.literal('reject_fly'),
+  args: C.tuple(PlayerID, C.array(cd_CardBase), cd_Flight(tr)),
+});
+
+export const follow_lead = (tr: TrumpMeta) => C.type({
+  motion: C.literal('follow_lead'),
+  args: C.tuple(PlayerID, cd_Play(tr)),
+});
+export const observe_follow = (tr: TrumpMeta) => C.type({
+  motion: C.literal('observe_follow'),
+  args: C.tuple(PlayerID, cd_Play(tr)),
+});
+
+export const end_round = trivial('end_round');
+export const finish = card_arr('finish');
+
+export const next_round = trivial('next_round');
+
+}
+
+export const Action = (tr: TrumpMeta) => C.sum('motion')({
+  'add_player': A.add_player,
+  'set_decks': A.set_decks,
+  'start_game': A.start_game,
+  'draw_card': A.draw_card,
+  'bid_trump': A.bid_trump,
+  'request_redeal': A.request_redeal,
+  'ready': A.ready,
+  'replace_kitty': A.replace_kitty,
+  'call_friends': A.call_friends,
+  'lead_play': A.lead_play(tr),
+  'contest_fly': A.contest_fly,
+  'pass_contest': A.pass_contest,
+  'follow_lead': A.follow_lead(tr),
+  'end_round': A.end_round,
+  'next_round': A.next_round,
+});
+const _Act = Action(new TrumpMeta(Suit.TRUMP, Rank.B));
+export type Action = P.TypeOf<typeof _Act>;
 
 export const Intent = Action;
 export type Intent = Action;
+
+export const Effect = (tr: TrumpMeta) => C.sum('motion')({
+  'add_player': A.add_player,
+  'set_decks': A.set_decks,
+  'init_game': A.init_game,
+  'add_to_hand': A.add_to_hand,
+  'secure_bid': A.secure_bid,
+  'redeal': A.redeal,
+  //'pass': A.pass,
+  'reveal_kitty': A.reveal_kitty,
+  'receive_kitty': A.receive_kitty,
+  'replace_kitty': A.replace_kitty,
+  'seal_hand': A.seal_hand,
+  'call_friends': A.call_friends,
+  'lead_play': A.lead_play(tr),
+  'observe_lead': A.observe_lead(tr),
+  'reject_fly': A.reject_fly(tr),
+  //'pass_contest': A.pass_contest,
+  'follow_lead': A.follow_lead(tr),
+  'observe_follow': A.observe_follow(tr),
+  'end_round': A.end_round,
+  'finish': A.finish,
+  'next_round': A.next_round,
+});
 
 ///////////////////////////////////////////////////////////////////////////////
 /*
@@ -228,6 +316,7 @@ export type Intent = Action;
  */
 
 export type State = ZPY;
+export type ClientState = ZPY;
 
 ///////////////////////////////////////////////////////////////////////////////
 
