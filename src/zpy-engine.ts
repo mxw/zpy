@@ -418,8 +418,11 @@ export const larp = (
       if (result instanceof ZPY.Error) return Err(result);
       return OK([state, everyone(effect('reject_fly', p, ...result))]);
     }
-    case 'pass_contest':
-      break;
+    case 'pass_contest': {
+      let result = state[intent.kind](...intent.args);
+      if (result instanceof ZPY.Error) return Err(result);
+      return OK([state, everyone(intent)]);
+    }
     case 'follow_lead': {
       let result = state[intent.kind](...intent.args);
       if (result instanceof ZPY.Error) return Err(result);
