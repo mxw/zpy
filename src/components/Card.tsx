@@ -1,6 +1,3 @@
-import * as React from 'react'
-
-
 // this exists because the svgs we have checked in are monstrous
 // and we need to shove the math somewhere
 
@@ -34,11 +31,10 @@ export type CardProps = {
   x: number;
   y: number;
 
-  [more:string]: any;
-}
+  [more: string]: any;
+};
 
-export const Card = (props: CardProps ) => {
-
+export const Card = (props: CardProps) => {
   let {card, width, position, x, y, ...more} = props;
 
   let height = width / aspect_ratio;
@@ -52,7 +48,6 @@ export const Card = (props: CardProps ) => {
   let border_radius = Math.ceil(border_radius_x_ratio * width + 1);
 
   let svg = "url(/static/svg/cards/" + card + ".svg)";
-
 
   return <div style={{
     position: props.position,
@@ -69,6 +64,4 @@ export const Card = (props: CardProps ) => {
   }}
     {...more}
   />
-
-}
-
+};
