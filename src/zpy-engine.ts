@@ -52,8 +52,8 @@ export type UpdateError = ZPY.Error;
  * state codecs.
  */
 
-export type State = ZPY;
-export type ClientState = ZPY;
+export type State = ZPY<P.UserID>;
+export type ClientState = ZPY<P.UserID>;
 
 ///////////////////////////////////////////////////////////////////////////////
 /*
@@ -182,18 +182,19 @@ const cd_Hand = (tr: TrumpMeta): C.Codec<Hand> => C.make(
  * intent and effect codecs.
  */
 
-const PlayerID = C.string;
+const PlayerID = P.UserID;
+type PlayerID = P.UserID;
 
 const trivial = <L extends string> (
   literal: L
-): C.Codec<{kind: L, args: [string]}> => C.type({
+): C.Codec<{kind: L, args: [PlayerID]}> => C.type({
   kind: C.literal(literal),
   args: C.tuple(PlayerID),
 });
 
 const card_arr = <L extends string> (
   literal: L
-): C.Codec<{kind: L, args: [string, CardBase[]]}> => C.type({
+): C.Codec<{kind: L, args: [PlayerID, CardBase[]]}> => C.type({
   kind: C.literal(literal),
   args: C.tuple(PlayerID, C.array(cd_CardBase)),
 });
@@ -230,12 +231,11 @@ export const secure_bid = C.type({
 
 export const request_redeal = trivial('request_redeal');
 export const redeal = trivial('redeal');
+
 export const ready = trivial('ready');
+export const install_host = card_arr('install_host');
 
-export const reveal_kitty = card_arr('reveal_kitty');
-export const receive_kitty = card_arr('receive_kitty');
 export const replace_kitty = card_arr('replace_kitty');
-
 export const seal_hand = trivial('seal_hand');
 
 export const call_friends = C.type({
@@ -306,8 +306,7 @@ const Effect_ = (tr: TrumpMeta) => C.sum('kind')({
   'secure_bid': A.secure_bid,
   'redeal': A.redeal,
   'ready': A.ready,
-  'reveal_kitty': A.reveal_kitty,
-  'receive_kitty': A.receive_kitty,
+  'install_host': A.install_host,
   'replace_kitty': A.replace_kitty,
   'seal_hand': A.seal_hand,
   'call_friends': A.call_friends,
@@ -329,7 +328,7 @@ export const Effect = (cs: ClientState): C.Codec<Effect> => Effect_(cs.tr);
 ///////////////////////////////////////////////////////////////////////////////
 
 export const init = (options: Config): State => {
-  return new ZPY(options);
+  return new ZPY<P.UserID>(options);
 };
 
 export const larp = (
@@ -352,7 +351,11 @@ export const larp = (
 
   // send the same effect to everyone
   let everyone = (effect: Effect): Record<P.UserID, Effect> =>
-    Object.fromEntries(clients.map(u => [u, intent]));
+    Object.fromEntries(clients.map(u => [u.id, effect]));
+
+  // send a customized effect to each player
+  let each = (effect: (p: P.UserID) => Effect): Record<P.UserID, Effect> =>
+    Object.fromEntries(clients.map(u => [u.id, effect(u.id)]));
 
   // send `you` back to `who` and send `others` to everyone else
   let you_and_them = (you: Effect, them: Effect): Record<P.UserID, Effect> =>
@@ -394,8 +397,17 @@ export const larp = (
       if (result instanceof ZPY.Error) return Err(result);
       return OK([state, everyone(effect('redeal', p, ...result))]);
     }
-    case 'ready':
-      break;
+    case 'ready': {
+      let result = state[intent.kind](...intent.args);
+      if (result instanceof ZPY.Error) return Err(result);
+      return OK([state, result === null
+        ? everyone(effect('ready', p))
+        : each((p: P.UserID) => effect(
+            'install_host',
+            ...state.redact_kitty_for(p, ...(result as [PlayerID, CardBase[]]))
+          ))
+      ]);
+    }
     case 'replace_kitty': {
       let result = state[intent.kind](...intent.args);
       if (result instanceof ZPY.Error) return Err(result);

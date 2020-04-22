@@ -12,36 +12,38 @@ import {
   array_fill, array_shuffle, o_map
 } from 'utils/array.ts';
 
+import { UserID } from 'protocol/protocol.ts'
+
 import {strict as assert} from 'assert';
 
 ///////////////////////////////////////////////////////////////////////////////
 
-export class ZPY {
+export class ZPY<PlayerID extends keyof any>{
   #phase: ZPY.Phase = ZPY.Phase.INIT;
   // rule modifiers
   #rules: ZPY.RuleModifiers;
   // the player whose state this represents; null for global view
-  #identity: ZPY.PlayerID | null = null;
+  #identity: PlayerID | null = null;
 
   // owner of the game
-  #owner: ZPY.PlayerID = null;
+  #owner: PlayerID = null;
   // all players; in turn order if #phase > INIT
-  #players: ZPY.PlayerID[] = [];
+  #players: PlayerID[] = [];
   // rank information of each player; always valid
-  #ranks: Record<ZPY.PlayerID, {
+  #ranks: Record<PlayerID, {
     rank: Rank,  // current rank
     start: Rank, // most recent starting rank
     last_host: Rank, // last hosted rank
-  }> = {};
+  }> = {} as any;
   // number of decks
   #ndecks: number = 0;
 
   // round counter; > 0 iff #phase > INIT
   #round: number = 0;
   // playing to order index mapping; valid iff #phase > INIT
-  #order: Record<ZPY.PlayerID, number> = {};
+  #order: Record<PlayerID, number> = {} as any;
   // general-purpose player set for reaching consensus
-  #consensus: Set<ZPY.PlayerID> = new Set();
+  #consensus: Set<PlayerID> = new Set();
 
   // contents of the deck; null iff #phase !== DRAW
   #deck: CardBase[] = [];
@@ -50,36 +52,36 @@ export class ZPY {
   // kitty; set before DRAW, replaced by KITTY, consumed by FINISH
   #kitty: CardBase[] = [];
   // list of successful trump bids made during DRAW; last one is the winner
-  #bids: {player: ZPY.PlayerID, card: CardBase, n: number}[] = [];
+  #bids: {player: PlayerID, card: CardBase, n: number}[] = [];
   // players' hands as they are being drawn
-  #draws: Record<ZPY.PlayerID, CardPile> = {};
+  #draws: Record<PlayerID, CardPile> = {} as any;
   // current index into #players for draws, play, etc.
   #current: number = null;
 
   // host of the current round; valid iff #phase > INIT
-  #host: ZPY.PlayerID | null = null;
+  #host: PlayerID | null = null;
   // trump selection for the current round; valid iff #phase > DRAW
   #tr: TrumpMeta = null;
   // hands; valid iff #phase > KITTY
-  #hands: Record<ZPY.PlayerID, Hand> = {};
+  #hands: Record<PlayerID, Hand> = {} as any;
   // each player's point cards; valid if #phase > FRIEND
-  #points: Record<ZPY.PlayerID, CardBase[]> = {};
+  #points: Record<PlayerID, CardBase[]> = {} as any;
   // friends declarations; valid iff #phase > FRIEND
   #friends: {card: Card, nth: number}[] = [];
   // number of times a friend has joined; valid iff #phase > FRIEND
   #joins: number = 0;
   // attacking and host teams; valid if #phase > FRIEND
-  #host_team: Set<ZPY.PlayerID> = new Set();
-  #atk_team: Set<ZPY.PlayerID> = new Set();
+  #host_team: Set<PlayerID> = new Set();
+  #atk_team: Set<PlayerID> = new Set();
 
   // leader of the current trick; valid iff #phase >= LEAD
-  #leader: ZPY.PlayerID | null = null;
+  #leader: PlayerID | null = null;
   // lead play for the current trick; valid iff #phase > LEAD
   #lead: Flight | null = null;
   // all plays for the current trick; valid iff #phase > LEAD
-  #plays: Record<ZPY.PlayerID, Play> = {};
+  #plays: Record<PlayerID, Play> = {} as any;
   // current winning player
-  #winning: ZPY.PlayerID | null = null;
+  #winning: PlayerID | null = null;
 
   // debugging determinism flag
   #debug: boolean = false;
@@ -118,7 +120,7 @@ export class ZPY {
    * Clients won't even have this data available; this just makes things
    * nullsafe and the like.
    */
-  private can_see(player: ZPY.PlayerID): boolean {
+  private can_see(player: PlayerID): boolean {
     return this.#identity === null || this.#identity === player;
   }
 
@@ -136,7 +138,7 @@ export class ZPY {
    *
    * Add a player to the game.  The first player added is the game owner.
    */
-  add_player(player: ZPY.PlayerID): ZPY.Result {
+  add_player(player: PlayerID): ZPY.Result {
     if (this.#players.find(p => p === player)) {
       return new ZPY.DuplicateActionError('already joined game');
     }
@@ -156,7 +158,7 @@ export class ZPY {
    *
    * Set the number of decks.  Game owner only.
    */
-  set_decks(player: ZPY.PlayerID, ndecks: number): ZPY.Result {
+  set_decks(player: PlayerID, ndecks: number): ZPY.Result {
     if (player !== this.#owner) {
       return new ZPY.WrongPlayerError('game owner only');
     }
@@ -202,7 +204,7 @@ export class ZPY {
    * This includes: incrementing the round counter, shuffling the deck, setting
    * aside a kitty, and resetting all other per-round internal state.
    */
-  private reset_round(starting: ZPY.PlayerID, is_host: boolean): void {
+  private reset_round(starting: PlayerID, is_host: boolean): void {
     ++this.#round;
     this.#consensus.clear();
 
@@ -221,15 +223,15 @@ export class ZPY {
       }
     }
     this.#bids = [];
-    this.#draws = {};
+    this.#draws = {} as any;
     this.#current = this.#order[starting];
 
     this.#host = is_host ? starting : null;
     this.#tr = is_host
       ? new TrumpMeta(Suit.TRUMP, this.#ranks[starting].rank)
       : new TrumpMeta(Suit.TRUMP, Rank.B);  // big joker is the sentinel tr
-    this.#hands = {};
-    this.#points = {};
+    this.#hands = {} as any;
+    this.#points = {} as any;
     this.#friends = [];
     this.#joins = 0;
     this.#host_team.clear();
@@ -237,7 +239,7 @@ export class ZPY {
 
     this.#leader = null;
     this.#lead = null;
-    this.#plays = {};
+    this.#plays = {} as any;
     this.#winning = null;
 
     for (let p of this.#players) {
@@ -254,7 +256,7 @@ export class ZPY {
    *
    * Start the game and transition to Phase.DRAW.  Game owner only.
    */
-  start_game(player: ZPY.PlayerID): ZPY.Result<[ZPY.PlayerID[]]> {
+  start_game(player: PlayerID): ZPY.Result<[PlayerID[]]> {
     if (player !== this.#owner) {
       return new ZPY.WrongPlayerError('game owner only');
     }
@@ -268,7 +270,7 @@ export class ZPY {
     this.init_game(player, players);
     return [players];
   }
-  init_game(player: ZPY.PlayerID, players: ZPY.PlayerID[]): ZPY.Result {
+  init_game(player: PlayerID, players: PlayerID[]): ZPY.Result {
     this.#players = players;
     for (let i = 0; i < this.nplayers; ++i) {
       this.#order[this.#players[i]] = i;
@@ -284,7 +286,7 @@ export class ZPY {
    * Draw a card for the player in question.  Transition to Phase.PREPARE if
    * the deck empties.
    */
-  draw_card(player: ZPY.PlayerID): ZPY.Result<[CardBase]> {
+  draw_card(player: PlayerID): ZPY.Result<[CardBase]> {
     if (player !== this.#players[this.#current]) {
       return new ZPY.OutOfTurnError();
     }
@@ -292,7 +294,7 @@ export class ZPY {
     this.add_to_hand(player, cb);
     return [cb];
   }
-  add_to_hand(player: ZPY.PlayerID, cb: null | CardBase): ZPY.Result {
+  add_to_hand(player: PlayerID, cb: null | CardBase): ZPY.Result {
     if (this.can_see(player) && cb !== null) {
       this.#draws[player].insert(cb);
     }
@@ -310,7 +312,7 @@ export class ZPY {
    * pile and changes the current trump selection.
    */
   bid_trump(
-    player: ZPY.PlayerID,
+    player: PlayerID,
     card: CardBase,
     n: number
   ): ZPY.Result<[CardBase, number]> {
@@ -357,7 +359,7 @@ export class ZPY {
     }
     return new ZPY.InvalidPlayError('bid too low');
   }
-  secure_bid(player: ZPY.PlayerID, card: CardBase, n: number): ZPY.Result {
+  secure_bid(player: PlayerID, card: CardBase, n: number): ZPY.Result {
     this.#bids.push({player, card, n});
     this.#tr = new TrumpMeta(card.suit, card.rank);
     for (let p in this.#draws) this.#draws[p].rehash(this.#tr);
@@ -370,7 +372,7 @@ export class ZPY {
    * Request a redeal.  Only valid if the player has fewer than #ndecks * 5
    * points in hand.
    */
-  request_redeal(player: ZPY.PlayerID): ZPY.Result<[]> {
+  request_redeal(player: PlayerID): ZPY.Result<[]> {
     let points = 0;
     for (let [card, n] of this.#draws[player]) {
       points += card.point_value() * n;
@@ -381,13 +383,14 @@ export class ZPY {
     this.redeal(player);
     return [];
   }
-  redeal(player: ZPY.PlayerID): ZPY.Result {
+  redeal(player: PlayerID): ZPY.Result {
     this.reset_round(player, false);
     this.#phase = ZPY.Phase.DRAW;
   }
 
   /*
    * Phase.PREPARE : Action.ready
+   * Phase.PREPARE : Effect.install_host
    *
    * The player has no more bids or redeals to make.  Once everyone is ready,
    * the round can begin, and we transition to Phase.KITTY.
@@ -396,36 +399,51 @@ export class ZPY {
    * However, if no trump has been set, we have to flip the cards in the kitty
    * in order and use that to determine the trump.
    */
-  ready(player: ZPY.PlayerID): ZPY.Result<[CardBase[]]> {
+  ready(player: PlayerID): ZPY.Result<null | [PlayerID, CardBase[]]> {
     this.#consensus.add(player);
-    if (this.#consensus.size !== this.#players.length) return;
-
-    this.#consensus.clear();
+    if (this.#consensus.size !== this.#players.length) return null;
 
     let nbids = this.#bids.length;
 
-    this.#host = this.#host ?? (nbids !== 0
+    let host = this.#host ?? (nbids !== 0
       ? this.#bids[nbids - 1].player
-      : this.#players[this.#current]
+      : this.#players[this.#current]  // starting player defaults to host
     );
+    this.install_host(this.#host, this.#kitty);
+    return [host, this.#kitty];
+  }
+  install_host(
+    host: PlayerID,
+    kitty: CardBase[],
+  ): ZPY.Result {
+    this.#consensus.clear();
+
+    this.#host = host;
+    this.#ranks[this.#host].last_host = this.#ranks[this.#host].rank;
 
     if (this.#bids.length === 0) {
-      // if there's no host, the starting player becomes host
-      this.#host = this.#host ?? this.#players[this.#current];
-      this.#ranks[this.#host].last_host = this.#ranks[this.#host].rank;
-
       this.reveal_kitty(this.#host, this.#kitty);
     }
     this.receive_kitty(this.#host, this.#kitty);
-    return this.#kitty;
+
+    this.#kitty = kitty;
+    this.#phase = ZPY.Phase.KITTY;
   }
 
   /*
-   * Phase.PREPARE : Effect.reveal_kitty
-   *
-   * Flip the kitty and use it to determine the trump.
+   * Helper for redacting per-player knowledge of the kitty's contents.
    */
-  reveal_kitty(player: ZPY.PlayerID, kitty: CardBase[]): ZPY.Result {
+  redact_kitty_for(
+    player: PlayerID,
+    host: PlayerID,
+    kitty: CardBase[],
+  ): [PlayerID, CardBase[]] {
+    if (player === host) return [host, kitty];
+    if (this.#bids.length === 0) return [host, kitty];
+    return [host, []];
+  }
+
+  private reveal_kitty(player: PlayerID, kitty: CardBase[]): ZPY.Result {
     let rank = this.#ranks[this.#host].rank;
 
     // the natural-trump-only TrumpMeta works for comparisons here
@@ -439,22 +457,12 @@ export class ZPY {
 
     this.#tr = new TrumpMeta(card.suit, card.rank);
     for (let p in this.#draws) this.#draws[p].rehash(this.#tr);
-
-    this.#kitty = kitty;
-    this.#phase = ZPY.Phase.KITTY;
   }
 
-  /*
-   * Phase.PREPARE : Effect.receive_kitty
-   *
-   * Dump the kitty into the host's hand.
-   */
-  receive_kitty(player: ZPY.PlayerID, kitty: CardBase[]): ZPY.Result {
+  private receive_kitty(player: PlayerID, kitty: CardBase[]): ZPY.Result {
     for (let c of kitty) {
       this.#draws[player].insert(new Card(c.suit, c.rank, this.#tr));
     }
-    this.#kitty = kitty;
-    this.#phase = ZPY.Phase.KITTY;
   }
 
   /*
@@ -464,7 +472,7 @@ export class ZPY {
    * The host discards their kitty.  We Hand-ify every player's draw pile, and
    * transition to Phase.FRIEND.
    */
-  replace_kitty(player: ZPY.PlayerID, kitty: CardBase[]): ZPY.Result<[]> {
+  replace_kitty(player: PlayerID, kitty: CardBase[]): ZPY.Result<[]> {
     if (player !== this.#host) {
       return new ZPY.WrongPlayerError('host only');
     }
@@ -485,13 +493,13 @@ export class ZPY {
     this.seal_hand(player);
     return [];
   }
-  seal_hand(player: ZPY.PlayerID): ZPY.Result {
+  seal_hand(player: PlayerID): ZPY.Result {
     for (let p of this.#players) {
       if (this.can_see(p)) {
         this.#hands[p] = new Hand(this.#draws[p]);
       }
     }
-    this.#draws = {}; // clear this, mostly to prevent bugs
+    this.#draws = {} as any; // clear this, mostly to prevent bugs
     this.#phase = ZPY.Phase.FRIEND;
   }
 
@@ -502,7 +510,7 @@ export class ZPY {
    * gameplay actually begins.
    */
   call_friends(
-    player: ZPY.PlayerID,
+    player: PlayerID,
     friends: [CardBase, number][]
   ): ZPY.Result {
     if (player !== this.#host) {
@@ -548,7 +556,7 @@ export class ZPY {
    * returns the play as a CardPile on success.
    */
   private init_play(
-    player: ZPY.PlayerID,
+    player: PlayerID,
     play: Play,
   ): ZPY.Error | CardPile {
     if (player !== this.#players[this.#current]) {
@@ -568,7 +576,7 @@ export class ZPY {
    * In addition to recording metadata, this function also performs friend
    * detection.
    */
-  private commit_play(player: ZPY.PlayerID, play: Play): void {
+  private commit_play(player: PlayerID, play: Play): void {
     this.#plays[player] = play;
 
     // set `player` as the new winner if they're the first play or the current
@@ -604,7 +612,7 @@ export class ZPY {
   /*
    * Commit the lead play.
    */
-  private commit_lead(player: ZPY.PlayerID, play: Play): void {
+  private commit_lead(player: PlayerID, play: Play): void {
     for (let count of play.gen_counts(this.#tr)) {
       this.#hands[player].remove(...count);
     }
@@ -619,14 +627,14 @@ export class ZPY {
    * If the leader plays a nontrivial flight, transition to Phase.FLY, else to
    * Phase.FOLLOW.
    */
-  lead_play(player: ZPY.PlayerID, play: Flight): ZPY.Result<[Flight]> {
+  lead_play(player: PlayerID, play: Flight): ZPY.Result<[Flight]> {
     let play_pile = this.init_play(player, play);
     if (play_pile instanceof ZPY.Error) return play_pile;
 
     this.observe_lead(player, play);
     return [play];
   }
-  observe_lead(player: ZPY.PlayerID, play: Flight): ZPY.Result {
+  observe_lead(player: PlayerID, play: Flight): ZPY.Result {
     this.#lead = play;
 
     if (play.tractors.length > 1) {
@@ -648,7 +656,7 @@ export class ZPY {
    * Transitions to Phase.FOLLOW.
    */
   contest_fly(
-    player: ZPY.PlayerID,
+    player: PlayerID,
     reveal: CardBase[]
   ): ZPY.Result<[CardBase[], Tractor]> {
     if (player === this.#leader) {
@@ -683,7 +691,7 @@ export class ZPY {
     return new ZPY.InvalidPlayError('reveal does not contest flight');
   }
   reject_fly(
-    player: ZPY.PlayerID,
+    player: PlayerID,
     reveal: CardBase[],
     force: Tractor
   ): ZPY.Result {
@@ -702,7 +710,7 @@ export class ZPY {
    * The equivalent of READY for Phase.FLY.  Once everyone passes, the fly
    * succeeds and play continues to Phase.FOLLOW.
    */
-  pass_contest(player: ZPY.PlayerID): ZPY.Result {
+  pass_contest(player: PlayerID): ZPY.Result {
     this.#consensus.add(player);
     if (this.#consensus.size !== this.#players.length) return;
 
@@ -720,7 +728,7 @@ export class ZPY {
    * played.  Transitions to either Phase.LEAD, or Phase.FINISH if the round
    * has ended.
    */
-  follow_lead(player: ZPY.PlayerID, play: Play): ZPY.Result<[Play]> {
+  follow_lead(player: PlayerID, play: Play): ZPY.Result<[Play]> {
     let play_pile = this.init_play(player, play);
     if (play_pile instanceof ZPY.Error) return play_pile;
 
@@ -731,7 +739,7 @@ export class ZPY {
     return [play];
   }
   observe_follow(
-    player: ZPY.PlayerID,
+    player: PlayerID,
     play: Play,
     play_pile?: CardPile,
   ): ZPY.Result {
@@ -786,7 +794,7 @@ export class ZPY {
     this.#current = this.#order[this.#leader];
     this.#winning = null;
     this.#lead = null;
-    this.#plays = {};
+    this.#plays = {} as any;
 
     this.#phase = ZPY.Phase.LEAD;
   }
@@ -796,7 +804,7 @@ export class ZPY {
    *
    * A delta of -1 indicates that the player was J'd.
    */
-  private rank_up(player: ZPY.PlayerID, delta: number): void {
+  private rank_up(player: PlayerID, delta: number): void {
     let meta = this.#ranks[player];
 
     for (let i = 0; i < delta; ++i) {
@@ -835,14 +843,14 @@ export class ZPY {
    *
    * Score and finish up the round.  Transitions to Phase.WAIT.
    */
-  end_round(player: ZPY.PlayerID): ZPY.Result<[CardBase[]]> {
+  end_round(player: PlayerID): ZPY.Result<[CardBase[]]> {
     if (player !== this.#host) {
       return new ZPY.WrongPlayerError('host only');
     }
     this.finish(player, this.#kitty);
     return [this.#kitty];
   }
-  finish(player: ZPY.PlayerID, kitty: CardBase[]): ZPY.Result {
+  finish(player: PlayerID, kitty: CardBase[]): ZPY.Result {
     this.#kitty = kitty;
 
     let atk_points = this.#players.reduce(
@@ -895,7 +903,7 @@ export class ZPY {
    *
    * Start a new round.
    */
-  next_round(player: ZPY.PlayerID): ZPY.Result {
+  next_round(player: PlayerID): ZPY.Result {
     if (player !== this.#owner) {
       return new ZPY.WrongPlayerError('host only');
     }
@@ -911,8 +919,8 @@ export class ZPY {
   /*
    * Make a shallow copy of the game state for `player`.
    */
-  redact_for(player: ZPY.PlayerID): ZPY {
-    let copy = new ZPY(this.#rules);
+  redact_for(player: PlayerID): ZPY<PlayerID> {
+    let copy = new ZPY<PlayerID>(this.#rules);
     copy.#phase    = this.#phase;
     copy.#identity = player;
 
@@ -969,7 +977,9 @@ players: ${this.#players.join(', ')}
 ranks:
 ${o_map(this.#ranks,
   (p, meta) => `  ${p}: ${
-    o_map(meta, (k, v) => `${k[0]}:${rank_to_string(v)}`).join(' ')
+    o_map(meta,
+      ((k: string, v: Rank) => `${k[0]}:${rank_to_string(v)}`) as any
+    ).join(' ')
   }`
 ).join('\n')}
 
@@ -1023,8 +1033,6 @@ ${p}'s hand: ${hand_pile.size > 0 ? '\n' + hand_pile.toString(color) : ''}`;
 ///////////////////////////////////////////////////////////////////////////////
 
 export namespace ZPY {
-  export type PlayerID = string;
-
   export enum RenegeRule {
     ACCUSE,   // reneges are tracked, but must be called out by other players
     FORBID,   // disallow plays that would result in a renege

@@ -30,9 +30,9 @@ export function array_shuffle<T>(arr: T[]): T[] {
 /*
  * Functional map for objects.
  */
-export function o_map<O, K extends keyof O & string, R>(
+export function o_map<O, K extends keyof O, R>(
   o: O,
-  fn: (k: K, v: O[K]) => R,
+  fn: (k: string, v: O[K]) => R,
 ) {
-  return Object.keys(o).map((k: K) => fn(k, o[k]));
+  return Object.keys(o).map((k: string) => fn(k, o[k as K]));
 }
