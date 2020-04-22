@@ -3,18 +3,7 @@
  * deals with state transitions as users join, leave, and otherwise interact.
  * it also encodes the way the game requires information to be hidden.
  *
- * the types State and Action define the game state and possible transitions,
- * respectively; while ClientState and ClientAction define the state and
- * possible transitions as they are visible by a particular user.
- *
- * the functions redact and manifest define the mapping from the globally-
- * knowledgeable State and Action to their client-side counterparts.  protocol
- * actions should be viewed as if they redact to themselves.
- *
- * the functions apply and apply_client define the way that actions affect a
- * given game state.
- *
- * in particular, this diagram commutes:
+ * we would like to establish this commutative diagram:
  *
  *  Intent
  *     |    \
@@ -23,7 +12,7 @@
  *     |               \____________
  *     |                            |
  *     v                            v
- *  Action -----manifest--------> Effect
+ *  Action ---redact_action-----> Effect
  *     |                            |
  *     |                            |
  *   apply                     apply_client
@@ -31,12 +20,39 @@
  *     v                            v
  *   State ------redact------> ClientState
  *
- * that is, it should not matter if you redact and use apply_client or use
- * apply and then redact---the results should be the same (though see below for
- * a caveat).
+ * the types State and Action define the game state and possible transitions,
+ * respectively; while ClientState and Effect define the state and possible
+ * transitions as they are visible by a particular user.  both an Action and
+ * its Effect arise from a user's Intent.
+ *
+ * the functions redact and redact_action define the mapping from the globally-
+ * knowledgeable State and Action to their client-side counterparts.  protocol
+ * actions should be viewed as if they redact to themselves.
+ *
+ * the functions apply and apply_client define the way that actions affect a
+ * given game state.
+ *
+ * however, because all JS objects are mutable, and there is no nice way to
+ * impose immutability, we instead combine the listen, apply, and redact_action
+ * functions into a single function called larp (the p stands for potato):
+ *
+ *  Intent
+ *     |    \
+ *     |     \
+ *     |       predict
+ *     |               \____________
+ *      \                           |
+ *       \                          v
+ *       larp ---(per-client)---> Effect
+ *        /                         |
+ *       /                          |
+ *      /                      apply_client
+ *     |                            |
+ *     v                            v
+ *   State ------redact------> ClientState
  */
 
-import { ProtocolAction, User } from 'protocol/protocol.ts'
+import { ProtocolAction, User, UserID } from 'protocol/protocol.ts'
 import { Result } from 'utils/result.ts'
 
 import { Codec } from 'io-ts/lib/Codec'
@@ -54,45 +70,44 @@ export interface Engine<
   Config: Codec<Config>;
   Intent: Codec<Intent>;
   State: Codec<State>;
-  Action: (state: State) => Codec<Action>;
   ClientState: Codec<ClientState>;
+  Action: (state: ClientState) => Codec<Action>;
   Effect: (state: ClientState) => Codec<Effect>;
   UpdateError: Codec<UpdateError>;
 
   // generate the initial engine state
   init: (options: Config) => State;
 
-  // lift a client-generated intent into an action that will be applied
-  listen: (
+  // listen, apply, redact_action, potato.
+  //
+  // lifts a client-generated intent into an action, applies that action to the
+  // input state, and produces an output state along with per-client redacted
+  // effects.
+  larp: (
     state: State,
-    int: Intent,
-    who: User
-  ) => Result<Action, UpdateError>;
-
-  // compute the effect of an action on a given state or describe the reason
-  // why the update is invalid, inapplicable, or otherwise problematic™
-  apply: (
-    state: State,
-    act: Action | ProtocolAction
-  ) => Result<State, UpdateError>;
+    intent: Intent,
+    who: User,
+    clients: User[],
+  ) => Result<
+    [State, Record<UserID, Effect>],
+    UpdateError
+  >;
 
   // predict the outcome of an intent based on the client state; return null if
   // the outcome is unknown
   predict: (
     state: ClientState,
-    int: Intent,
+    intent: Intent,
     me: User
   ) => null | Result<Effect, UpdateError>;
 
   // same as apply, on the client side
   apply_client: (
     state: ClientState,
-    eff: Effect | ProtocolAction,
+    effect: Effect | ProtocolAction,
     me: User
   ) => Result<ClientState, UpdateError>;
 
-  // redact a server-side state/action into a client-side state/action for the
-  // given recipient
+  // redact a server state into a client-side state for the given recipient
   redact: (state: State, who: User) => ClientState;
-  manifest: (state: State, act: Action, who: User) => Effect;
 };

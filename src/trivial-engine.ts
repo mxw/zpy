@@ -1,5 +1,5 @@
 import * as P from 'protocol/protocol.ts';
-import { Result, OK, Err, assertOK } from 'utils/result.ts'
+import { Result, OK, Err, isErr } from 'utils/result.ts'
 
 import * as C from 'io-ts/lib/Codec'
 
@@ -27,27 +27,8 @@ export const State = C.type({
 });
 export type State = TypeOf<typeof State>;
 
-export const Action_ = C.sum('verb')({
-  grab: C.type({
-    verb: C.literal('grab'),
-    actor: P.UserID,
-    target: CardID,
-  }),
-  drop: C.type({
-    verb: C.literal('drop'),
-    actor: P.UserID,
-    target: CardID,
-  }),
-  move: C.type({
-    verb: C.literal('move'),
-    actor: P.UserID,
-    target: CardID,
-    x: C.number,
-    y: C.number,
-  }),
-});
-export const Action = (_: State) => Action_;
-export type Action = TypeOf<typeof Action_>;
+export const ClientState = State;
+export type ClientState = State;
 
 export const Intent = C.sum('verb')({
   grab: C.type({
@@ -67,11 +48,30 @@ export const Intent = C.sum('verb')({
 });
 export type Intent = TypeOf<typeof Intent>;
 
+const Action_ = C.sum('verb')({
+  grab: C.type({
+    verb: C.literal('grab'),
+    actor: P.UserID,
+    target: CardID,
+  }),
+  drop: C.type({
+    verb: C.literal('drop'),
+    actor: P.UserID,
+    target: CardID,
+  }),
+  move: C.type({
+    verb: C.literal('move'),
+    actor: P.UserID,
+    target: CardID,
+    x: C.number,
+    y: C.number,
+  }),
+});
+export const Action = (s: State) => Action_;
+export type Action = TypeOf<typeof Action_>;
+
 export const Effect = Action;
 export type Effect = Action;
-
-export const ClientState = State;
-export type ClientState = State;
 
 export const UpdateError = C.sum('why')({
   'already-held': C.type({
@@ -104,29 +104,29 @@ export const init = (): State => {
   }]};
 }
 
-export const listen = (
+const listen = (
   state: State,
   intent: Intent,
   who: P.User
-): Result<Action, UpdateError> => {
+): Action => {
   switch(intent.verb) {
     case 'grab':
-    case 'drop': return OK({
+    case 'drop': return {
       verb: intent.verb,
       target: intent.target,
       actor: who.id,
-    });
-    case 'move': return OK({
+    };
+    case 'move': return {
       verb: intent.verb,
       actor: who.id,
       target: intent.target,
       x: intent.x,
       y: intent.y,
-    });
+    };
   }
 }
 
-export const apply = (
+const apply = (
   state: State,
   act: Action | P.ProtocolAction
 ): Result<State, UpdateError> => {
@@ -174,12 +174,31 @@ export const apply = (
   }
 }
 
+export const larp = (
+  state: State,
+  intent: Intent,
+  who: P.User,
+  clients: P.User[],
+): Result<
+  [State, Record<P.UserID, Effect>],
+  UpdateError
+> => {
+  let action = listen(state, intent, who);
+  let result = apply(state, action);
+  if (isErr(result)) return result;
+
+  return OK([
+    result.ok,
+    Object.fromEntries(clients.map(u => [u.id, action]))
+  ]);
+};
+
 export const predict = (
   state: ClientState,
   intent: Intent,
   me: P.User
 ): Result<Effect, UpdateError> => {
-  return OK(manifest(state, assertOK(listen(state, intent, me)), me));
+  return OK(listen(state, intent, me));
 }
 export const apply_client = (
   state: ClientState,
@@ -190,4 +209,3 @@ export const apply_client = (
 }
 
 export const redact = (s: State, who: P.User): ClientState => s;
-export const manifest = (s: State, a: Action, who: P.User): Effect => a;

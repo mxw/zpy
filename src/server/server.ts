@@ -61,84 +61,64 @@ class Game<
     this.state = this.engine.init(config);
   }
 
-  // try to apply the given action originating with a particular client and
-  // transaction. the provided source and transaction id are used to mark the
-  // update message as a reply to the appropriate client.
-  //
-  // if `source` is set, `tx` must also be set. if neither is set, the action
-  // originated from the server.
-  //
-  // a return value of null indicates success; if the engine returns an error
-  // on `apply`, it is forward as the return value
-  process_update(
-    act: Action | P.ProtocolAction,
-    source: null | Client,
-    tx: null | P.TxID
-  ): UpdateError | null {
-    let newstate = this.engine.apply(this.state, act);
-    if (isErr(newstate)) return newstate.err;
-
-    this.state = newstate.ok;
-
-    for (let client of this.clients) {
-      if (!client.sync) continue;
-
-      let eff = P.on_decode(
-        this.engine.Action(this.state),
-        act,
-        act => this.engine.manifest(this.state, act, client.user),
-        act as P.ProtocolAction
-      );
-      let for_tx = client === source ? tx : null;
-
-      client.socket.send(JSON.stringify({
-        verb: "update",
-        tx: for_tx,
-        effect: eff,
-      }));
-    }
-    return null;
-  }
-
   // process a hello message from a client. this marks them as present but not
   // yet synchronized; they won't receive updates until they ask for a reset
-  hello(client: Client, nick: string): void {
+  hello(source: Client, nick: string): void {
     let user = {
       id: this.next_id++,
       nick: nick,
     };
 
-    let res = this.process_update({
-      verb: 'user:join',
-      who: user,
-    }, client, null);
-    assert(res === null);
-
-    client.user = user;
-    client.socket.send(JSON.stringify({
+    source.user = user;
+    source.socket.send(JSON.stringify({
       verb: "hello",
       you: user,
     }));
+
+    for (let client of this.clients) {
+      if (!client.sync) continue;
+
+      client.socket.send(JSON.stringify({
+        verb: 'user:join',
+        who: user,
+      }));
+    }
   }
 
   // process an update request from a client. the response will be marked w/ the
   // transaction id provided here; either as an update messsage after we handle
   // the update or as an update-reject message
-  update(client: Client, tx: P.TxID, int: Intent) {
-    let bail = (ue: UpdateError) => client.socket.send(JSON.stringify({
-      verb: "update-reject",
-      tx: tx,
-      reason: act,
-    }));
+  update(source: Client, tx: P.TxID, intent: Intent) {
+    let result = this.engine.larp(
+      this.state,
+      intent,
+      source.user,
+      this.clients.map(c => c.user),
+    );
 
-    let act = this.engine.listen(this.state, int, client.user);
-    if (isErr(act)) {
-      return bail(act.err);
+    if (isErr(result)) {
+      source.socket.send(JSON.stringify({
+        verb: "update-reject",
+        tx: tx,
+        reason: result.err,
+      }));
+      return;
     }
+    let [state, effects] = result.ok;
 
-    let err = this.process_update(act.ok, client, tx);
-    if (err !== null) {
-      return bail(err);
+    this.state = state;
+
+    for (let client of this.clients) {
+      if (!client.sync) continue;
+      if (!(client.user.id in effects)) continue;
+
+      let for_tx = client === source ? tx : null;
+
+      client.socket.send(JSON.stringify({
+        verb: "update",
+        tx: for_tx,
+        effect: effects[client.user.id],
+      }));
     }
   }
 
