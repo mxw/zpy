@@ -331,6 +331,48 @@ export const init = (options: Config): State => {
   return new ZPY<P.UserID>(options);
 };
 
+export const predict = (
+  state: ClientState,
+  intent: Intent,
+  me: P.User,
+): null | Result<Effect, UpdateError> => {
+  switch (intent.kind) {
+    case 'add_player': {
+      let result = state[intent.kind](...intent.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(intent);
+    }
+    case 'set_decks': {
+      let result = state[intent.kind](...intent.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(intent);
+    }
+    case 'start_game': break;
+    case 'draw_card': break;
+    case 'bid_trump': break;
+    case 'request_redeal': break;
+    case 'ready': break;
+    case 'replace_kitty': {
+      let result = state[intent.kind](...intent.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(intent);
+    }
+    case 'call_friends': {
+      let result = state[intent.kind](...intent.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(intent);
+    }
+    case 'lead_play': {
+      let result = state[intent.kind](...intent.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(intent);
+    }
+    case 'contest_fly': break;
+    case 'pass_contest': break;
+    case 'follow_lead': {
+      let result = state[intent.kind](...intent.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(intent);
+    }
+    case 'end_round': break;
+    case 'next_round': break;
+  }
+};
+
 export const larp = (
   state: State,
   intent: Intent,
@@ -452,5 +494,93 @@ export const larp = (
       return OK([state, everyone(intent)]);
     }
   }
-  return Err(new ZPY.Error('unknown error'));
-}
+};
+
+export const apply_client = (
+  state: ClientState,
+  effect: Effect,
+  me: P.User,
+): Result<ClientState, UpdateError> => {
+  switch (effect.kind) {
+    case 'add_player': {
+      let result = state[effect.kind](...effect.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+    }
+    case 'set_decks': {
+      let result = state[effect.kind](...effect.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+    }
+    case 'init_game': {
+      let result = state[effect.kind](...effect.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+    }
+    case 'add_to_hand': {
+      let result = state[effect.kind](...effect.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+    }
+    case 'secure_bid': {
+      let result = state[effect.kind](...effect.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+    }
+    case 'redeal': {
+      let result = state[effect.kind](...effect.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+    }
+    case 'ready': {
+      let result = state[effect.kind](...effect.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+    }
+    case 'install_host': {
+      let result = state[effect.kind](...effect.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+    }
+    case 'replace_kitty': {
+      let result = state[effect.kind](...effect.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+    }
+    case 'seal_hand': {
+      let result = state[effect.kind](...effect.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+    }
+    case 'call_friends': {
+      let result = state[effect.kind](...effect.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+    }
+    case 'lead_play': {
+      let result = state[effect.kind](...effect.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+    }
+    case 'observe_lead': {
+      let result = state[effect.kind](...effect.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+    }
+    case 'reject_fly': {
+      let result = state[effect.kind](...effect.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+    }
+    case 'pass_contest': {
+      let result = state[effect.kind](...effect.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+    }
+    case 'follow_lead': {
+      let result = state[effect.kind](...effect.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+    }
+    case 'observe_follow': {
+      let result = state[effect.kind](...effect.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+    }
+    case 'finish': {
+      let result = state[effect.kind](...effect.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+    }
+    case 'next_round': {
+      let result = state[effect.kind](...effect.args);
+      return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+    }
+  }
+};
+
+export const redact = (state: State, who: P.User): ClientState => {
+  return state.redact_for(who.id);
+};
