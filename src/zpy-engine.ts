@@ -23,6 +23,8 @@ import {
   Hand,
 } from 'lib/trick.ts';
 
+import { Result, OK, Err } from 'utils/result.ts'
+
 import { ZPY } from 'lib/zpy.ts';
 
 import { Either } from 'fp-ts/lib/Either'
@@ -33,7 +35,7 @@ import {strict as assert} from 'assert';
 
 ///////////////////////////////////////////////////////////////////////////////
 /*
- * config codec.
+ * config and error codecs.
  */
 
 export const Config = C.type({
@@ -42,6 +44,16 @@ export const Config = C.type({
   kitty: P.Enum<ZPY.KittyMultiplierRule>(ZPY.KittyMultiplierRule),
 });
 export type Config = ZPY.RuleModifiers;
+
+export type UpdateError = ZPY.Error;
+
+///////////////////////////////////////////////////////////////////////////////
+/*
+ * state codecs.
+ */
+
+export type State = ZPY;
+export type ClientState = ZPY;
 
 ///////////////////////////////////////////////////////////////////////////////
 /*
@@ -167,22 +179,22 @@ const cd_Hand = (tr: TrumpMeta): C.Codec<Hand> => C.make(
 
 ///////////////////////////////////////////////////////////////////////////////
 /*
- * intent, action, and effect codecs.
+ * intent and effect codecs.
  */
 
 const PlayerID = C.string;
 
 const trivial = <L extends string> (
   literal: L
-): C.Codec<{motion: L, args: [string]}> => C.type({
-  motion: C.literal(literal),
+): C.Codec<{kind: L, args: [string]}> => C.type({
+  kind: C.literal(literal),
   args: C.tuple(PlayerID),
 });
 
 const card_arr = <L extends string> (
   literal: L
-): C.Codec<{motion: L, args: [string, CardBase[]]}> => C.type({
-  motion: C.literal(literal),
+): C.Codec<{kind: L, args: [string, CardBase[]]}> => C.type({
+  kind: C.literal(literal),
   args: C.tuple(PlayerID, C.array(cd_CardBase)),
 });
 
@@ -191,28 +203,28 @@ namespace A {
 export const add_player = trivial('add_player');
 
 export const set_decks = C.type({
-  motion: C.literal('set_decks'),
+  kind: C.literal('set_decks'),
   args: C.tuple(PlayerID, C.number),
 });
 
 export const start_game = trivial('start_game');
 export const init_game = C.type({
-  motion: C.literal('init_game'),
+  kind: C.literal('init_game'),
   args: C.tuple(PlayerID, C.array(PlayerID)),
 });
 
 export const draw_card = trivial('draw_card');
 export const add_to_hand = C.type({
-  motion: C.literal('add_to_hand'),
-  args: C.tuple(PlayerID, cd_CardBase),
+  kind: C.literal('add_to_hand'),
+  args: C.tuple(PlayerID, C.nullable(cd_CardBase)),
 });
 
 export const bid_trump = C.type({
-  motion: C.literal('bid_trump'),
+  kind: C.literal('bid_trump'),
   args: C.tuple(PlayerID, cd_CardBase, C.number),
 });
 export const secure_bid = C.type({
-  motion: C.literal('secure_bid'),
+  kind: C.literal('secure_bid'),
   args: C.tuple(PlayerID, cd_CardBase, C.number),
 });
 
@@ -227,32 +239,32 @@ export const replace_kitty = card_arr('replace_kitty');
 export const seal_hand = trivial('seal_hand');
 
 export const call_friends = C.type({
-  motion: C.literal('call_friends'),
+  kind: C.literal('call_friends'),
   args: C.tuple(PlayerID, C.array(C.tuple(cd_CardBase, C.number))),
 });
 
 export const lead_play = (tr: TrumpMeta) => C.type({
-  motion: C.literal('lead_play'),
+  kind: C.literal('lead_play'),
   args: C.tuple(PlayerID, cd_Flight(tr)),
 });
 export const observe_lead = (tr: TrumpMeta) => C.type({
-  motion: C.literal('observe_lead'),
+  kind: C.literal('observe_lead'),
   args: C.tuple(PlayerID, cd_Flight(tr)),
 });
 
 export const contest_fly = card_arr('contest_fly');
 export const pass_contest = trivial('pass_contest');
 export const reject_fly = (tr: TrumpMeta) => C.type({
-  motion: C.literal('reject_fly'),
-  args: C.tuple(PlayerID, C.array(cd_CardBase), cd_Flight(tr)),
+  kind: C.literal('reject_fly'),
+  args: C.tuple(PlayerID, C.array(cd_CardBase), cd_Tractor(tr)),
 });
 
 export const follow_lead = (tr: TrumpMeta) => C.type({
-  motion: C.literal('follow_lead'),
+  kind: C.literal('follow_lead'),
   args: C.tuple(PlayerID, cd_Play(tr)),
 });
 export const observe_follow = (tr: TrumpMeta) => C.type({
-  motion: C.literal('observe_follow'),
+  kind: C.literal('observe_follow'),
   args: C.tuple(PlayerID, cd_Play(tr)),
 });
 
@@ -263,7 +275,7 @@ export const next_round = trivial('next_round');
 
 }
 
-export const Action = (tr: TrumpMeta) => C.sum('motion')({
+const Intent_ = (tr: TrumpMeta) => C.sum('kind')({
   'add_player': A.add_player,
   'set_decks': A.set_decks,
   'start_game': A.start_game,
@@ -280,13 +292,13 @@ export const Action = (tr: TrumpMeta) => C.sum('motion')({
   'end_round': A.end_round,
   'next_round': A.next_round,
 });
-const _Act = Action(new TrumpMeta(Suit.TRUMP, Rank.B));
-export type Action = P.TypeOf<typeof _Act>;
 
-export const Intent = Action;
-export type Intent = Action;
+const _I = Intent_(new TrumpMeta(Suit.TRUMP, Rank.B));
+export type Intent = P.TypeOf<typeof _I>;
 
-export const Effect = (tr: TrumpMeta) => C.sum('motion')({
+export const Intent = (s: State): C.Codec<Intent> => Intent_(s.tr);
+
+const Effect_ = (tr: TrumpMeta) => C.sum('kind')({
   'add_player': A.add_player,
   'set_decks': A.set_decks,
   'init_game': A.init_game,
@@ -305,21 +317,125 @@ export const Effect = (tr: TrumpMeta) => C.sum('motion')({
   'pass_contest': A.pass_contest,
   'follow_lead': A.follow_lead(tr),
   'observe_follow': A.observe_follow(tr),
-  'end_round': A.end_round,
   'finish': A.finish,
   'next_round': A.next_round,
 });
 
-///////////////////////////////////////////////////////////////////////////////
-/*
- * state codecs.
- */
+const _E = Effect_(new TrumpMeta(Suit.TRUMP, Rank.B));
+export type Effect = P.TypeOf<typeof _E>;
 
-export type State = ZPY;
-export type ClientState = ZPY;
+export const Effect = (cs: ClientState): C.Codec<Effect> => Effect_(cs.tr);
 
 ///////////////////////////////////////////////////////////////////////////////
 
 export const init = (options: Config): State => {
   return new ZPY(options);
 };
+
+export const larp = (
+  state: State,
+  intent: Intent,
+  who: P.User,
+  clients: P.User[]
+): Result<
+  [State, Record<P.UserID, Effect>],
+  UpdateError
+> => {
+  // convenience helper for making an effect
+  let effect = <L extends string, T extends readonly any[]>(
+    literal: L,
+    ...args: T
+  ): {kind: L, args: {[K in keyof T]: T[K]}} => ({
+    kind: literal,
+    args: args
+  });
+
+  // send the same effect to everyone
+  let everyone = (effect: Effect): Record<P.UserID, Effect> =>
+    Object.fromEntries(clients.map(u => [u, intent]));
+
+  // send `you` back to `who` and send `others` to everyone else
+  let you_and_them = (you: Effect, them: Effect): Record<P.UserID, Effect> =>
+    Object.assign(everyone(them), {[who.id]: you});
+
+  let p = intent.args[0];
+
+  switch (intent.kind) {
+    case 'add_player': {
+      let result = state[intent.kind](...intent.args);
+      if (result instanceof ZPY.Error) return Err(result);
+      return OK([state, everyone(intent)]);
+    }
+    case 'set_decks': {
+      let result = state[intent.kind](...intent.args);
+      if (result instanceof ZPY.Error) return Err(result);
+      return OK([state, everyone(intent)]);
+    }
+    case 'start_game': {
+      let result = state[intent.kind](...intent.args);
+      if (result instanceof ZPY.Error) return Err(result);
+      return OK([state, everyone(effect('init_game', p, ...result))]);
+    }
+    case 'draw_card': {
+      let result = state[intent.kind](...intent.args);
+      if (result instanceof ZPY.Error) return Err(result);
+      return OK([state, you_and_them(
+        effect('add_to_hand', p, ...result),
+        effect('add_to_hand', p, null)
+      )]);
+    }
+    case 'bid_trump': {
+      let result = state[intent.kind](...intent.args);
+      if (result instanceof ZPY.Error) return Err(result);
+      return OK([state, everyone(effect('secure_bid', p, ...result))]);
+    }
+    case 'request_redeal': {
+      let result = state[intent.kind](...intent.args);
+      if (result instanceof ZPY.Error) return Err(result);
+      return OK([state, everyone(effect('redeal', p, ...result))]);
+    }
+    case 'ready':
+      break;
+    case 'replace_kitty': {
+      let result = state[intent.kind](...intent.args);
+      if (result instanceof ZPY.Error) return Err(result);
+      return OK([state, you_and_them(
+        intent, effect('seal_hand', p, ...result))]);
+    }
+    case 'call_friends': {
+      let result = state[intent.kind](...intent.args);
+      if (result instanceof ZPY.Error) return Err(result);
+      return OK([state, everyone(intent)]);
+    }
+    case 'lead_play': {
+      let result = state[intent.kind](...intent.args);
+      if (result instanceof ZPY.Error) return Err(result);
+      return OK([state, you_and_them(
+        intent, effect('observe_lead', p, ...result))]);
+    }
+    case 'contest_fly': {
+      let result = state[intent.kind](...intent.args);
+      if (result instanceof ZPY.Error) return Err(result);
+      return OK([state, everyone(effect('reject_fly', p, ...result))]);
+    }
+    case 'pass_contest':
+      break;
+    case 'follow_lead': {
+      let result = state[intent.kind](...intent.args);
+      if (result instanceof ZPY.Error) return Err(result);
+      return OK([state, you_and_them(
+        intent, effect('observe_follow', p, ...result))]);
+    }
+    case 'end_round': {
+      let result = state[intent.kind](...intent.args);
+      if (result instanceof ZPY.Error) return Err(result);
+      return OK([state, everyone(effect('finish', p, ...result))]);
+    }
+    case 'next_round': {
+      let result = state[intent.kind](...intent.args);
+      if (result instanceof ZPY.Error) return Err(result);
+      return OK([state, everyone(intent)]);
+    }
+  }
+  return Err(new ZPY.Error('unknown error'));
+}

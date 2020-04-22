@@ -292,9 +292,10 @@ export class ZPY {
     this.add_to_hand(player, cb);
     return [cb];
   }
-  add_to_hand(player: ZPY.PlayerID, cb: CardBase): ZPY.Result {
-    if (this.can_see(player)) this.#draws[player].insert(cb);
-
+  add_to_hand(player: ZPY.PlayerID, cb: null | CardBase): ZPY.Result {
+    if (this.can_see(player) && cb !== null) {
+      this.#draws[player].insert(cb);
+    }
     if (this.#deck_sz === 0) {
       this.#phase = ZPY.Phase.PREPARE;
     }
@@ -369,7 +370,7 @@ export class ZPY {
    * Request a redeal.  Only valid if the player has fewer than #ndecks * 5
    * points in hand.
    */
-  request_redeal(player: ZPY.PlayerID): ZPY.Result {
+  request_redeal(player: ZPY.PlayerID): ZPY.Result<[]> {
     let points = 0;
     for (let [card, n] of this.#draws[player]) {
       points += card.point_value() * n;
@@ -378,6 +379,7 @@ export class ZPY {
       return new ZPY.InvalidPlayError('too many points for redeal');
     }
     this.redeal(player);
+    return [];
   }
   redeal(player: ZPY.PlayerID): ZPY.Result {
     this.reset_round(player, false);
@@ -462,7 +464,7 @@ export class ZPY {
    * The host discards their kitty.  We Hand-ify every player's draw pile, and
    * transition to Phase.FRIEND.
    */
-  replace_kitty(player: ZPY.PlayerID, kitty: CardBase[]): ZPY.Result {
+  replace_kitty(player: ZPY.PlayerID, kitty: CardBase[]): ZPY.Result<[]> {
     if (player !== this.#host) {
       return new ZPY.WrongPlayerError('host only');
     }
@@ -481,6 +483,7 @@ export class ZPY {
     this.#kitty = kitty;
 
     this.seal_hand(player);
+    return [];
   }
   seal_hand(player: ZPY.PlayerID): ZPY.Result {
     for (let p of this.#players) {
@@ -682,12 +685,12 @@ export class ZPY {
   reject_fly(
     player: ZPY.PlayerID,
     reveal: CardBase[],
-    component: Tractor
+    force: Tractor
   ): ZPY.Result {
     // we beat the flight; force the new flight
     this.#consensus.clear();
 
-    this.#lead = new Flight([component]);
+    this.#lead = new Flight([force]);
     this.commit_lead(this.#leader, this.#lead);
 
     this.#phase = ZPY.Phase.FOLLOW;
