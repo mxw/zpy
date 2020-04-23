@@ -47,6 +47,11 @@ export type Config = ZPY.RuleModifiers;
 
 export type UpdateError = ZPY.Error;
 
+export const UpdateError = C.make(
+  {decode: (u: unknown) => D.success(new ZPY.Error())},
+  {encode: (u: UpdateError) => ''}
+);
+
 ///////////////////////////////////////////////////////////////////////////////
 /*
  * state codecs.
@@ -54,6 +59,12 @@ export type UpdateError = ZPY.Error;
 
 export type State = ZPY<P.UserID>;
 export type ClientState = ZPY<P.UserID>;
+
+export const State = C.make(
+  {decode: (u: unknown) => D.success({} as State)},
+  {encode: (u: State) => ''}
+);
+export const ClientState = State;
 
 ///////////////////////////////////////////////////////////////////////////////
 /*
@@ -298,6 +309,9 @@ export type Intent = P.TypeOf<typeof _I>;
 
 export const Intent = (s: State): C.Codec<Intent> => Intent_(s.tr);
 
+export const Action = Intent;
+export type Action = Intent;
+
 const Effect_ = (tr: TrumpMeta) => C.sum('kind')({
   'add_player': A.add_player,
   'set_decks': A.set_decks,
@@ -498,9 +512,13 @@ export const larp = (
 
 export const apply_client = (
   state: ClientState,
-  effect: Effect,
+  effect: Effect | P.ProtocolAction,
   me: P.User,
 ): Result<ClientState, UpdateError> => {
+  if ('verb' in effect) {
+    return Err(new ZPY.Error('protocol actions not implemented'));
+  }
+
   switch (effect.kind) {
     case 'add_player': {
       let result = state[effect.kind](...effect.args);

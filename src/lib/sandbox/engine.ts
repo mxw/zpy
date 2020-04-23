@@ -30,7 +30,7 @@ export type State = TypeOf<typeof State>;
 export const ClientState = State;
 export type ClientState = State;
 
-export const Intent = C.sum('verb')({
+export const Intent_ = C.sum('verb')({
   grab: C.type({
     verb: C.literal('grab'),
     target: CardID
@@ -46,7 +46,8 @@ export const Intent = C.sum('verb')({
     y: C.number,
   }),
 });
-export type Intent = TypeOf<typeof Intent>;
+export const Intent = (s: State) => Intent_;
+export type Intent = TypeOf<typeof Intent_>;
 
 const Action_ = C.sum('verb')({
   grab: C.type({

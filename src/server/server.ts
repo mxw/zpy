@@ -172,7 +172,7 @@ class Game<
 
     sock.on('message', (data: string) => {
       let d = JSON.parse(data);
-      let ClientMessage = P.ClientMessage(this.engine.Intent);
+      let ClientMessage = P.ClientMessage(this.engine.Intent(this.state));
 
       P.on_decode(ClientMessage, d, msg => {
         switch (d.verb) {

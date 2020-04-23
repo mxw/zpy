@@ -68,11 +68,11 @@ export interface Engine<
 > {
   // codecs for all the type parameters
   Config: Codec<Config>;
-  Intent: Codec<Intent>;
+  Intent: (state: State | ClientState) => Codec<Intent>;
   State: Codec<State>;
   ClientState: Codec<ClientState>;
-  Action: (state: ClientState) => Codec<Action>;
-  Effect: (state: ClientState) => Codec<Effect>;
+  Action: (state: State | ClientState) => Codec<Action>;
+  Effect: (state: State | ClientState) => Codec<Effect>;
   UpdateError: Codec<UpdateError>;
 
   // generate the initial engine state
