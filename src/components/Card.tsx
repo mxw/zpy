@@ -38,7 +38,7 @@ export type CardProps = {
 };
 
 export const Card = (props: CardProps) => {
-  let {card, width, position, x, y, ...more} = props;
+  let {card, width, position, x, y, style, ...more} = props;
 
   let height = width / aspect_ratio;
 
@@ -52,7 +52,7 @@ export const Card = (props: CardProps) => {
 
   let svg = "url(/static/svg/cards/" + card + ".svg)";
 
-  return <div style={Object.assign({
+  return <div style={{
     position: props.position,
     top: y,
     left: x,
@@ -64,7 +64,8 @@ export const Card = (props: CardProps) => {
     borderRadius: border_radius + "px",
     boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.4)",
     border: "solid black 1px",
-  }, props.style || {})}
+    ...props.style
+  }}
     {...more}
   />
 };

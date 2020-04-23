@@ -5,12 +5,14 @@ import { CardBase, Suit, Rank } from 'lib/zpy/cards.ts'
 import { Card as UICard, CardProps as UICardProps } from "components/Card.tsx"
 
 
-export class ZPYCard extends React.Component<ZPYCard.Props> {
-  constructor(props: ZPYCard.Props) {
+export class ZCard extends React.Component<ZCard.Props> {
+  constructor(props: ZCard.Props) {
     super(props);
   }
 
   render() {
+    let {card, width, x, y, position, selected, ...more} = this.props;
+
     let suit = ((suit: Suit) => {
       switch (suit) {
         case Suit.CLUBS: return 'c';
@@ -19,7 +21,7 @@ export class ZPYCard extends React.Component<ZPYCard.Props> {
         case Suit.HEARTS: return 'h';
         case Suit.TRUMP: return 'j';
       }
-    })(this.props.card.suit);
+    })(card.suit);
 
     let rank = ((rank: Rank) => {
       switch (rank) {
@@ -31,22 +33,23 @@ export class ZPYCard extends React.Component<ZPYCard.Props> {
         case Rank.B: return 'b';
         default: return '' + rank
       }
-    })(this.props.card.rank);
+    })(card.rank);
 
     return <UICard
       card={suit + rank}
-      width={this.props.width}
-      x={this.props.x}
-      y={this.props.y}
-      position={this.props.position}
-      style={this.props.selected ? {
+      width={width}
+      x={x}
+      y={y}
+      position={position}
+      style={selected ? {
         boxShadow: "0px 0px 4px 4px rgba(63, 191, 170, 0.7)",
       } : {}}
+      {...more}
     />;
   }
 }
 
-export namespace ZPYCard {
+export namespace ZCard {
 
 export type Props = {
   card: CardBase;
@@ -55,6 +58,7 @@ export type Props = {
   y: number;
   position: "absolute" | "fixed" | "relative";
   selected: boolean;
+  [more: string]: any;
 };
 
 }
