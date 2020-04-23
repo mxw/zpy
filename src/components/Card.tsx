@@ -1,3 +1,5 @@
+import * as React from 'react'
+
 // this exists because the svgs we have checked in are monstrous
 // and we need to shove the math somewhere
 
