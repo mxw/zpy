@@ -29,9 +29,10 @@ const border_radius_x_ratio = 12.0 / 239.0;
 export type CardProps = {
   card: string;
   width: number;
-  position: "absolute" | "fixed" | "relative";
   x: number;
   y: number;
+  position: "absolute" | "fixed" | "relative";
+  style?: Record<string, string>;
 
   [more: string]: any;
 };
@@ -51,7 +52,7 @@ export const Card = (props: CardProps) => {
 
   let svg = "url(/static/svg/cards/" + card + ".svg)";
 
-  return <div style={{
+  return <div style={Object.assign({
     position: props.position,
     top: y,
     left: x,
@@ -63,7 +64,7 @@ export const Card = (props: CardProps) => {
     borderRadius: border_radius + "px",
     boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.4)",
     border: "solid black 1px",
-  }}
+  }, props.style || {})}
     {...more}
   />
 };
