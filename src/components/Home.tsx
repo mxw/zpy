@@ -1,7 +1,7 @@
 import * as React from "react"
 import axios from "axios"
 
-import { GameUI } from "components/trivial-engine/GameUI.tsx"
+import { GameUI } from "components/sandbox/GameUI.tsx"
 
 export const Home = (props: {}) => {
   let [session, setSession] = React.useState<string | null>(null);

@@ -1,10 +1,10 @@
 import * as React from "react"
 
 import { GameClient } from "protocol/client.ts"
-import * as CardEngine from "trivial-engine.ts"
-import { Board } from "components/trivial-engine/Board.tsx"
+import * as CardEngine from "lib/sandbox/engine.ts"
+import { Board } from "components/sandbox/Board.tsx"
 
-import { Client, createGame } from "components/trivial-engine/game.ts"
+import { Client, createGame } from "components/sandbox/game.ts"
 
 export class GameUI extends React.Component<{gameId: string}, {client: null | Client}> {
   constructor(props: {gameId: string}) {

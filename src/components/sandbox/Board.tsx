@@ -1,10 +1,10 @@
 import * as React from "react"
 
-import * as Eng from "trivial-engine.ts"
+import * as Eng from "lib/sandbox/engine.ts"
 import * as P from "protocol/protocol.ts"
 
 import { Card } from "components/Card.tsx"
-import { Client, State } from "components/trivial-engine/game.ts"
+import { Client, State } from "components/sandbox/game.ts"
 
 type BoardCardProps = {
   client: Client,

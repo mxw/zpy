@@ -291,7 +291,7 @@ export class CardPile {
    *
    * Guarantees that suits are contiguous and that no earlier card is greater
    * in value than a later card.  Note that this guarantee is not true in
-   * general for methods named gen_counts() across lib/.
+   * general for methods named gen_counts() across lib/zpy/.
    */
   [Symbol.iterator](): Iterator<[Card, number]> {
     return this.gen_counts();

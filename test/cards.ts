@@ -1,6 +1,6 @@
 import {
   Suit, Rank, TrumpMeta, CardBase, Card, CardPile
-} from 'lib/cards.ts';
+} from 'lib/zpy/cards.ts';
 
 import {expect} from 'chai';
 

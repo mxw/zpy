@@ -1,4 +1,4 @@
-import * as CardEngine from "trivial-engine.ts"
+import * as CardEngine from "lib/sandbox/engine.ts"
 import { GameClient } from "protocol/client.ts"
 
 export type State = CardEngine.ClientState;

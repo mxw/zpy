@@ -13,7 +13,7 @@ import {
   CardPile,
   suit_to_symbol,
   rank_to_string,
-} from 'lib/cards.ts';
+} from 'lib/zpy/cards.ts';
 import {
   CardTuple,
   Tractor,
@@ -21,11 +21,11 @@ import {
   Toss,
   Play,
   Hand,
-} from 'lib/trick.ts';
+} from 'lib/zpy/trick.ts';
+
+import { ZPY } from 'lib/zpy/zpy.ts';
 
 import { Result, OK, Err } from 'utils/result.ts'
-
-import { ZPY } from 'lib/zpy.ts';
 
 import { Either } from 'fp-ts/lib/Either'
 import * as C from 'io-ts/lib/Codec';

@@ -1,11 +1,11 @@
-import * as CardEngine from 'trivial-engine.ts'
+import * as CardEngine from 'lib/sandbox/engine.ts'
 
 import { GameServer } from 'server/server.ts'
 import * as Session from 'server/session.ts'
 
 import CookieParser from 'cookie-parser'
 import express from 'express'
-import * as Http from 'http'
+import * as HTTP from 'http'
 import * as WebSocket from 'ws'
 
 let app = express();
@@ -17,7 +17,7 @@ app.use('/static/svg', express.static("assets/svg"))
 app.use(CookieParser());
 app.use(Session.middleware);
 
-let server = Http.createServer(app);
+let server = HTTP.createServer(app);
 let gs = new GameServer(CardEngine, server, "game");
 
 var activeGame: string | null = null;

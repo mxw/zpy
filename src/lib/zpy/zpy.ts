@@ -4,10 +4,10 @@
 
 import {
   Suit, Rank, TrumpMeta, CardBase, Card, CardPile, rank_to_string
-} from 'lib/cards.ts';
+} from 'lib/zpy/cards.ts';
 import {
   CardTuple, Tractor, Flight, Play, Hand
-} from 'lib/trick.ts';
+} from 'lib/zpy/trick.ts';
 import {
   array_fill, array_shuffle, o_map
 } from 'utils/array.ts';
