@@ -231,20 +231,34 @@ export class PlayArea extends React.Component<
     this.setState((state, props): PlayArea.State => {
       state = PlayArea.updateForProps(state, props);
 
-      //if (src.droppableId === dst.droppableId) {
-        const ordered = reorder(
-          state.areas[0].ordered,
-          src.index,
-          dst.index
-        );
+      const src_adx = parseInt(src.droppableId);
+      const dst_adx = parseInt(dst.droppableId);
+      const src_area = state.areas[src_adx];
+      const dst_area = state.areas[dst_adx];
+
+      if (src_adx === dst_adx) {
+        const area = dst_area;
+
+        const is_dragging = (card: CardID): boolean => {
+          return state.selected.size !== 0
+            ? state.selected.has(card.id)
+            : card.id === area.ordered[src.index].id;
+        };
+        const is_not_dragging = (card: CardID): boolean => !is_dragging(card);
+
+        const ordered = [
+          ...area.ordered.slice(0, dst.index).filter(is_not_dragging),
+          ...area.ordered.filter(is_dragging),
+          ...area.ordered.slice(dst.index).filter(is_not_dragging),
+        ];
         return {
           ...state,
-          areas: [
-            { ordered, id_to_pos: id_to_pos(ordered) },
-            ...state.areas.slice(1)
-          ]
+          areas: state.areas.map((area, adx) => adx === dst_adx
+            ? { ordered, id_to_pos: id_to_pos(ordered) }
+            : area
+          )
         }
-      //}
+      }
     });
   };
 
@@ -264,7 +278,7 @@ export class PlayArea extends React.Component<
       onDragEnd={this.onDragEnd.bind(this)}
     >
       <HandArea
-        droppableId="hand"
+        droppableId="0"
         cards={state.areas[0].ordered}
         selected={this.state.selected}
         onSelect={this.onSelect.bind(this)}

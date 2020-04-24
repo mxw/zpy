@@ -9,10 +9,13 @@ import { PlayArea } from 'components/zpy/PlayArea.tsx'
 export const Home = (props: {}) => {
   return <PlayArea
     cards={[
-      {cb: new CardBase(Suit.HEARTS, Rank.Q), id: '0'},
-      {cb: new CardBase(Suit.HEARTS, Rank.Q), id: '1'},
+      {cb: new CardBase(Suit.DIAMONDS, Rank.K), id: '0'},
+      {cb: new CardBase(Suit.DIAMONDS, Rank.A), id: '1'},
       {cb: new CardBase(Suit.SPADES, 4), id: '2'},
-      {cb: new CardBase(Suit.TRUMP, Rank.B), id: '3'},
+      {cb: new CardBase(Suit.SPADES, 7), id: '3'},
+      {cb: new CardBase(Suit.HEARTS, Rank.Q), id: '4'},
+      {cb: new CardBase(Suit.HEARTS, Rank.Q), id: '5'},
+      {cb: new CardBase(Suit.TRUMP, Rank.B), id: '6'},
     ]}
   />;
 
