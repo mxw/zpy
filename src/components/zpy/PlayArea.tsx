@@ -7,7 +7,7 @@ import {
 } from 'react-beautiful-dnd'
 
 import { CardID } from 'components/zpy/common.ts'
-import { HandArea } from 'components/zpy/Hand.tsx'
+import { HandArea } from 'components/zpy/HandArea.tsx'
 import { isWindows } from 'components/utils/platform.ts'
 
 import { strict as assert} from 'assert'
