@@ -236,20 +236,19 @@ export class PlayArea extends React.Component<
       const src_area = state.areas[src_adx];
       const dst_area = state.areas[dst_adx];
 
+      const is_dragging = (card: CardID): boolean => {
+        return state.selected.size !== 0
+          ? state.selected.has(card.id)
+          : card.id === src_area.ordered[src.index].id;
+      };
+      const is_not_dragging = (card: CardID): boolean => !is_dragging(card);
+
       if (src_adx === dst_adx) {
-        const area = dst_area;
-
-        const is_dragging = (card: CardID): boolean => {
-          return state.selected.size !== 0
-            ? state.selected.has(card.id)
-            : card.id === area.ordered[src.index].id;
-        };
-        const is_not_dragging = (card: CardID): boolean => !is_dragging(card);
-
+        const the_area = dst_area;
         const ordered = [
-          ...area.ordered.slice(0, dst.index).filter(is_not_dragging),
-          ...area.ordered.filter(is_dragging),
-          ...area.ordered.slice(dst.index).filter(is_not_dragging),
+          ...the_area.ordered.slice(0, dst.index).filter(is_not_dragging),
+          ...the_area.ordered.filter(is_dragging),
+          ...the_area.ordered.slice(dst.index).filter(is_not_dragging),
         ];
         return {
           ...state,
@@ -257,8 +256,22 @@ export class PlayArea extends React.Component<
             ? { ordered, id_to_pos: id_to_pos(ordered) }
             : area
           )
-        }
+        };
       }
+
+      const d = dst_area.ordered.splice(
+        dst.index, 0, ...src_area.ordered.filter(is_dragging)
+      );
+      const s = src_area.ordered.filter(is_not_dragging);
+
+      return {
+        ...state,
+        areas: state.areas.map((area, adx) => {
+          return adx === dst_adx ? { ordered: d, id_to_pos: id_to_pos(d) }
+               : adx === src_adx ? { ordered: s, id_to_pos: id_to_pos(s) }
+               : area;
+        })
+      };
     });
   };
 
