@@ -6,6 +6,8 @@ import {
   DragStart, DropResult,
 } from 'react-beautiful-dnd'
 
+import { CardBase } from 'lib/zpy/cards.ts'
+
 import { CardID } from 'components/zpy/common.ts'
 import { HandArea } from 'components/zpy/HandArea.tsx'
 import { isWindows } from 'components/utils/platform.ts'
@@ -37,6 +39,7 @@ export class PlayArea extends React.Component<
       selected: new Set(),
       prev_start: null,
       prev_stop: null,
+      multidrag: null,
     };
   }
 
@@ -61,6 +64,7 @@ export class PlayArea extends React.Component<
       selected: new Set(...state.selected),
       prev_start: state.prev_start,
       prev_stop: state.prev_stop,
+      multidrag: state.multidrag,
     }
   }
 
@@ -217,10 +221,25 @@ export class PlayArea extends React.Component<
     if (!this.state.selected.has(start.draggableId)) {
       this.deselectAll();
     }
-    if (PlayArea.checkSync(this.state, this.props)) return;
-
-    // cards were added or removed; adjust state accordingly
-    this.setState(PlayArea.updateForProps);
+    if (PlayArea.checkSync(this.state, this.props) &&
+        this.state.selected.size <= 1) {
+      return;
+    }
+    // cards were added or removed, or we need to trigger multi-drag rendering
+    this.setState((state, props): PlayArea.State => {
+      return {
+        ...PlayArea.updateForProps(state, props),
+        multidrag: {
+          id: start.draggableId,
+          tail: state.areas.flatMap(
+            area => area.ordered.filter(card => (
+              card.id !== start.draggableId &&
+              state.selected.has(card.id)
+            )).map(card => card.cb)
+          ),
+        }
+      };
+    });
   }
 
   onDragEnd(result: DropResult) {
@@ -229,6 +248,9 @@ export class PlayArea extends React.Component<
 
     this.setState((state, props): PlayArea.State => {
       state = PlayArea.updateForProps(state, props);
+
+      const multidrag_id = state.multidrag?.id;
+      state = {...state, multidrag: null};
 
       const src_adx = parseInt(src.droppableId);
       const dst_adx = parseInt(dst.droppableId);
@@ -242,43 +264,47 @@ export class PlayArea extends React.Component<
       };
       const is_not_dragging = (card: CardID): boolean => !is_dragging(card);
 
-      if (src_adx === dst_adx) {
-        const the_area = dst_area;
+      // count the number of cards that remain before dst.index once we move
+      // all the dragging cards out of the way...
+      let dst_index = Math.min(
+        dst_area.ordered.reduce((n, card, i) => {
+          if (i > dst.index) return n;
 
-        // count the number of cards that remain before dst.index once we move
-        // all the dragging cards out of the way...
-        let dst_index = Math.min(the_area.ordered.reduce(
-          (n, card, i) => (is_not_dragging(card) && i <= dst.index ? n + 1 : n),
-          0
-        ), dst.index);
+          const skip = multidrag_id === null
+            ? is_dragging(card)
+            : card.id === multidrag_id;
 
-        const not_dragging = the_area.ordered.filter(is_not_dragging);
-
-        const ordered = [
-          ...not_dragging.slice(0, dst_index),
-          ...the_area.ordered.filter(is_dragging),
-          ...not_dragging.slice(dst_index),
-        ];
-        return {
-          ...state,
-          areas: state.areas.map((area, adx) => adx === dst_adx
-            ? { ordered, id_to_pos: id_to_pos(ordered) }
-            : area
-          )
-        };
-      }
-
-      const d = dst_area.ordered.splice(
-        dst.index, 0, ...src_area.ordered.filter(is_dragging)
+          return skip ? n : n + 1;
+        }, 0),
+        dst.index
       );
-      const s = src_area.ordered.filter(is_not_dragging);
+
+      const not_dragging = dst_area.ordered.filter(is_not_dragging);
+
+      const dst_ordered = [
+        ...not_dragging.slice(0, dst_index),
+        ...dst_area.ordered.filter(is_dragging),
+        ...not_dragging.slice(dst_index),
+      ];
+
+      const affected_areas = new Set(
+        [...state.selected].map(id => state.id_to_area[id])
+      );
 
       return {
         ...state,
         areas: state.areas.map((area, adx) => {
-          return adx === dst_adx ? { ordered: d, id_to_pos: id_to_pos(d) }
-               : adx === src_adx ? { ordered: s, id_to_pos: id_to_pos(s) }
-               : area;
+          if (adx === dst_adx) {
+            return {
+              ordered: dst_ordered,
+              id_to_pos: id_to_pos(dst_ordered)
+            };
+          }
+          if (affected_areas.has(adx)) {
+            const ordered = area.ordered.filter(is_not_dragging);
+            return {ordered, id_to_pos: id_to_pos(ordered)};
+          }
+          return area;
         })
       };
     });
@@ -295,17 +321,20 @@ export class PlayArea extends React.Component<
   render() {
     const state = PlayArea.updateForProps(this.state, this.props);
 
-    return <DragDropContext
-      onDragStart={this.onDragStart.bind(this)}
-      onDragEnd={this.onDragEnd.bind(this)}
-    >
-      <HandArea
-        droppableId="0"
-        cards={state.areas[0].ordered}
-        selected={this.state.selected}
-        onSelect={this.onSelect.bind(this)}
-      />
-    </DragDropContext>;
+    return <div>
+      <DragDropContext
+        onDragStart={this.onDragStart.bind(this)}
+        onDragEnd={this.onDragEnd.bind(this)}
+      >
+        <HandArea
+          droppableId="0"
+          cards={state.areas[0].ordered}
+          selected={state.selected}
+          multidrag={state.multidrag}
+          onSelect={this.onSelect.bind(this)}
+        />
+      </DragDropContext>
+    </div>;
   }
 }
 
@@ -349,6 +378,11 @@ export type State = {
   prev_start: null | string;
   // last card id to end a shift-select range
   prev_stop: null | string;
+  // card being dragged in a multi-drag; used only for rendering
+  multidrag: null | {
+    id: string;
+    tail: CardBase[];
+  };
 };
 
 }

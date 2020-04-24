@@ -8,6 +8,7 @@ import { CardBase, Card, Suit, Rank } from 'lib/zpy/cards.ts'
 
 import { CardID } from "components/zpy/common.ts"
 import { ZCard } from "components/zpy/Card.tsx"
+import { CardFan } from "components/zpy/CardFan.tsx"
 
 import { strict as assert} from 'assert'
 
@@ -43,36 +44,54 @@ export class HandArea extends React.Component<HandArea.Props, {}> {
             padding: 10,
           }}
         >
-          {this.props.cards.map(({cb, id}, pos) => (
-            <Draggable
-              key={id}
-              draggableId={id}
-              index={pos}
-            >
-              {(
-                provided: DraggableProvided,
-                snapshot: DraggableStateSnapshot
-               ) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.draggableProps}
-                  {...provided.dragHandleProps}
-                  style={restyle({
-                    outline: 'none', // avoid conflicting selection affordance
-                    ...provided.draggableProps.style
-                  }, snapshot)}
-                  onClick={ev => this.props.onSelect(id, ev)}
-                >
-                  <ZCard
-                    card={cb}
-                    width={100}
-                    clip={0.25}
-                    selected={this.props.selected.has(id)}
-                  />
-                </div>
-              )}
-            </Draggable>
-          ))}
+          {this.props.cards
+            .filter(card => (
+              // if we're multidragging, we want to vanish all the selected cards
+              // except for the drag target
+              this.props.multidrag === null ||
+              card.id === this.props.multidrag.id ||
+              !this.props.selected.has(card.id)
+            ))
+            .map(({cb, id}, pos) => (
+              <Draggable
+                key={id}
+                draggableId={id}
+                index={pos}
+              >
+                {(
+                  provided: DraggableProvided,
+                  snapshot: DraggableStateSnapshot
+                 ) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.draggableProps}
+                    {...provided.dragHandleProps}
+                    style={restyle({
+                      outline: 'none', // avoid conflicting selection affordance
+                      ...provided.draggableProps.style
+                    }, snapshot)}
+                    onClick={ev => this.props.onSelect(id, ev)}
+                  >
+                    {this.props.multidrag?.id === id ?
+                      (<CardFan
+                        card={cb}
+                        width={100}
+                        clip={0.25}
+                        selected={this.props.selected.has(id)}
+                        tail={this.props.multidrag.tail}
+                      />) :
+                      (<ZCard
+                        card={cb}
+                        width={100}
+                        clip={0.25}
+                        selected={this.props.selected.has(id)}
+                      />)
+                    }
+                  </div>
+                )}
+              </Draggable>
+            )
+          )}
           {provided.placeholder}
         </div>
       )}
@@ -86,6 +105,10 @@ export type Props = {
   droppableId: string;
   cards: CardID[];
   selected: Set<string>;
+  multidrag: null | {
+    id: string;
+    tail: CardBase[];
+  };
   onSelect: (id: string, ev: React.MouseEvent | React.TouchEvent) => void;
 };
 
