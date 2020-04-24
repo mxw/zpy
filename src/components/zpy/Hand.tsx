@@ -1,4 +1,8 @@
 import * as React from "react"
+import {
+  Draggable, DraggableProvided, DraggableStateSnapshot,
+  Droppable, DroppableProvided, DroppableStateSnapshot,
+} from 'react-beautiful-dnd'
 
 import { CardBase, Card, Suit, Rank } from 'lib/zpy/cards.ts'
 
@@ -7,131 +11,85 @@ import { ZCard } from "components/zpy/Card.tsx"
 import { strict as assert} from 'assert'
 
 
-export class ZHand extends React.Component<ZHand.Props, ZHand.State> {
+const restyle = (
+  style: React.CSSProperties,
+  snapshot: DraggableStateSnapshot
+): React.CSSProperties => {
+  if (!snapshot.isDropAnimating) return style;
+  return {
+    ...style,
+    transitionDuration: '0.1s',
+  };
+};
+
+export class ZHand extends React.Component<ZHand.Props, {}> {
   constructor(props: ZHand.Props) {
     super(props);
-    this.state = this.new_state();
-  }
-
-  private new_state(): ZHand.State {
-    return {
-      order_to_id: this.props.cards.map((_, i: number) => i),
-      id_to_order: this.props.cards.map((_, i: number) => i),
-      selected: new Set(),
-      last_start: -1,
-    };
-  }
-
-  private fixup_state(): ZHand.State {
-    let n = this.state.order_to_id.length;
-    assert(n === this.state.id_to_order.length);
-
-    if (this.props.cards.length === n) {
-      return this.state;
-    }
-    if (this.props.cards.length < n) {
-      // this should never happen
-      return this.new_state();
-    }
-    return {
-      ...this.state,
-      order_to_id: this.props.cards.map(
-        (_, i) => i < this.state.order_to_id.length
-          ? this.state.order_to_id[i] : i
-      ),
-      id_to_order: this.props.cards.map(
-        (_, i) => i < this.state.id_to_order.length
-          ? this.state.id_to_order[i] : i
-      ),
-    };
-  }
-
-  /*
-   * select or deselect a card (or range of cards).
-   */
-  onClick(idx: number, odx: number, ev: MouseEvent) {
-    if (this.state.id_to_order[idx] !== odx) {
-      // the card was moved; don't toggle selection
-      return;
-    }
-    // synthetic events won't persist into the setState() callback
-    let {metaKey, shiftKey} = ev;
-
-    this.setState((state, props): any => {
-      assert(state.last_start === -1 ||
-             state.selected.has(state.last_start));
-
-      if (state.last_start === -1 || metaKey) {
-        // either an initial selection or a continued selection
-        let selected = new Set(state.selected);
-        if (selected.has(idx)) {
-          selected.delete(idx)
-          return {selected, last_start: -1};
-        }
-        selected.add(idx);
-        return {selected, last_start: idx};
-      }
-
-      if (!shiftKey) {
-        return (state.selected.size === 1 && state.selected.has(idx)
-          // only this card selected; toggle selection
-          ? {selected: new Set(), last_start: -1}
-          // fresh selection; override existing selection with this card
-          : {selected: new Set([idx]), last_start: idx}
-        );
-      }
-      // range selection
-      let last_odx = state.id_to_order[state.last_start];
-      let first = Math.min(odx, last_odx);
-      let last = Math.max(odx, last_odx);
-
-      let selected = new Set(state.selected);
-
-      for (let o = first; o <= last; ++o) {
-        selected.add(state.order_to_id[o]);
-      }
-      return {selected};
-    });
   }
 
   render() {
-    return <div
-      style={{position: 'relative'}}
+    return <Droppable
+      droppableId={this.props.droppableId}
+      direction="horizontal"
     >
-      {this.props.cards.map(
-        (card, idx) => card === null ? null : <ZCard
-          key={idx}
-          card={card}
-          width={100}
-          x={40 + idx * 20}
-          y={40}
-          position={'absolute'}
-          selected={this.state.selected.has(idx)}
-          onClick={
-            this.onClick.bind(this, idx, this.state.id_to_order[idx] ?? idx)
-          }
-        />
-      ).filter(zc => zc !== null)}
-    </div>;
+      {(provided: DroppableProvided, snapshot: DroppableStateSnapshot) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.droppableProps}
+          style={{
+            display: 'flex',
+            overflow: 'auto',
+            padding: 10,
+          }}
+        >
+          {this.props.cards.map(({cb, id}, pos) => (
+            <Draggable
+              key={id}
+              draggableId={id}
+              index={pos}
+            >
+              {(
+                provided: DraggableProvided,
+                snapshot: DraggableStateSnapshot
+               ) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.draggableProps}
+                  {...provided.dragHandleProps}
+                  style={restyle({
+                    outline: 'none', // avoid conflicting selection affordance
+                    ...provided.draggableProps.style
+                  }, snapshot)}
+                  onClick={ev => this.props.onSelect(id, pos, ev)}
+                >
+                  <ZCard
+                    card={cb}
+                    width={100}
+                    clip={0.25}
+                    selected={this.props.selected.has(id)}
+                  />
+                </div>
+              )}
+            </Draggable>
+          ))}
+          {provided.placeholder}
+        </div>
+      )}
+    </Droppable>;
   }
 }
 
 export namespace ZHand {
 
 export type Props = {
-  // for each round, cards are identified by their insertion order
-  cards: (null | CardBase)[];
-};
-
-export type State = {
-  // insertion ids in user-sorted order; odx => idx
-  order_to_id: number[];
-  // ordered position of each card; idx => odx
-  id_to_order: number[];
-  // currently selected card ids
-  selected: Set<number>;
-  // last card id to start being selected; -1 for none
-  last_start: number;
+  droppableId: string;
+  cards: {cb: CardBase, id: string}[];
+  selected: Set<string>;
+  onSelect: (
+    id: string,
+    pos: number,
+    ev: React.MouseEvent | React.TouchEvent
+  ) => void;
 };
 
 }

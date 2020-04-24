@@ -11,9 +11,9 @@ export class ZCard extends React.Component<ZCard.Props> {
   }
 
   render() {
-    let {card, width, x, y, position, selected, ...more} = this.props;
+    const {card, width, selected, ...more} = this.props;
 
-    let suit = ((suit: Suit) => {
+    const suit = ((suit: Suit) => {
       switch (suit) {
         case Suit.CLUBS: return 'c';
         case Suit.DIAMONDS: return 'd';
@@ -23,7 +23,7 @@ export class ZCard extends React.Component<ZCard.Props> {
       }
     })(card.suit);
 
-    let rank = ((rank: Rank) => {
+    const rank = ((rank: Rank) => {
       switch (rank) {
         case Rank.J: return 'j';
         case Rank.Q: return 'q';
@@ -38,9 +38,6 @@ export class ZCard extends React.Component<ZCard.Props> {
     return <UICard
       card={suit + rank}
       width={width}
-      x={x}
-      y={y}
-      position={position}
       style={selected ? {
         boxShadow: "0px 0px 4px 4px rgba(63, 191, 170, 0.7)",
       } : {}}
@@ -54,9 +51,6 @@ export namespace ZCard {
 export type Props = {
   card: CardBase;
   width: number;
-  x: number;
-  y: number;
-  position: "absolute" | "fixed" | "relative";
   selected: boolean;
   [more: string]: any;
 };

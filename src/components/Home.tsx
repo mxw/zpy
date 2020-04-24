@@ -4,16 +4,15 @@ import axios from "axios"
 import { GameUI } from "components/sandbox/GameUI.tsx"
 
 import { CardBase, Suit, Rank } from 'lib/zpy/cards.ts'
-import { ZCard } from 'components/zpy/Card.tsx'
-import { ZHand } from 'components/zpy/Hand.tsx'
+import { PlayArea } from 'components/zpy/PlayArea.tsx'
 
 export const Home = (props: {}) => {
-  return <ZHand
+  return <PlayArea
     cards={[
-      new CardBase(Suit.HEARTS, Rank.Q),
-      new CardBase(Suit.HEARTS, Rank.Q),
-      new CardBase(Suit.SPADES, 4),
-      new CardBase(Suit.TRUMP, Rank.B),
+      {cb: new CardBase(Suit.HEARTS, Rank.Q), id: '0'},
+      {cb: new CardBase(Suit.HEARTS, Rank.Q), id: '1'},
+      {cb: new CardBase(Suit.SPADES, 4), id: '2'},
+      {cb: new CardBase(Suit.TRUMP, Rank.B), id: '3'},
     ]}
   />;
 

@@ -15,12 +15,14 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@types/react-beautiful-dnd": "^12.1.2",
     "cookie-parser": "*",
     "express": "*",
-    "uuid": "*",
-    "ws": "*",
+    "fp-ts": "*",
     "io-ts": ">=2.2",
-    "fp-ts": "*"
+    "react-beautiful-dnd": "^13.0.0",
+    "uuid": "*",
+    "ws": "*"
   },
   "devDependencies": {
     "axios": "*",

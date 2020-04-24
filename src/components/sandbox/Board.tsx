@@ -61,85 +61,89 @@ export class BoardCard extends React.Component<BoardCardProps, BoardCardState> {
     }
 
     return (
-      <Card
-      card={c.card}
-      width={100}
-      x={x}
-      y={y}
-      position={"absolute"}
-      onMouseDown={(ev: MouseEvent) => {
-        (ev as any as {foo: number}).foo = 42;
-        if (!this.state.dragStarted) {
-          this.setState({
-            dragStarted: true,
-            dragOffset: {
-              x: ev.clientX - this.props.c.x,
-              y: ev.clientY - this.props.c.y,
-            },
-            dragPos: {
-              x: c.x,
-              y: c.y
-            },
-            resyncPosTimer: resyncPos(),
-            dragTimer: setTimeout(() => {
+      <div style={{
+        top: y,
+        left: x,
+        position: "absolute",
+      }}>
+        <Card
+          card={c.card}
+          width={100}
+          onMouseDown={(ev: MouseEvent) => {
+            (ev as any as {foo: number}).foo = 42;
+            if (!this.state.dragStarted) {
+              this.setState({
+                dragStarted: true,
+                dragOffset: {
+                  x: ev.clientX - this.props.c.x,
+                  y: ev.clientY - this.props.c.y,
+                },
+                dragPos: {
+                  x: c.x,
+                  y: c.y
+                },
+                resyncPosTimer: resyncPos(),
+                dragTimer: setTimeout(() => {
+                  client.attempt({
+                    verb: 'grab',
+                    target: c.id
+                  });
+                }, 200),
+              });
+            }
+          }}
+
+          onMouseMove={(ev: MouseEvent) => {
+            if (this.props.held) {
+              this.setState({
+                dragPos: {
+                  x: ev.clientX - this.state.dragOffset.x,
+                  y: ev.clientY - this.state.dragOffset.y
+                }
+              });
+            }
+          }}
+
+          onMouseLeave={(ev: MouseEvent) => {
+            if (this.props.held) {
               client.attempt({
-                verb: 'grab',
+                verb: 'move',
+                target: c.id,
+                x: this.state.dragPos.x,
+                y: this.state.dragPos.y,
+              })
+              client.attempt({
+                verb: 'drop',
                 target: c.id
               });
-            }, 200),
-          });
-        }
-      }}
-
-      onMouseMove={(ev: MouseEvent) => {
-        if (this.props.held) {
-          this.setState({
-            dragPos: {
-              x: ev.clientX - this.state.dragOffset.x,
-              y: ev.clientY - this.state.dragOffset.y
+            } else if (this.state.dragTimer !== null) {
+              clearTimeout(this.state.dragTimer);
+              this.setState({dragTimer: null,
+                             dragStarted: false,
+                             resyncPosTimer: null});
             }
-          });
-        }
-      }}
+          }}
 
-      onMouseLeave={(ev: MouseEvent) => {
-        if (this.props.held) {
-          client.attempt({
-            verb: 'move',
-            target: c.id,
-            x: this.state.dragPos.x,
-            y: this.state.dragPos.y,
-          })
-          client.attempt({
-            verb: 'drop',
-            target: c.id
-          });
-        } else if (this.state.dragTimer !== null) {
-          clearTimeout(this.state.dragTimer);
-          this.setState({dragTimer: null,
-                         dragStarted: false,
-                         resyncPosTimer: null});
-        }
-      }}
-
-      onMouseUp={(ev: MouseEvent) => {
-        if (this.props.held) {
-          client.attempt({
-            verb: 'move',
-            target: c.id,
-            x: this.state.dragPos.x,
-            y: this.state.dragPos.y,
-          })
-          client.attempt({
-            verb: 'drop',
-            target: c.id
-          });
-        } else {
-          clearTimeout(this.state.dragTimer);
-          this.setState({dragTimer: null, resyncPosTimer: null, dragStarted: false});
-        }
-      }}
-      />);
+          onMouseUp={(ev: MouseEvent) => {
+            if (this.props.held) {
+              client.attempt({
+                verb: 'move',
+                target: c.id,
+                x: this.state.dragPos.x,
+                y: this.state.dragPos.y,
+              })
+              client.attempt({
+                verb: 'drop',
+                target: c.id
+              });
+            } else {
+              clearTimeout(this.state.dragTimer);
+              this.setState({dragTimer: null, resyncPosTimer: null, dragStarted: false});
+            }
+          }}
+        />
+      </div>
+    );
   }
 }
 
