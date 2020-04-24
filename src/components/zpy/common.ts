@@ -3,6 +3,7 @@
  */
 import { GameClient } from 'protocol/client.ts'
 
+import { CardBase } from "lib/zpy/cards.ts"
 import * as Engine from "lib/zpy/engine.ts"
 
 export type Client = GameClient<
@@ -16,3 +17,11 @@ export type Client = GameClient<
   typeof Engine
 >;
 export type ZPY = Engine.ClientState;
+
+/*
+ * drag-n-drop card identifier
+ */
+export type CardID = {
+  cb: CardBase,
+  id: string
+};

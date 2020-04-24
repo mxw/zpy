@@ -1,4 +1,4 @@
-import * as React from "react"
+import * as React from 'react'
 import {
   DragDropContext,
   Draggable, DraggableProvided, DraggableStateSnapshot,
@@ -6,10 +6,9 @@ import {
   DragStart, DropResult,
 } from 'react-beautiful-dnd'
 
-import { CardBase } from 'lib/zpy/cards.ts'
-
-import { ZHand } from "components/zpy/Hand.tsx"
-import { isWindows } from "components/utils/platform.ts"
+import { CardID } from 'components/zpy/common.ts'
+import { HandArea } from 'components/zpy/Hand.tsx'
+import { isWindows } from 'components/utils/platform.ts'
 
 import { strict as assert} from 'assert'
 
@@ -29,10 +28,12 @@ export class PlayArea extends React.Component<
     super(props);
 
     this.state = {
-      ordered: [...this.props.cards],
-      id_to_order: Object.fromEntries(
-        this.props.cards.map((card, i) => [card.id, i])
-      ),
+      id_set: new Set(this.props.cards.map(card => card.id)),
+      areas: [{
+        ordered: [...this.props.cards],
+        id_to_pos: id_to_pos(this.props.cards),
+      }],
+      id_to_area: id_to_cns(this.props.cards, 0),
       selected: new Set(),
       prev_start: null,
       prev_stop: null,
@@ -44,10 +45,95 @@ export class PlayArea extends React.Component<
     window.addEventListener('touchend', this.onClickOut.bind(this));
   }
 
+  /////////////////////////////////////////////////////////////////////////////
+
+  /*
+   * make a deep copy of `state`
+   */
+  static copyState(state: PlayArea.State): PlayArea.State {
+    return {
+      id_set: new Set(...state.id_set),
+      areas: state.areas.map(({ordered, id_to_pos}) => ({
+        ordered: [...ordered],
+        id_to_pos: {...id_to_pos},
+      })),
+      id_to_area: {...state.id_to_area},
+      selected: new Set(...state.selected),
+      prev_start: state.prev_start,
+      prev_stop: state.prev_stop,
+    }
+  }
+
+  /*
+   * whether `state` is up-to-date for `props`
+   */
+  static checkSync(
+    state: PlayArea.State,
+    props: PlayArea.Props
+  ): boolean {
+    return props.cards.length === state.id_set.size &&
+           props.cards.every(card => state.id_set.has(card.id));
+  }
+
+  /*
+   * return a new State from `state` and updated `props`
+   */
+  static updateForProps(
+    state: PlayArea.State,
+    props: PlayArea.Props
+  ): PlayArea.State {
+    if (PlayArea.checkSync(state, props)) return state;
+    state = PlayArea.copyState(state);
+
+    // new cards are easy; just stuff them at the end of the hand area
+    for (let card of props.cards) {
+      if (state.id_set.has(card.id)) continue;
+
+      state.id_set.add(card.id);
+      state.areas[0].ordered.push(card);
+      state.areas[0].id_to_pos[card.id] = state.areas[0].ordered.length - 1;
+      state.id_to_area[card.id] = 0;
+    }
+
+    const props_ids = new Set(props.cards.map(card => card.id));
+    const removed_ids = new Set(
+      [...state.id_set].filter(id => !props_ids.has(id))
+    );
+    if (removed_ids.size === 0) return state;
+
+    for (let id of removed_ids) {
+      state.id_set.delete(id);
+      state.selected.delete(id);
+
+      delete state.id_to_area[id];
+
+      if (id === state.prev_start) {
+        state.prev_start = null;
+        state.prev_stop = null;
+      }
+      if (id === state.prev_stop) {
+        state.prev_stop = null;
+      }
+    }
+    for (let area of state.areas) {
+      const prev_len = area.ordered.length;
+      area.ordered = area.ordered.filter(card => !removed_ids.has(card.id));
+
+      if (area.ordered.length !== prev_len) {
+        area.id_to_pos = id_to_pos(area.ordered);
+      }
+    }
+    //state.areas = state.areas.filter(area => area.ordered.length > 0);
+
+    return state;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+
   /*
    * handler for click and touch events to trigger selection behavior
    */
-  onSelect(id: string, pos: number, ev: React.MouseEvent | React.TouchEvent) {
+  onSelect(id: string, ev: React.MouseEvent | React.TouchEvent) {
     // click is swallowed if a drag occurred
     if (ev.defaultPrevented) return;
 
@@ -60,7 +146,9 @@ export class PlayArea extends React.Component<
 
     ev.preventDefault(); // bypass window handler
 
-    this.setState((state, props): any => {
+    this.setState((state, props): PlayArea.State => {
+      state = PlayArea.updateForProps(state, props);
+
       assert(state.prev_start === null ||
              state.selected.has(state.prev_start));
 
@@ -68,31 +156,41 @@ export class PlayArea extends React.Component<
         // either an initial selection or a continued selection
         let selected = new Set(state.selected);
         return (selected.delete(id) // true if deletion occured
-          ? {selected, prev_start: null}
-          : {selected: selected.add(id), prev_start: id}
+          ? {...state, selected, prev_start: null}
+          : {...state, selected: selected.add(id), prev_start: id}
         );
       }
 
       if (shiftKey) {
+        // if the click target is in a different area from prev_start, this
+        // selection operation is invalid
+        if (state.id_to_area[id] !== state.id_to_area[state.prev_start]) {
+          return state;
+        }
+        const area = state.areas[state.id_to_area[id]];
+        const pos = area.id_to_pos[id];
+
         // range selection
         let selected = new Set(state.selected);
 
+
         const range_for = (prev_id: string) => {
-          let prev_pos = state.id_to_order[prev_id];
+          let prev_pos = area.id_to_pos[prev_id];
           return [Math.min(pos, prev_pos), Math.max(pos, prev_pos)];
         };
 
         if (state.prev_stop !== null) {
           let [first, last] = range_for(state.prev_stop);
           for (let o = first; o <= last; ++o) {
-            selected.delete(state.ordered[o].id);
+            selected.delete(area.ordered[o].id);
           }
         }
         let [first, last] = range_for(state.prev_start);
         for (let o = first; o <= last; ++o) {
-          selected.add(state.ordered[o].id);
+          selected.add(area.ordered[o].id);
         }
         return {
+          ...state,
           selected,
           prev_start: state.prev_start,
           prev_stop: id,
@@ -101,9 +199,9 @@ export class PlayArea extends React.Component<
 
       return (state.selected.size === 1 && state.selected.has(id)
         // only this card selected; toggle selection
-        ? {selected: new Set(), prev_start: null}
+        ? {...state, selected: new Set(), prev_start: null}
         // fresh selection; override existing selection with this card
-        : {selected: new Set([id]), prev_start: id}
+        : {...state, selected: new Set([id]), prev_start: id}
       );
     });
   }
@@ -120,20 +218,31 @@ export class PlayArea extends React.Component<
     if (!this.state.selected.has(start.draggableId)) {
       this.deselectAll();
     }
+    if (PlayArea.checkSync(this.state, this.props)) return;
+
+    // cards were added or removed; adjust state accordingly
+    this.setState(PlayArea.updateForProps);
   }
 
   onDragEnd(result: DropResult) {
     const { source: src, destination: dst } = result;
     if (!dst || result.reason === 'CANCEL') return;
 
-    this.setState((state, props) => {
+    this.setState((state, props): PlayArea.State => {
+      state = PlayArea.updateForProps(state, props);
+
       //if (src.droppableId === dst.droppableId) {
-        const ordered = reorder(state.ordered, src.index, dst.index);
+        const ordered = reorder(
+          state.areas[0].ordered,
+          src.index,
+          dst.index
+        );
         return {
-          ordered,
-          id_to_order: Object.fromEntries(
-            ordered.map((card, i) => [card.id, i])
-          ),
+          ...state,
+          areas: [
+            { ordered, id_to_pos: id_to_pos(ordered) },
+            ...state.areas.slice(1)
+          ]
         }
       //}
     });
@@ -143,19 +252,20 @@ export class PlayArea extends React.Component<
     this.setState({
       selected: new Set(),
       prev_start: null,
+      prev_stop: null,
     });
   }
 
   render() {
+    const state = PlayArea.updateForProps(this.state, this.props);
+
     return <DragDropContext
+      onDragStart={this.onDragStart.bind(this)}
       onDragEnd={this.onDragEnd.bind(this)}
     >
-      <ZHand
+      <HandArea
         droppableId="hand"
-        cards={[
-          ...this.state.ordered,
-          ...this.props.cards.slice(this.state.ordered.length)
-        ]}
+        cards={state.areas[0].ordered}
         selected={this.state.selected}
         onSelect={this.onSelect.bind(this)}
       />
@@ -163,17 +273,40 @@ export class PlayArea extends React.Component<
   }
 }
 
+/*
+ * make a record mapping card id to a constant `val`
+ */
+function id_to_cns<T>(cards: CardID[], val: T): Record<string, T> {
+  return Object.fromEntries(cards.map(card => [card.id, val]))
+}
+
+/*
+ * make a record mapping card id to its position in `cards`
+ */
+function id_to_pos(cards: CardID[]): Record<string, number> {
+  return Object.fromEntries(cards.map((card, i) => [card.id, i]));
+}
+
 export namespace PlayArea {
 
+type CardArea = {
+  // card in sorted order; pos => id
+  ordered: CardID[];
+  // ordered position of each card; id => pos
+  id_to_pos: Record<string, number>;
+};
+
 export type Props = {
-  cards: {cb: CardBase, id: string}[];
+  cards: CardID[];
 };
 
 export type State = {
-  // card in sorted order; pos => id
-  ordered: {cb: CardBase, id: string}[];
-  // ordered position of each card; id => pos
-  id_to_order: Record<string, number>;
+  // set of all card ids managed by this PlayArea
+  id_set: Set<string>;
+  // card areas; 0 is the Hand, [1:] are the PlayPiles
+  areas: CardArea[];
+  // map from card id to enclosing droppable area id
+  id_to_area: Record<string, number>;
   // currently selected card ids
   selected: Set<string>;
   // last card id to start being selected

@@ -6,6 +6,7 @@ import {
 
 import { CardBase, Card, Suit, Rank } from 'lib/zpy/cards.ts'
 
+import { CardID } from "components/zpy/common.ts"
 import { ZCard } from "components/zpy/Card.tsx"
 
 import { strict as assert} from 'assert'
@@ -22,8 +23,8 @@ const restyle = (
   };
 };
 
-export class ZHand extends React.Component<ZHand.Props, {}> {
-  constructor(props: ZHand.Props) {
+export class HandArea extends React.Component<HandArea.Props, {}> {
+  constructor(props: HandArea.Props) {
     super(props);
   }
 
@@ -60,7 +61,7 @@ export class ZHand extends React.Component<ZHand.Props, {}> {
                     outline: 'none', // avoid conflicting selection affordance
                     ...provided.draggableProps.style
                   }, snapshot)}
-                  onClick={ev => this.props.onSelect(id, pos, ev)}
+                  onClick={ev => this.props.onSelect(id, ev)}
                 >
                   <ZCard
                     card={cb}
@@ -79,17 +80,13 @@ export class ZHand extends React.Component<ZHand.Props, {}> {
   }
 }
 
-export namespace ZHand {
+export namespace HandArea {
 
 export type Props = {
   droppableId: string;
-  cards: {cb: CardBase, id: string}[];
+  cards: CardID[];
   selected: Set<string>;
-  onSelect: (
-    id: string,
-    pos: number,
-    ev: React.MouseEvent | React.TouchEvent
-  ) => void;
+  onSelect: (id: string, ev: React.MouseEvent | React.TouchEvent) => void;
 };
 
 }
