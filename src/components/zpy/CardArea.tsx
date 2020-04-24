@@ -24,8 +24,8 @@ const restyle = (
   };
 };
 
-export class HandArea extends React.Component<HandArea.Props, {}> {
-  constructor(props: HandArea.Props) {
+export class CardArea extends React.Component<CardArea.Props, {}> {
+  constructor(props: CardArea.Props) {
     super(props);
   }
 
@@ -102,7 +102,7 @@ export class HandArea extends React.Component<HandArea.Props, {}> {
   }
 }
 
-export namespace HandArea {
+export namespace CardArea {
 
 export type Props = {
   droppableId: string;

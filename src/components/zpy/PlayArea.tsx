@@ -9,7 +9,7 @@ import {
 import { CardBase } from 'lib/zpy/cards.ts'
 
 import { CardID } from 'components/zpy/common.ts'
-import { HandArea } from 'components/zpy/HandArea.tsx'
+import { CardArea } from 'components/zpy/CardArea.tsx'
 import { isWindows } from 'components/utils/platform.ts'
 
 import { strict as assert} from 'assert'
@@ -327,7 +327,7 @@ export class PlayArea extends React.Component<
         onDragStart={this.onDragStart.bind(this)}
         onDragEnd={this.onDragEnd.bind(this)}
       >
-        <HandArea
+        <CardArea
           droppableId="0"
           cards={state.areas[0].ordered}
           selected={state.selected}
@@ -355,7 +355,7 @@ function id_to_pos(cards: CardID[]): Record<string, number> {
 
 export namespace PlayArea {
 
-type CardArea = {
+type Area = {
   // card in sorted order; pos => id
   ordered: CardID[];
   // ordered position of each card; id => pos
@@ -370,7 +370,7 @@ export type State = {
   // set of all card ids managed by this PlayArea
   id_set: Set<string>;
   // card areas; 0 is the Hand, [1:] are the PlayPiles
-  areas: CardArea[];
+  areas: Area[];
   // map from card id to enclosing droppable area id
   id_to_area: Record<string, number>;
   // currently selected card ids
