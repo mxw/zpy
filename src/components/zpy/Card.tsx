@@ -11,7 +11,7 @@ export class ZCard extends React.Component<ZCard.Props> {
   }
 
   render() {
-    const {card, width, selected, ...more} = this.props;
+    const {card, width, selected, style, ...more} = this.props;
 
     const suit = ((suit: Suit) => {
       switch (suit) {
@@ -39,8 +39,9 @@ export class ZCard extends React.Component<ZCard.Props> {
       card={suit + rank}
       width={width}
       style={selected ? {
+        ...style,
         boxShadow: "0px 0px 4px 4px rgba(63, 191, 170, 0.7)",
-      } : {}}
+      } : style}
       {...more}
     />;
   }

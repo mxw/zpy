@@ -36,26 +36,33 @@ export type CardProps = {
   width: number;
   // fraction of the card (from the left edge) to set the div width to
   clip?: number; // in [0, 1]
+  // amount of dimming to apply to the image
+  dim?: number; // in [0, 1]
   style?: Record<string, string>;
 
   [more: string]: any;
 };
 
 export const Card = (props: CardProps) => {
-  let {card, width, clip = 1, style, ...more} = props;
+  let {card, width, clip = 1, dim = null, style, ...more} = props;
+
   if (clip < 0 || clip > 1) clip = 1;
+  if (dim < 0 || dim > 1) dim = null;
 
-  let height = width / aspect_ratio;
+  const height = width / aspect_ratio;
 
-  let svg_width = width / card_to_bounding_box_x;
-  let svg_height = height / card_to_bounding_box_y;
+  const svg_width = width / card_to_bounding_box_x;
+  const svg_height = height / card_to_bounding_box_y;
 
-  let padding_x = padding_x_ratio * svg_width;
-  let padding_y = padding_y_ratio * svg_height;
+  const padding_x = padding_x_ratio * svg_width;
+  const padding_y = padding_y_ratio * svg_height;
 
-  let border_radius = Math.ceil(border_radius_x_ratio * width + 1);
+  const border_radius = Math.ceil(border_radius_x_ratio * width + 1);
 
-  let svg = "url(/static/svg/cards/" + card + ".svg)";
+  const svg = "url(/static/svg/cards/" + card + ".svg)";
+  const bg_image = dim !== null
+    ? `linear-gradient(rgba(0,0,0,${dim}), rgba(0,0,0,${dim})), ${svg}`
+    : svg;
 
   return <div
     style={{
@@ -63,7 +70,7 @@ export const Card = (props: CardProps) => {
       height: height,
       paddingRight: width * (1 - clip),
       marginRight: -width * (1 - clip),
-      backgroundImage: svg,
+      backgroundImage: bg_image,
       backgroundPosition: "-" + padding_x + "px -" + padding_y + "px",
       backgroundSize: svg_width + "px " + svg_height + "px",
       backgroundOverflow: "visible",

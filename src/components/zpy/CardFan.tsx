@@ -11,33 +11,29 @@ export class CardFan extends React.Component<CardFan.Props> {
   }
 
   render() {
-    const {tail, ...props} = this.props;
+    const {pile, ...props} = this.props;
 
     const scale = (mult: number) => props.width * (props.clip ?? 1) * mult;
 
     return <div
       style={{
         display: 'flex',
-        width: scale(tail.length + 2),
+        width: scale(pile.length + 2),
       }}
     >
-      <ZCard {...props}/>
-      {tail.map((cb, i) =>
-        <ZCard
-          {...props}
-          card={cb}
-        />
-      )}
+      {pile.map((cb, i) => <ZCard card={cb} {...props} />)}
     </div>;
   }
 }
 
 export namespace CardFan {
 
-export type Props = ZCard.Props & {
+export type Props = {
+  width: number;
+  selected: boolean;
   clip?: number;
-  // all cards past the first
-  tail: CardBase[];
+  pile: CardBase[];
+  [more: string]: any;
 };
 
 }

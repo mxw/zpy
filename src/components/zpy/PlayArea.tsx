@@ -227,24 +227,25 @@ export class PlayArea extends React.Component<
     }
     // cards were added or removed, or we need to trigger multi-drag rendering
     this.setState((state, props): PlayArea.State => {
+      let pile = state.areas.flatMap(
+        area => (area.ordered
+          .filter(card => state.selected.has(card.id))
+          .map(card => card.cb))
+      );
       return {
         ...PlayArea.updateForProps(state, props),
-        multidrag: {
-          id: start.draggableId,
-          tail: state.areas.flatMap(
-            area => area.ordered.filter(card => (
-              card.id !== start.draggableId &&
-              state.selected.has(card.id)
-            )).map(card => card.cb)
-          ),
-        }
+        multidrag: {id: start.draggableId, pile}
       };
     });
   }
 
   onDragEnd(result: DropResult) {
     const { source: src, destination: dst } = result;
-    if (!dst || result.reason === 'CANCEL') return;
+
+    if (!dst || result.reason === 'CANCEL') {
+      this.setState({multidrag: null});
+      return;
+    }
 
     this.setState((state, props): PlayArea.State => {
       state = PlayArea.updateForProps(state, props);
@@ -270,7 +271,7 @@ export class PlayArea extends React.Component<
         dst_area.ordered.reduce((n, card, i) => {
           if (i > dst.index) return n;
 
-          const skip = multidrag_id === null
+          const skip = (true || multidrag_id === null) // [multidrag policy]
             ? is_dragging(card)
             : card.id === multidrag_id;
 
@@ -378,10 +379,12 @@ export type State = {
   prev_start: null | string;
   // last card id to end a shift-select range
   prev_stop: null | string;
-  // card being dragged in a multi-drag; used only for rendering
+  // multidrag metadata
   multidrag: null | {
+    // card being dragged
     id: string;
-    tail: CardBase[];
+    // list of all cards in the pile
+    pile: CardBase[];
   };
 };
 

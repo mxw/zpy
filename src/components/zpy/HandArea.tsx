@@ -44,54 +44,57 @@ export class HandArea extends React.Component<HandArea.Props, {}> {
             padding: 10,
           }}
         >
-          {this.props.cards
-            .filter(card => (
-              // if we're multidragging, we want to vanish all the selected cards
-              // except for the drag target
-              this.props.multidrag === null ||
-              card.id === this.props.multidrag.id ||
-              !this.props.selected.has(card.id)
-            ))
-            .map(({cb, id}, pos) => (
-              <Draggable
-                key={id}
-                draggableId={id}
-                index={pos}
-              >
-                {(
-                  provided: DraggableProvided,
-                  snapshot: DraggableStateSnapshot
-                 ) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    style={restyle({
-                      outline: 'none', // avoid conflicting selection affordance
-                      ...provided.draggableProps.style
-                    }, snapshot)}
-                    onClick={ev => this.props.onSelect(id, ev)}
-                  >
-                    {this.props.multidrag?.id === id ?
-                      (<CardFan
-                        card={cb}
+          {this.props.cards.map(({cb, id}, pos) => (
+            <Draggable
+              key={id}
+              draggableId={id}
+              index={pos}
+            >
+              {(
+                provided: DraggableProvided,
+                snapshot: DraggableStateSnapshot
+               ) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.draggableProps}
+                  {...provided.dragHandleProps}
+                  style={restyle({
+                    outline: 'none', // avoid conflicting selection affordance
+                    ...provided.draggableProps.style
+                  }, snapshot)}
+                  onClick={ev => this.props.onSelect(id, ev)}
+                >
+                  {(() => {
+                    if (this.props.multidrag?.id === id) {
+                      return <CardFan
                         width={100}
                         clip={0.25}
                         selected={this.props.selected.has(id)}
-                        tail={this.props.multidrag.tail}
-                      />) :
-                      (<ZCard
-                        card={cb}
-                        width={100}
-                        clip={0.25}
-                        selected={this.props.selected.has(id)}
-                      />)
+                        pile={this.props.multidrag.pile}
+                      />;
                     }
-                  </div>
-                )}
-              </Draggable>
-            )
-          )}
+                    let should_vanish = this.props.multidrag !== null &&
+                                        this.props.selected.has(id);
+                    // the current rendering policy is to dim the cards that
+                    // are part of a multigrab.  it's possible to just have
+                    // them disappear completely (by returning null here), but
+                    // this causes slightly pathological drag behavior.
+                    //
+                    // to apply that policy anyway, get rid of the always-
+                    // passing true condition in onDragEnd()'s dst_index
+                    // conversion logic.
+                    return <ZCard
+                      card={cb}
+                      width={100}
+                      clip={0.25}
+                      selected={this.props.selected.has(id) && !should_vanish}
+                      dim={should_vanish ? 0.6 : null}
+                    />;
+                  })()}
+                </div>
+              )}
+            </Draggable>
+          ))}
           {provided.placeholder}
         </div>
       )}
@@ -107,7 +110,7 @@ export type Props = {
   selected: Set<string>;
   multidrag: null | {
     id: string;
-    tail: CardBase[];
+    pile: CardBase[];
   };
   onSelect: (id: string, ev: React.MouseEvent | React.TouchEvent) => void;
 };
