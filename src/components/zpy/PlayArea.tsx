@@ -173,7 +173,6 @@ export class PlayArea extends React.Component<
         // range selection
         let selected = new Set(state.selected);
 
-
         const range_for = (prev_id: string) => {
           let prev_pos = area.id_to_pos[prev_id];
           return [Math.min(pos, prev_pos), Math.max(pos, prev_pos)];
@@ -245,10 +244,20 @@ export class PlayArea extends React.Component<
 
       if (src_adx === dst_adx) {
         const the_area = dst_area;
+
+        // count the number of cards that remain before dst.index once we move
+        // all the dragging cards out of the way...
+        let dst_index = Math.min(the_area.ordered.reduce(
+          (n, card, i) => (is_not_dragging(card) && i <= dst.index ? n + 1 : n),
+          0
+        ), dst.index);
+
+        const not_dragging = the_area.ordered.filter(is_not_dragging);
+
         const ordered = [
-          ...the_area.ordered.slice(0, dst.index).filter(is_not_dragging),
+          ...not_dragging.slice(0, dst_index),
           ...the_area.ordered.filter(is_dragging),
-          ...the_area.ordered.slice(dst.index).filter(is_not_dragging),
+          ...not_dragging.slice(dst_index),
         ];
         return {
           ...state,
