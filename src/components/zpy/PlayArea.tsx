@@ -164,9 +164,30 @@ export class PlayArea extends React.Component<
         area.id_to_pos = id_to_pos(area.ordered);
       }
     }
-    //state.areas = state.areas.filter(area => area.ordered.length > 0);
+    return PlayArea.reapAreas(state);
+  }
 
-    return state;
+  /*
+   * discard empty non-hand areas in `state` and update `id_to_pos`
+   */
+  static reapAreas(
+    state: PlayArea.State
+  ): PlayArea.State {
+    const areas = [...state.areas].filter(
+      (area, adx) => adx === 0 || area.ordered.length > 0
+    );
+    if (areas.length === state.areas.length) return state;
+
+    const id_to_area = {...state.id_to_area};
+
+    // remap all cards in all areas besides the hand
+    for (let adx = 1; adx < areas.length; ++adx) {
+      const ordered = areas[adx].ordered;
+      for (let pos = 0; pos < ordered.length; ++pos) {
+        id_to_area[ordered[pos].id] = adx;
+      }
+    }
+    return {...state, areas, id_to_area};
   }
 
   /*
@@ -372,7 +393,7 @@ export class PlayArea extends React.Component<
         : [src_id];
       const affected_areas = new Set(selected.map(id => state.id_to_area[id]));
 
-      return PlayArea.validate({
+      return PlayArea.validate(PlayArea.reapAreas({
         ...state,
         areas: state.areas.map((area, adx) => {
           if (adx === dst_adx) {
@@ -391,7 +412,7 @@ export class PlayArea extends React.Component<
           ...state.id_to_area,
           ...Object.fromEntries(selected.map(id => [id, dst_adx]))
         },
-      });
+      }));
     });
   };
 
