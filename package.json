@@ -21,6 +21,7 @@
     "fp-ts": "*",
     "io-ts": ">=2.2",
     "react-beautiful-dnd": "^13.0.0",
+    "styled-components": "^5.1.0",
     "uuid": "*",
     "ws": "*"
   },
