@@ -1,3 +1,6 @@
+/*
+ * a single card, converting a ZPY CardBase to a UI Card
+ */
 import * as React from "react"
 
 import { CardBase, Suit, Rank } from 'lib/zpy/cards.ts'

@@ -1,3 +1,6 @@
+/*
+ * a fanned-out, non-interactive pile of cards
+ */
 import * as React from "react"
 
 import { CardBase } from 'lib/zpy/cards.ts'
@@ -15,12 +18,10 @@ export class CardFan extends React.Component<CardFan.Props> {
 
     const scale = (mult: number) => props.width * (props.clip ?? 1) * mult;
 
-    return <div
-      style={{
-        display: 'flex',
-        width: scale(pile.length + 2),
-      }}
-    >
+    return <div style={{
+      display: 'flex',
+      width: scale(pile.length + 2),
+    }}>
       {pile.map((cb, i) => <ZCard card={cb} {...props} />)}
     </div>;
   }

@@ -1,3 +1,6 @@
+/*
+ * interactive splay of cards
+ */
 import * as React from "react"
 import {
   Draggable, DraggableProvided, DraggableStateSnapshot,
@@ -13,19 +16,10 @@ import { CardFan } from "components/zpy/CardFan.tsx"
 import { strict as assert} from 'assert'
 
 
-const restyle = (
-  style: React.CSSProperties,
-  snapshot: DraggableStateSnapshot
-): React.CSSProperties => {
-  if (!snapshot.isDropAnimating) return style;
-  return {
-    ...style,
-    transitionDuration: '0.1s',
-  };
-};
+///////////////////////////////////////////////////////////////////////////////
 
-export class CardArea extends React.Component<CardArea.Props, {}> {
-  constructor(props: CardArea.Props) {
+export class Area extends React.Component<Area.Props, {}> {
+  constructor(props: Area.Props) {
     super(props);
   }
 
@@ -44,61 +38,95 @@ export class CardArea extends React.Component<CardArea.Props, {}> {
             padding: 10,
           }}
         >
-          {this.props.cards.map(({cb, id}, pos) => (
-            <Draggable
-              key={id}
-              draggableId={id}
-              index={pos}
-            >
-              {(
-                provided: DraggableProvided,
-                snapshot: DraggableStateSnapshot
-               ) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.draggableProps}
-                  {...provided.dragHandleProps}
-                  style={restyle({
-                    outline: 'none', // avoid conflicting selection affordance
-                    ...provided.draggableProps.style
-                  }, snapshot)}
-                  onClick={ev => this.props.onSelect(id, ev)}
-                >
-                  {(() => {
-                    if (this.props.multidrag?.id === id) {
-                      return <CardFan
-                        width={100}
-                        clip={0.25}
-                        selected={this.props.selected.has(id)}
-                        pile={this.props.multidrag.pile}
-                      />;
-                    }
-                    let should_vanish = this.props.multidrag !== null &&
-                                        this.props.selected.has(id);
-                    // the current rendering policy is to dim the cards that
-                    // are part of a multigrab.  it's possible to just have
-                    // them disappear completely (by returning null here), but
-                    // this causes slightly pathological drag behavior.
-                    //
-                    // to apply that policy anyway, get rid of the always-
-                    // passing true condition in onDragEnd()'s dst_index
-                    // conversion logic.
-                    return <ZCard
-                      card={cb}
-                      width={100}
-                      clip={0.25}
-                      selected={this.props.selected.has(id) && !should_vanish}
-                      dim={should_vanish ? 0.6 : null}
-                    />;
-                  })()}
-                </div>
-              )}
-            </Draggable>
-          ))}
+          {this.props.children}
           {provided.placeholder}
         </div>
       )}
     </Droppable>;
+  }
+}
+
+export namespace Area {
+
+export type Props = {
+  droppableId: string;
+  children: any[];
+};
+
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+const restyle = (
+  style: React.CSSProperties,
+  snapshot: DraggableStateSnapshot
+): React.CSSProperties => {
+  if (!snapshot.isDropAnimating) return style;
+  return {
+    ...style,
+    transitionDuration: '0.1s',
+  };
+};
+
+export class CardArea extends React.Component<CardArea.Props, {}> {
+  constructor(props: CardArea.Props) {
+    super(props);
+  }
+
+  render() {
+    return <Area droppableId={this.props.droppableId}>
+      {this.props.cards.map(({cb, id}, pos) => (
+        <Draggable
+          key={id}
+          draggableId={id}
+          index={pos}
+        >
+          {(
+            provided: DraggableProvided,
+            snapshot: DraggableStateSnapshot
+           ) => (
+            <div
+              ref={provided.innerRef}
+              {...provided.draggableProps}
+              {...provided.dragHandleProps}
+              style={restyle({
+                outline: 'none', // avoid conflicting selection affordance
+                ...provided.draggableProps.style
+              }, snapshot)}
+              onClick={ev => this.props.onSelect(id, ev)}
+            >
+              {(() => {
+                if (this.props.multidrag?.id === id) {
+                  return <CardFan
+                    width={100}
+                    clip={0.25}
+                    selected={this.props.selected.has(id)}
+                    pile={this.props.multidrag.pile}
+                  />;
+                }
+                let should_vanish = this.props.multidrag !== null &&
+                                    this.props.selected.has(id);
+                // the current rendering policy is to dim the cards that
+                // are part of a multigrab.  it's possible to just have
+                // them disappear completely (by returning null here), but
+                // this causes slightly pathological drag behavior.
+                //
+                // to apply that policy anyway, get rid of the always-
+                // passing true condition in onDragEnd()'s dst_index
+                // conversion logic.
+                return <ZCard
+                  card={cb}
+                  width={100}
+                  clip={0.25}
+                  selected={this.props.selected.has(id) && !should_vanish}
+                  dim={should_vanish ? 0.6 : null}
+                />;
+              })()}
+            </div>
+          )}
+        </Draggable>
+      ))}
+    </Area>;
   }
 }
 

@@ -1,3 +1,6 @@
+/*
+ * interactive play portion of the ZPY board
+ */
 import * as React from 'react'
 import {
   DragDropContext,
@@ -41,6 +44,10 @@ export class PlayArea extends React.Component<
       prev_stop: null,
       multidrag: null,
     };
+
+    this.onSelect = this.onSelect.bind(this);
+    this.onDragStart = this.onDragStart.bind(this);
+    this.onDragEnd = this.onDragEnd.bind(this);
   }
 
   componentDidMount() {
@@ -130,6 +137,18 @@ export class PlayArea extends React.Component<
     //state.areas = state.areas.filter(area => area.ordered.length > 0);
 
     return state;
+  }
+
+  /*
+   * filter a flattened, ordered array of all cards in `state`
+   */
+  static filter(
+    state: PlayArea.State,
+    filt?: (card: CardID) => boolean
+  ): CardID[] {
+    return state.areas.flatMap(
+      area => filt ? area.ordered.filter(filt) : area.ordered
+    );
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -227,11 +246,10 @@ export class PlayArea extends React.Component<
     }
     // cards were added or removed, or we need to trigger multi-drag rendering
     this.setState((state, props): PlayArea.State => {
-      let pile = state.areas.flatMap(
-        area => (area.ordered
-          .filter(card => state.selected.has(card.id))
-          .map(card => card.cb))
-      );
+      let pile = PlayArea
+        .filter(state, card => state.selected.has(card.id))
+        .map(card => card.cb);
+
       return {
         ...PlayArea.updateForProps(state, props),
         multidrag: {id: start.draggableId, pile}
@@ -255,18 +273,29 @@ export class PlayArea extends React.Component<
 
       const src_adx = parseInt(src.droppableId);
       const dst_adx = parseInt(dst.droppableId);
+
+      if (dst_adx === state.areas.length) {
+        // user dragged into the "new area" area; instantiate it
+        state = {
+          ...state,
+          areas: [...state.areas, {ordered: [], id_to_pos: {}}],
+        };
+      }
+
       const src_area = state.areas[src_adx];
       const dst_area = state.areas[dst_adx];
+
+      const src_id = src_area.ordered[src.index].id;
 
       const is_dragging = (card: CardID): boolean => {
         return state.selected.size !== 0
           ? state.selected.has(card.id)
-          : card.id === src_area.ordered[src.index].id;
+          : card.id === src_id;
       };
       const is_not_dragging = (card: CardID): boolean => !is_dragging(card);
 
       // count the number of cards that remain before dst.index once we move
-      // all the dragging cards out of the way...
+      // all the dragging cards out of the way
       let dst_index = Math.min(
         dst_area.ordered.reduce((n, card, i) => {
           if (i > dst.index) return n;
@@ -280,17 +309,18 @@ export class PlayArea extends React.Component<
         dst.index
       );
 
-      const not_dragging = dst_area.ordered.filter(is_not_dragging);
+      const not_dragging = [...dst_area.ordered].filter(is_not_dragging);
 
       const dst_ordered = [
         ...not_dragging.slice(0, dst_index),
-        ...dst_area.ordered.filter(is_dragging),
+        ...PlayArea.filter(state, is_dragging),
         ...not_dragging.slice(dst_index),
       ];
 
-      const affected_areas = new Set(
-        [...state.selected].map(id => state.id_to_area[id])
-      );
+      const selected = state.selected.size !== 0
+        ? [...state.selected]
+        : [src_id];
+      const affected_areas = new Set(selected.map(id => state.id_to_area[id]));
 
       return {
         ...state,
@@ -302,11 +332,15 @@ export class PlayArea extends React.Component<
             };
           }
           if (affected_areas.has(adx)) {
-            const ordered = area.ordered.filter(is_not_dragging);
+            const ordered = [...area.ordered].filter(is_not_dragging);
             return {ordered, id_to_pos: id_to_pos(ordered)};
           }
           return area;
-        })
+        }),
+        id_to_area: {
+          ...state.id_to_area,
+          ...Object.fromEntries(selected.map(id => [id, dst_adx]))
+        },
       };
     });
   };
@@ -322,20 +356,49 @@ export class PlayArea extends React.Component<
   render() {
     const state = PlayArea.updateForProps(this.state, this.props);
 
-    return <div>
+    return (
       <DragDropContext
-        onDragStart={this.onDragStart.bind(this)}
-        onDragEnd={this.onDragEnd.bind(this)}
+        onDragStart={this.onDragStart}
+        onDragEnd={this.onDragEnd}
       >
-        <CardArea
-          droppableId="0"
-          cards={state.areas[0].ordered}
-          selected={state.selected}
-          multidrag={state.multidrag}
-          onSelect={this.onSelect.bind(this)}
-        />
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+        }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'row',
+          }}>
+            {this.state.areas.map((area, adx) => {
+              if (adx === 0) return null;
+              return <CardArea
+                key={adx}
+                droppableId={'' + adx}
+                cards={state.areas[adx].ordered}
+                selected={state.selected}
+                multidrag={state.multidrag}
+                onSelect={this.onSelect}
+              />
+            })}
+            <CardArea
+              key={this.state.areas.length}
+              droppableId={'' + this.state.areas.length}
+              cards={[]}
+              selected={state.selected}
+              multidrag={state.multidrag}
+              onSelect={this.onSelect}
+            />
+          </div>
+          <CardArea
+            droppableId="0"
+            cards={state.areas[0].ordered}
+            selected={state.selected}
+            multidrag={state.multidrag}
+            onSelect={this.onSelect}
+          />
+        </div>
       </DragDropContext>
-    </div>;
+    );
   }
 }
 
