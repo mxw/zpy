@@ -53,6 +53,7 @@ export class PlayArea extends React.Component<
   componentDidMount() {
     window.addEventListener('click', this.onClickOut.bind(this));
     window.addEventListener('touchend', this.onClickOut.bind(this));
+    window.addEventListener('keydown', this.onKeyDown.bind(this));
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -258,6 +259,26 @@ export class PlayArea extends React.Component<
   }
 
   /*
+   * intercepted keypresses:
+   *
+   *  {ctrl,cmd}-a: select all cards
+   *  enter: submit staged cards
+   */
+  onKeyDown(ev: React.KeyboardEvent) {
+    const metaKey = isWindows() ? ev.ctrlKey : ev.metaKey;
+
+    if (ev.key === 'a') {
+      ev.preventDefault();
+      this.selectAll();
+      return;
+    }
+    if (ev.key === 'Enter') {
+      ev.preventDefault();
+      return;
+    }
+  }
+
+  /*
    * event handler for clicking outside of all selectable items
    */
   onClickOut(ev: React.MouseEvent | React.TouchEvent) {
@@ -373,6 +394,16 @@ export class PlayArea extends React.Component<
       });
     });
   };
+
+  selectAll() {
+    this.setState((state, props) => {
+      state = PlayArea.updateForProps(state, props);
+      return {
+        ...state,
+        selected: new Set(state.id_set),
+      };
+    });
+  }
 
   deselectAll() {
     this.setState({
