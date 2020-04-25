@@ -6,7 +6,6 @@ import { Home } from 'components/Home.tsx';
 
 ReactDOM.render(
   <Router>
-    "hello"
     <Switch>
       <Route path="/">
         <Home/>

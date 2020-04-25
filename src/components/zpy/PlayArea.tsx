@@ -444,36 +444,31 @@ export class PlayArea extends React.Component<
       >
         <div style={{
           display: 'flex',
-          flexDirection: 'column',
+          flexDirection: 'row',
         }}>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'row',
-          }}>
-            {this.state.areas.map((area, adx) => {
-              if (adx === 0) return null;
-              return <CardArea
-                key={adx}
-                droppableId={'' + adx}
-                cards={state.areas[adx].ordered}
-                selected={state.selected}
-                multidrag={state.multidrag}
-                onSelect={this.onSelect}
-              />
-            })}
-            <NextArea
-              key={this.state.areas.length}
-              droppableId={'' + this.state.areas.length}
+          {this.state.areas.map((area, adx) => {
+            if (adx === 0) return null;
+            return <CardArea
+              key={adx}
+              droppableId={'' + adx}
+              cards={state.areas[adx].ordered}
+              selected={state.selected}
+              multidrag={state.multidrag}
+              onSelect={this.onSelect}
             />
-          </div>
-          <CardArea
-            droppableId="0"
-            cards={state.areas[0].ordered}
-            selected={state.selected}
-            multidrag={state.multidrag}
-            onSelect={this.onSelect}
+          })}
+          <NextArea
+            key={this.state.areas.length}
+            droppableId={'' + this.state.areas.length}
           />
         </div>
+        <CardArea
+          droppableId="0"
+          cards={state.areas[0].ordered}
+          selected={state.selected}
+          multidrag={state.multidrag}
+          onSelect={this.onSelect}
+        />
       </DragDropContext>
     );
   }
