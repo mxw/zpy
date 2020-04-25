@@ -12,7 +12,7 @@ import {
 import { CardBase, TrumpMeta } from 'lib/zpy/cards.ts'
 import { ZPY } from 'lib/zpy/zpy.ts'
 
-import { CardID } from 'components/zpy/common.ts'
+import { CardID, dims } from 'components/zpy/common.ts'
 import { CardArea, NextArea } from 'components/zpy/CardArea.tsx'
 import { isWindows } from 'components/utils/platform.ts'
 
@@ -460,9 +460,11 @@ export class PlayArea extends React.Component<
   /////////////////////////////////////////////////////////////////////////////
 
   renderDrawArea(state: PlayArea.State) {
+    return <div></div>;
   }
 
   renderFriendArea(state: PlayArea.State) {
+    return <div></div>;
   }
 
   static isStagingAreaVariadic(props: PlayArea.Props) {
@@ -482,6 +484,8 @@ export class PlayArea extends React.Component<
     return <div style={{
       display: 'flex',
       flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
     }}>
       {this.state.areas.map((area, adx) => {
         if (adx === 0) return null;
@@ -499,20 +503,31 @@ export class PlayArea extends React.Component<
   }
 
   renderActionArea(state: PlayArea.State) {
-    switch (this.props.phase) {
-      case ZPY.Phase.DRAW:
-      case ZPY.Phase.PREPARE:
-        return this.renderDrawArea(state);
-      case ZPY.Phase.FRIEND:
-        return this.renderFriendArea(state);
-      case ZPY.Phase.KITTY:
-      case ZPY.Phase.LEAD:
-      case ZPY.Phase.FLY:
-      case ZPY.Phase.FOLLOW:
-        return this.renderStagingArea(state);
-      default: break;
-    }
-    return null;
+    const inner = (() => {
+      switch (this.props.phase) {
+        case ZPY.Phase.DRAW:
+        case ZPY.Phase.PREPARE:
+          return this.renderDrawArea(state);
+        case ZPY.Phase.FRIEND:
+          return this.renderFriendArea(state);
+        case ZPY.Phase.KITTY:
+        case ZPY.Phase.LEAD:
+        case ZPY.Phase.FLY:
+        case ZPY.Phase.FOLLOW:
+          return this.renderStagingArea(state);
+        default: break;
+      }
+      return null;
+    })();
+    if (inner === null) return null;
+
+    return <div style={{
+      minWidth: 4 * dims.card_width,
+      minHeight: 1.5 * dims.card_height,
+      backgroundColor: 'rgb(169, 191, 212)',
+    }}>
+      {inner}
+    </div>;
   }
 
   render() {

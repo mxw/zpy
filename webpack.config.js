@@ -20,8 +20,9 @@ let resolve_path = (() => {
 let common = {
   mode: "production",
   devtool: "source-map",
+
   resolve: {
-    extensions: [".ts", ".tsx"]
+    extensions: [".ts", ".tsx"],
   },
 
   module: {
@@ -34,13 +35,24 @@ let common = {
         enforce: "pre",
         test: /\.js$/,
         loader: "source-map-loader"
-      }
-    ]
+      },
+      {
+        test: /\.s[ac]ss$/,
+        use: [
+          'style-loader',
+          'css-loader',
+          'sass-loader',
+        ],
+      },
+    ],
   },
 
-  resolve: {modules: resolve_path},
-
-  resolveLoader: {modules: resolve_path}
+  resolve: {
+    modules: resolve_path,
+  },
+  resolveLoader: {
+    modules: resolve_path,
+  },
 };
 
 let frontend = Object.assign({

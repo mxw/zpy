@@ -18,7 +18,7 @@
  */
 import * as React from 'react'
 
-const aspect_ratio = 239.0 / 335.0;
+export const aspect_ratio = 239.0 / 335.0;
 
 const card_to_bounding_box_x = 239.0 / 264.0;
 const card_to_bounding_box_y = 335.0 / 360.0;

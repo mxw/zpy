@@ -10,6 +10,8 @@ import { PlayArea } from 'components/zpy/PlayArea.tsx'
 
 import { strict as assert} from 'assert'
 
+import 'styles/zpy/zpy.scss'
+
 
 export class Board extends React.Component<Board.Props, Board.State> {
   constructor(props: Board.Props) {

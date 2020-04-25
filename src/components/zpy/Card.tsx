@@ -5,7 +5,7 @@ import * as React from "react"
 
 import { CardBase, Suit, Rank } from 'lib/zpy/cards.ts'
 
-import { Card as UICard, CardProps as UICardProps } from "components/Card.tsx"
+import { Card as UICard } from "components/Card.tsx"
 
 
 export class Card extends React.Component<Card.Props> {

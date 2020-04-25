@@ -9,7 +9,7 @@ import {
 
 import { CardBase, Suit, Rank } from 'lib/zpy/cards.ts'
 
-import { CardID } from "components/zpy/common.ts"
+import { CardID, dims } from "components/zpy/common.ts"
 import { CardShape } from "components/Card.tsx"
 import { Card } from "components/zpy/Card.tsx"
 import { CardFan } from "components/zpy/CardFan.tsx"
@@ -36,8 +36,8 @@ export class Area extends React.Component<Area.Props, {}> {
           style={{
             display: 'flex',
             overflow: 'auto',
-            padding: 10,
-            paddingRight: 85,
+            padding: 15,
+            paddingRight: 90,
           }}
         >
           {this.props.children}
@@ -100,7 +100,7 @@ export class CardArea extends React.Component<CardArea.Props, {}> {
               {(() => {
                 if (this.props.multidrag?.id === id) {
                   return <CardFan
-                    width={100}
+                    width={dims.card_width}
                     clip={0.25}
                     selected={this.props.selected.has(id)}
                     pile={this.props.multidrag.pile}
@@ -118,7 +118,7 @@ export class CardArea extends React.Component<CardArea.Props, {}> {
                 // conversion logic.
                 return <Card
                   card={cb}
-                  width={100}
+                  width={dims.card_width}
                   clip={0.25}
                   selected={this.props.selected.has(id) && !should_vanish}
                   dim={should_vanish ? 0.6 : null}
@@ -157,7 +157,7 @@ export class NextArea extends React.Component<Area.Props, {}> {
   render() {
     return <Area {...this.props}>
       <CardShape
-        width={100}
+        width={dims.card_width}
         style={{
           backgroundColor: 'lightgrey',
           border: 'solid grey 1px',

@@ -6,6 +6,8 @@ import { GameClient } from 'protocol/client.ts'
 import { CardBase } from "lib/zpy/cards.ts"
 import * as Engine from "lib/zpy/engine.ts"
 
+import { aspect_ratio } from "components/Card.tsx"
+
 export type Client = GameClient<
   Engine.Config,
   Engine.Intent,
@@ -24,4 +26,14 @@ export type ZPY = Engine.ClientState;
 export type CardID = {
   cb: CardBase,
   id: string
+};
+
+/*
+ * shared dimensional units
+ */
+export namespace dims {
+
+export const card_width = 100;
+export const card_height = card_width / aspect_ratio;
+
 };
