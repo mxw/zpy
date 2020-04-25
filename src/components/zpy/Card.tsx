@@ -8,8 +8,8 @@ import { CardBase, Suit, Rank } from 'lib/zpy/cards.ts'
 import { Card as UICard, CardProps as UICardProps } from "components/Card.tsx"
 
 
-export class ZCard extends React.Component<ZCard.Props> {
-  constructor(props: ZCard.Props) {
+export class Card extends React.Component<Card.Props> {
+  constructor(props: Card.Props) {
     super(props);
   }
 
@@ -50,7 +50,7 @@ export class ZCard extends React.Component<ZCard.Props> {
   }
 }
 
-export namespace ZCard {
+export namespace Card {
 
 export type Props = {
   card: CardBase;

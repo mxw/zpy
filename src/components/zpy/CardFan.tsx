@@ -5,7 +5,7 @@ import * as React from "react"
 
 import { CardBase } from 'lib/zpy/cards.ts'
 
-import { ZCard } from "components/zpy/Card.tsx"
+import { Card } from "components/zpy/Card.tsx"
 
 
 export class CardFan extends React.Component<CardFan.Props> {
@@ -22,7 +22,7 @@ export class CardFan extends React.Component<CardFan.Props> {
       display: 'flex',
       width: scale(pile.length + 2),
     }}>
-      {pile.map((cb, i) => <ZCard key={i} card={cb} {...props} />)}
+      {pile.map((cb, i) => <Card key={i} card={cb} {...props} />)}
     </div>;
   }
 }

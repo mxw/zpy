@@ -7,11 +7,11 @@ import {
   Droppable, DroppableProvided, DroppableStateSnapshot,
 } from 'react-beautiful-dnd'
 
-import { CardBase, Card, Suit, Rank } from 'lib/zpy/cards.ts'
+import { CardBase, Suit, Rank } from 'lib/zpy/cards.ts'
 
 import { CardID } from "components/zpy/common.ts"
 import { CardShape } from "components/Card.tsx"
-import { ZCard } from "components/zpy/Card.tsx"
+import { Card } from "components/zpy/Card.tsx"
 import { CardFan } from "components/zpy/CardFan.tsx"
 
 import { strict as assert} from 'assert'
@@ -116,7 +116,7 @@ export class CardArea extends React.Component<CardArea.Props, {}> {
                 // to apply that policy anyway, get rid of the always-
                 // passing true condition in onDragEnd()'s dst_index
                 // conversion logic.
-                return <ZCard
+                return <Card
                   card={cb}
                   width={100}
                   clip={0.25}
