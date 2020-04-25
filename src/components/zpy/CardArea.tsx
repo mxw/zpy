@@ -36,6 +36,7 @@ export class Area extends React.Component<Area.Props, {}> {
             display: 'flex',
             overflow: 'auto',
             padding: 10,
+            paddingRight: 85,
           }}
         >
           {this.props.children}
@@ -154,7 +155,6 @@ export class NextArea extends React.Component<Area.Props, {}> {
 
   render() {
     return <div style={{
-      minWidth: 200,
       backgroundColor: 'lightgrey',
     }}>
       <Area {...this.props} />
