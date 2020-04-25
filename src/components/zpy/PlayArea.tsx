@@ -58,6 +58,35 @@ export class PlayArea extends React.Component<
   /////////////////////////////////////////////////////////////////////////////
 
   /*
+   * assert coherency of `state`, then return it for convenience
+   */
+  static validate(state: PlayArea.State): PlayArea.State {
+    // all cards should be unique and tracked
+    const cards = PlayArea.filter(state);
+    assert(cards.length === state.id_set.size);
+    assert(cards.every(card => state.id_set.has(card.id)));
+
+    // all metadata ids should be valid
+    for (let id of [
+      state.prev_start,
+      state.prev_stop,
+      state.multidrag?.id ?? null,
+    ]) {
+      assert(id === null || state.id_set.has(id));
+    }
+
+    // areas should be tracked and correct
+    assert(state.areas.every((area, adx) =>
+      area.ordered.every(card => state.id_to_area[card.id] === adx)
+    ));
+    assert(state.areas.every((area, adx) =>
+      area.ordered.every((card, i) => area.id_to_pos[card.id] === i)
+    ));
+
+    return state;
+  }
+
+  /*
    * make a deep copy of `state`
    */
   static copyState(state: PlayArea.State): PlayArea.State {
@@ -322,7 +351,7 @@ export class PlayArea extends React.Component<
         : [src_id];
       const affected_areas = new Set(selected.map(id => state.id_to_area[id]));
 
-      return {
+      return PlayArea.validate({
         ...state,
         areas: state.areas.map((area, adx) => {
           if (adx === dst_adx) {
@@ -341,7 +370,7 @@ export class PlayArea extends React.Component<
           ...state.id_to_area,
           ...Object.fromEntries(selected.map(id => [id, dst_adx]))
         },
-      };
+      });
     });
   };
 

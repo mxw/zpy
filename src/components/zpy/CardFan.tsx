@@ -22,7 +22,7 @@ export class CardFan extends React.Component<CardFan.Props> {
       display: 'flex',
       width: scale(pile.length + 2),
     }}>
-      {pile.map((cb, i) => <ZCard card={cb} {...props} />)}
+      {pile.map((cb, i) => <ZCard key={i} card={cb} {...props} />)}
     </div>;
   }
 }
