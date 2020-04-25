@@ -10,6 +10,7 @@ import {
 import { CardBase, Card, Suit, Rank } from 'lib/zpy/cards.ts'
 
 import { CardID } from "components/zpy/common.ts"
+import { CardShape } from "components/Card.tsx"
 import { ZCard } from "components/zpy/Card.tsx"
 import { CardFan } from "components/zpy/CardFan.tsx"
 
@@ -51,7 +52,7 @@ export namespace Area {
 
 export type Props = {
   droppableId: string;
-  children?: any[];
+  children?: any;
 };
 
 }
@@ -154,10 +155,14 @@ export class NextArea extends React.Component<Area.Props, {}> {
   }
 
   render() {
-    return <div style={{
-      backgroundColor: 'lightgrey',
-    }}>
-      <Area {...this.props} />
-    </div>;
+    return <Area {...this.props}>
+      <CardShape
+        width={100}
+        style={{
+          backgroundColor: 'lightgrey',
+          border: 'solid grey 1px',
+        }}
+      />
+    </Area>;
   }
 }

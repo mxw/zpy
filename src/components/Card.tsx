@@ -1,5 +1,3 @@
-import * as React from 'react'
-
 /*
  * unopinionated, styleable box with a card in it
  *
@@ -18,6 +16,7 @@ import * as React from 'react'
  * this means the card is centered and there's 12.5 units of padding around it
  * on all sides
  */
+import * as React from 'react'
 
 const aspect_ratio = 239.0 / 335.0;
 
@@ -29,22 +28,33 @@ const padding_y_ratio = 12.5 / 360.0;
 
 const border_radius_x_ratio = 12.0 / 239.0;
 
-export type CardProps = {
-  // string of the form "c1", "sq", "d10", "ja", "jb", etc.
-  card: string;
+const chain_background_image = (
+  style: React.CSSProperties,
+  prepend: string,
+): React.CSSProperties => {
+  return {
+    backgroundImage: (('backgroundImage' in style)
+      ? `${prepend}, ${style.backgroundImage}`
+      : prepend),
+  };
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
+export type CardShapeProps = {
   // width of the whole card
   width: number;
   // fraction of the card (from the left edge) to set the div width to
   clip?: number; // in [0, 1]
   // amount of dimming to apply to the image
   dim?: number; // in [0, 1]
-  style?: Record<string, string>;
 
+  style?: React.CSSProperties;
   [more: string]: any;
 };
 
-export const Card = (props: CardProps) => {
-  let {card, width, clip = 1, dim = null, style, ...more} = props;
+export const CardShape = (props: CardShapeProps) => {
+  let {width, clip = 1, dim = null, style = {}, ...more} = props;
 
   if (clip < 0 || clip > 1) clip = 1;
   if (dim < 0 || dim > 1) dim = null;
@@ -59,10 +69,12 @@ export const Card = (props: CardProps) => {
 
   const border_radius = Math.ceil(border_radius_x_ratio * width + 1);
 
-  const svg = "url(/static/svg/cards/" + card + ".svg)";
-  const bg_image = dim !== null
-    ? `linear-gradient(rgba(0,0,0,${dim}), rgba(0,0,0,${dim})), ${svg}`
-    : svg;
+  const background_image = dim !== null
+    ? chain_background_image(
+      style,
+      `linear-gradient(rgba(0,0,0,${dim}), rgba(0,0,0,${dim}))`
+    )
+    : {};
 
   return <div
     style={{
@@ -70,15 +82,35 @@ export const Card = (props: CardProps) => {
       height: height,
       paddingRight: width * (1 - clip),
       marginRight: -width * (1 - clip),
-      backgroundImage: bg_image,
       backgroundPosition: "-" + padding_x + "px -" + padding_y + "px",
       backgroundSize: svg_width + "px " + svg_height + "px",
-      backgroundOverflow: "visible",
       borderRadius: border_radius + "px",
       boxShadow: "0px 1px 1px rgba(0, 0, 0, 0.4)",
       border: "solid black 1px",
-      ...props.style
-    } as React.CSSProperties}
+      ...style,
+      ...background_image,
+    }}
+    {...more}
+  />
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
+export type CardProps = CardShapeProps & {
+  // string of the form "c1", "sq", "d10", "ja", "jb", etc.
+  card: string;
+};
+
+export const Card = (props: CardProps) => {
+  const {card, style, ...more} = props;
+
+  const svg = "url(/static/svg/cards/" + card + ".svg)";
+
+  return <CardShape
+    style={{
+      ...style,
+      backgroundImage: svg,
+    }}
     {...more}
   />
 };
