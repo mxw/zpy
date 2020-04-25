@@ -50,7 +50,7 @@ export namespace Area {
 
 export type Props = {
   droppableId: string;
-  children: any[];
+  children?: any[];
 };
 
 }
@@ -143,4 +143,21 @@ export type Props = {
   onSelect: (id: string, ev: React.MouseEvent | React.TouchEvent) => void;
 };
 
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+export class NextArea extends React.Component<Area.Props, {}> {
+  constructor(props: Area.Props) {
+    super(props);
+  }
+
+  render() {
+    return <div style={{
+      minWidth: 200,
+      backgroundColor: 'lightgrey',
+    }}>
+      <Area {...this.props} />
+    </div>;
+  }
 }

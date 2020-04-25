@@ -12,7 +12,7 @@ import {
 import { CardBase } from 'lib/zpy/cards.ts'
 
 import { CardID } from 'components/zpy/common.ts'
-import { CardArea } from 'components/zpy/CardArea.tsx'
+import { CardArea, NextArea } from 'components/zpy/CardArea.tsx'
 import { isWindows } from 'components/utils/platform.ts'
 
 import { strict as assert} from 'assert'
@@ -380,13 +380,9 @@ export class PlayArea extends React.Component<
                 onSelect={this.onSelect}
               />
             })}
-            <CardArea
+            <NextArea
               key={this.state.areas.length}
               droppableId={'' + this.state.areas.length}
-              cards={[]}
-              selected={state.selected}
-              multidrag={state.multidrag}
-              onSelect={this.onSelect}
             />
           </div>
           <CardArea
