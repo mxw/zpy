@@ -9,7 +9,8 @@ import {
   DragStart, DropResult,
 } from 'react-beautiful-dnd'
 
-import { CardBase } from 'lib/zpy/cards.ts'
+import { CardBase, TrumpMeta } from 'lib/zpy/cards.ts'
+import { ZPY } from 'lib/zpy/zpy.ts'
 
 import { CardID } from 'components/zpy/common.ts'
 import { CardArea, NextArea } from 'components/zpy/CardArea.tsx'
@@ -32,18 +33,28 @@ export class PlayArea extends React.Component<
   constructor(props: PlayArea.Props) {
     super(props);
 
-    this.state = {
-      id_set: new Set(this.props.cards.map(card => card.id)),
-      areas: [{
-        ordered: [...this.props.cards],
-        id_to_pos: id_to_pos(this.props.cards),
-      }],
-      id_to_area: id_to_cns(this.props.cards, 0),
+    const areas = this.props.kitty !== null
+      ? [this.props.hand, this.props.kitty]
+      : [this.props.hand];
+
+    this.state = PlayArea.validate({
+      id_set: new Set([
+        ...this.props.hand.map(card => card.id),
+        ...this.props.kitty.map(card => card.id),
+      ]),
+      areas: areas.map(cards => ({
+        ordered: [...cards],
+        id_to_pos: id_to_pos(cards),
+      })),
+      id_to_area: {
+        ...id_to_cns(this.props.hand, 0),
+        ...id_to_cns(this.props.kitty, 1),
+      },
       selected: new Set(),
       prev_start: null,
       prev_stop: null,
       multidrag: null,
-    };
+    });
 
     this.onSelect = this.onSelect.bind(this);
     this.onDragStart = this.onDragStart.bind(this);
@@ -112,8 +123,9 @@ export class PlayArea extends React.Component<
     state: PlayArea.State,
     props: PlayArea.Props
   ): boolean {
-    return props.cards.length === state.id_set.size &&
-           props.cards.every(card => state.id_set.has(card.id));
+    return props.hand.length + props.kitty.length === state.id_set.size &&
+           props.hand.every(card => state.id_set.has(card.id)) &&
+          (props.kitty?.every(card => state.id_set.has(card.id)) ?? true);
   }
 
   /*
@@ -126,17 +138,25 @@ export class PlayArea extends React.Component<
     if (PlayArea.checkSync(state, props)) return state;
     state = PlayArea.copyState(state);
 
-    // new cards are easy; just stuff them at the end of the hand area
-    for (let card of props.cards) {
-      if (state.id_set.has(card.id)) continue;
+    // new cards are easy; just stuff them at the end of the appropriate area
+    const add_cards = (cards: CardID[], adx: number) => {
+      for (let c of cards) {
+        if (state.id_set.has(c.id)) continue;
 
-      state.id_set.add(card.id);
-      state.areas[0].ordered.push(card);
-      state.areas[0].id_to_pos[card.id] = state.areas[0].ordered.length - 1;
-      state.id_to_area[card.id] = 0;
-    }
+        state.id_set.add(c.id);
+        state.areas[adx].ordered.push(c);
+        state.areas[adx].id_to_pos[c.id] = state.areas[adx].ordered.length - 1;
+        state.id_to_area[c.id] = adx;
+      }
+    };
+    add_cards(props.hand, 0);
+    if (props.kitty !== null) add_cards(props.kitty, 1);
 
-    const props_ids = new Set(props.cards.map(card => card.id));
+    // removing cards is more of a pain
+    const props_ids = new Set([
+      ...props.hand.map(card => card.id),
+      ...props.kitty.map(card => card.id),
+    ]);
     const removed_ids = new Set(
       [...state.id_set].filter(id => !props_ids.has(id))
     );
@@ -164,15 +184,18 @@ export class PlayArea extends React.Component<
         area.id_to_pos = id_to_pos(area.ordered);
       }
     }
-    return PlayArea.reapAreas(state);
+    return PlayArea.reapAreas(state, props);
   }
 
   /*
    * discard empty non-hand areas in `state` and update `id_to_pos`
    */
   static reapAreas(
-    state: PlayArea.State
+    state: PlayArea.State,
+    props: PlayArea.Props,
   ): PlayArea.State {
+    if (!PlayArea.isStagingAreaVariadic(props)) return state;
+
     const areas = [...state.areas].filter(
       (area, adx) => adx === 0 || area.ordered.length > 0
     );
@@ -412,7 +435,7 @@ export class PlayArea extends React.Component<
           ...state.id_to_area,
           ...Object.fromEntries(selected.map(id => [id, dst_adx]))
         },
-      }));
+      }, props));
     });
   };
 
@@ -434,6 +457,64 @@ export class PlayArea extends React.Component<
     });
   }
 
+  /////////////////////////////////////////////////////////////////////////////
+
+  renderDrawArea(state: PlayArea.State) {
+  }
+
+  renderFriendArea(state: PlayArea.State) {
+  }
+
+  static isStagingAreaVariadic(props: PlayArea.Props) {
+    return props.phase === ZPY.Phase.LEAD ||
+           props.phase === ZPY.Phase.FOLLOW;
+  }
+
+  renderNextArea(state: PlayArea.State) {
+    if (!PlayArea.isStagingAreaVariadic(this.props)) return null;
+    return <NextArea
+      key={this.state.areas.length}
+      droppableId={'' + this.state.areas.length}
+    />;
+  }
+
+  renderStagingArea(state: PlayArea.State) {
+    return <div style={{
+      display: 'flex',
+      flexDirection: 'row',
+    }}>
+      {this.state.areas.map((area, adx) => {
+        if (adx === 0) return null;
+        return <CardArea
+          key={adx}
+          droppableId={'' + adx}
+          cards={state.areas[adx].ordered}
+          selected={state.selected}
+          multidrag={state.multidrag}
+          onSelect={this.onSelect}
+        />
+      })}
+      {this.renderNextArea(state)}
+    </div>
+  }
+
+  renderActionArea(state: PlayArea.State) {
+    switch (this.props.phase) {
+      case ZPY.Phase.DRAW:
+      case ZPY.Phase.PREPARE:
+        return this.renderDrawArea(state);
+      case ZPY.Phase.FRIEND:
+        return this.renderFriendArea(state);
+      case ZPY.Phase.KITTY:
+      case ZPY.Phase.LEAD:
+      case ZPY.Phase.FLY:
+      case ZPY.Phase.FOLLOW:
+        return this.renderStagingArea(state);
+      default: break;
+    }
+    return null;
+  }
+
   render() {
     const state = PlayArea.updateForProps(this.state, this.props);
 
@@ -442,26 +523,7 @@ export class PlayArea extends React.Component<
         onDragStart={this.onDragStart}
         onDragEnd={this.onDragEnd}
       >
-        <div style={{
-          display: 'flex',
-          flexDirection: 'row',
-        }}>
-          {this.state.areas.map((area, adx) => {
-            if (adx === 0) return null;
-            return <CardArea
-              key={adx}
-              droppableId={'' + adx}
-              cards={state.areas[adx].ordered}
-              selected={state.selected}
-              multidrag={state.multidrag}
-              onSelect={this.onSelect}
-            />
-          })}
-          <NextArea
-            key={this.state.areas.length}
-            droppableId={'' + this.state.areas.length}
-          />
-        </div>
+        {this.renderActionArea(state)}
         <CardArea
           droppableId="0"
           cards={state.areas[0].ordered}
@@ -498,7 +560,10 @@ type Area = {
 };
 
 export type Props = {
-  cards: CardID[];
+  phase: ZPY.Phase;
+  tr: null | TrumpMeta;
+  hand: CardID[];
+  kitty: null | CardID[];
 };
 
 export type State = {

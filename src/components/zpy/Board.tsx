@@ -4,6 +4,7 @@
 import * as React from 'react'
 
 import { CardBase, Suit, Rank } from 'lib/zpy/cards.ts'
+import { ZPY } from 'lib/zpy/zpy.ts'
 
 import { PlayArea } from 'components/zpy/PlayArea.tsx'
 
@@ -23,7 +24,9 @@ export class Board extends React.Component<Board.Props, Board.State> {
         alignItems: 'center',
       }}>
         <PlayArea
-          cards={[
+          phase={ZPY.Phase.KITTY}
+          tr={null}
+          hand={[
             {cb: new CardBase(Suit.DIAMONDS, Rank.K), id: '0'},
             {cb: new CardBase(Suit.DIAMONDS, Rank.A), id: '1'},
             {cb: new CardBase(Suit.SPADES, 4), id: '2'},
@@ -31,6 +34,10 @@ export class Board extends React.Component<Board.Props, Board.State> {
             {cb: new CardBase(Suit.HEARTS, Rank.Q), id: '4'},
             {cb: new CardBase(Suit.HEARTS, Rank.Q), id: '5'},
             {cb: new CardBase(Suit.TRUMP, Rank.B), id: '6'},
+          ]}
+          kitty={[
+            {cb: new CardBase(Suit.CLUBS, 10), id: '7'},
+            {cb: new CardBase(Suit.CLUBS, 2), id: '8'},
           ]}
         />
       </div>
