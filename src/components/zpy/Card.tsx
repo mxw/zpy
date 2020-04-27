@@ -5,7 +5,7 @@ import * as React from "react"
 
 import { CardBase, Suit, Rank } from 'lib/zpy/cards.ts'
 
-import { Card as UICard } from "components/Card.tsx"
+import { CardImage } from "components/zpy/CardImage.tsx"
 
 
 export class Card extends React.Component<Card.Props> {
@@ -38,7 +38,7 @@ export class Card extends React.Component<Card.Props> {
       }
     })(card.rank);
 
-    return <UICard
+    return <CardImage
       card={suit + rank}
       width={width}
       style={selected ? {

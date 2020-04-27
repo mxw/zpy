@@ -1,0 +1,53 @@
+/*
+ * base dimensions
+ */
+
+@use "dims";
+
+@use "common/rhythm";
+
+$-svg-card-width: 239.0;
+$-svg-card-height: 335.0;
+$-svg-bounding-box-width: 264.0;
+$-svg-bounding-box-height: 360.0;
+$-svg-padding: 12.5;
+$-svg-border-radius: 12.0;
+
+$aspect-ratio: $-svg_card_width / $-svg_card_height;
+$def-width: rhythm.px-to-rem(100px);
+$def-height: $def-width / $aspect-ratio;
+
+// for a given desired background image size, get the appropriate size
+// dimensions for the svg, factoring in the bounding boxes
+@function -bg-width($width) {
+  @return $width * $-svg-bounding-box-width / $-svg-card-width;
+}
+@function -bg-height($height) {
+  @return $height * $-svg-bounding-box-height / $-svg-card-height;
+}
+
+// for a given desired background image size, get the necessary offset from the
+// edge of the svg's bounding box
+@function -bg-off-x($width) {
+  @return -$width * $-svg-padding / $-svg-card-width;
+}
+@function -bg-off-y($height) {
+  @return -$height * $-svg-padding / $-svg-card-height;
+}
+
+// get the scaled border radius for the desired background image size
+@function -bg-border-radius($width) {
+  @return $width * $-svg-border-radius / $-svg-card-width + rhythm.$px;
+}
+
+@mixin card-shared($width: $def-width) {
+  background-size: -bg-width($width) -bg-height($width / $aspect-ratio);
+  background-position: -bg-off-x($width) -bg-off-y($width / $aspect-ratio);
+  border-radius: -bg-border-radius($width);
+}
+
+.card {
+  @include card-shared();
+  border: solid black rhythm.$px;
+  box-shadow: 0px rhythm.$px rhythm.$px rgba(0, 0, 0, 0.4);
+}

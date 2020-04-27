@@ -1,0 +1,8 @@
+/*
+ * base dimensions
+ */
+
+@use "common/rhythm";
+
+$unit_px: rhythm.$default-font-size;
+$unit_rem: rhythm.px-to-rem($unit_px);

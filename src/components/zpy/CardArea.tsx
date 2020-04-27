@@ -10,7 +10,7 @@ import {
 import { CardBase, Suit, Rank } from 'lib/zpy/cards.ts'
 
 import { CardID, dims } from "components/zpy/common.ts"
-import { CardShape } from "components/Card.tsx"
+import { CardShape } from "components/zpy/CardImage.tsx"
 import { Card } from "components/zpy/Card.tsx"
 import { CardFan } from "components/zpy/CardFan.tsx"
 
@@ -59,6 +59,34 @@ export type Props = {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+export class EmptyArea extends React.Component<EmptyArea.Props, {}> {
+  constructor(props: EmptyArea.Props) {
+    super(props);
+  }
+
+  render() {
+    return <Area {...this.props}>
+      <CardShape
+        width={dims.card_width}
+        style={{
+          backgroundColor: 'lightgrey',
+          border: 'solid grey 1px',
+        }}
+      />
+    </Area>;
+  }
+}
+
+export namespace EmptyArea {
+
+export type Props = {
+  droppableId: string;
+};
+
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 const restyle = (
   style: React.CSSProperties,
   snapshot: DraggableStateSnapshot
@@ -76,6 +104,10 @@ export class CardArea extends React.Component<CardArea.Props, {}> {
   }
 
   render() {
+    if (this.props.cards.length === 0) {
+      return <EmptyArea droppableId={this.props.droppableId} />;
+    }
+
     return <Area droppableId={this.props.droppableId}>
       {this.props.cards.map(({cb, id}, pos) => (
         <Draggable
@@ -145,24 +177,4 @@ export type Props = {
   onSelect: (id: string, ev: React.MouseEvent | React.TouchEvent) => void;
 };
 
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
-export class NextArea extends React.Component<Area.Props, {}> {
-  constructor(props: Area.Props) {
-    super(props);
-  }
-
-  render() {
-    return <Area {...this.props}>
-      <CardShape
-        width={dims.card_width}
-        style={{
-          backgroundColor: 'lightgrey',
-          border: 'solid grey 1px',
-        }}
-      />
-    </Area>;
-  }
 }

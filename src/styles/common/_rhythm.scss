@@ -1,0 +1,113 @@
+/*
+ * dimensions and other constants
+ */
+
+$default-font-size: 16px;
+
+// warn unless the units for $number are $unit
+@function enforce-unit($number, $unit) {
+  @if not unit($number) == $unit {
+    @warn "all numbers should be given in rems"
+  }
+  @return 0;
+}
+
+// strip units from a number
+@function strip-units($number) {
+  @return $number / ($number * 0 + 1);
+}
+
+// interconvert rem and px, assuming $default-font-size at the root
+@function rem-to-px($number) {
+  $_: enforce-unit($number, "rem");
+  @return $default-font-size * strip-units($number);
+}
+@function px-to-rem($number) {
+  $_: enforce-unit($number, "px");
+  @return 1rem * ($number / $default-font-size);
+}
+
+$rhythm: 1rem !default;
+$px: 1rem * (1px / $default-font-size);
+
+// simple function to compute line-height from $line count
+@function rh($lines, $offset: 0rem) {
+  @return $lines * $rhythm - $offset;
+}
+
+// leader and trailer application.
+@mixin rh-leader($lines: 1, $property: margin) {
+  #{$property}-top: rh($lines);
+}
+@mixin rh-trailer($lines: 1, $property: margin) {
+  #{$property}-bottom: rh($lines);
+}
+@mixin rh-margins($lines: 1) {
+  margin-top: rh($lines);
+  margin-bottom: rh($lines);
+}
+@mixin rh-padding($lines: 1) {
+  padding-top: rh($lines);
+  padding-bottom: rh($lines);
+}
+
+$default-border-width: 1rem / 16 !default;
+
+// borders
+@mixin rh-border($side, $lines: 1, $width: $default-border-width) {
+  border-#{$side}-width: $width;
+  padding-#{$side}: rh($lines, $offset: $width);
+}
+@mixin rh-border-tb($lines: 1, $width: $default-border-width) {
+  @include rh-border("top", $lines, $width);
+  @include rh-border("bottom", $lines, $width);
+}
+@mixin rh-border-lr($lines: 1, $width: $default-border-width) {
+  @include rh-border("left", $lines, $width);
+  @include rh-border("right", $lines, $width);
+}
+@mixin rh-border-full($lines: 1, $width: $default-border-width) {
+  @include rh-border-tb($lines, $width);
+  @include rh-border-lr($lines, $width);
+}
+
+/*
+$min-line-padding: 1rem / 8 !default;
+
+// Calculate the minimum number of lines needed for a given $font-size, based
+// on the global $min-line-padding.  Lines can be partitioned into sub-lines.
+@function lines-for-font-size($font-size, $subdiv: 1) {
+  $_: enforce-rem($font-size);
+
+  $lines: ceil($subdiv * $font-size / $rhythm) / $subdiv;
+
+  @if $lines * $rhythm - $font-size < $min-line-padding * 2 {
+    $lines: $lines + (1 / $subdiv);
+  }
+  @return $lines;
+}
+
+// Adjust font-size and line-height while maintaining vertical rhythm.
+@mixin rhythm(
+    $size,
+    $subdiv: 2,
+    $lines: lines-for-font-size($size, $subdiv),
+    $offset: 0rem) {
+  $_: enforce-rem($size);
+  font-size: rem-to-px($size);
+  font-size: $size;
+  line-height: rhythm($lines, $offset);
+}
+
+// Rhythm baseline background.  Fragile because we don't have Compass's fancy
+// experimental builtins.
+@mixin rhythm-baseline-background(
+    $baseline: $rhythm / 2,
+    $color: rgba(0, 0, 0, 0.25)
+) {
+  $gradient: -webkit-linear-gradient(bottom, $color 5%, rgba($color, 0) 5%);
+  @include background-size(100% $baseline);
+  background-image: $gradient;
+  background-position: left top;
+}
+*/

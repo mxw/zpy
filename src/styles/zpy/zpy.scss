@@ -1,3 +1,53 @@
-body {
-  background: red;
+/*
+ * toplevel import for ZPY
+ */
+
+@use "dims";
+@use "card";
+
+@use "common/rhythm";
+
+@mixin flex-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.hand {
+  height: rhythm.rh(10);
+
+  @include flex-row;
+  position: relative;
+
+  @include rhythm.rh-border-full();
+
+  &::after {
+    content: "[hand]";
+    font-family: monospace;
+
+    position: absolute;
+    bottom: 0;
+    right: 0;
+
+    opacity: 0;
+    transition: all ease-in 4s;
+  }
+  &:hover::after {
+    opacity: 1;
+    transition: all 0s;
+  }
+}
+
+.action {
+  min-width: card.$def-width * 6;
+  height: rhythm.rh(10);
+  background-color: rgb(169, 191, 212);
+
+  @include flex-row;
+
+  @include rhythm.rh-border-full();
+  border-radius: rhythm.rh(0.5);
+  border-style: solid;
+  border-color: lightgrey;
 }

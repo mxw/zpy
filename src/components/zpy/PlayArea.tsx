@@ -13,7 +13,7 @@ import { CardBase, TrumpMeta } from 'lib/zpy/cards.ts'
 import { ZPY } from 'lib/zpy/zpy.ts'
 
 import { CardID, dims } from 'components/zpy/common.ts'
-import { CardArea, NextArea } from 'components/zpy/CardArea.tsx'
+import { CardArea, EmptyArea } from 'components/zpy/CardArea.tsx'
 import { isWindows } from 'components/utils/platform.ts'
 
 import { strict as assert} from 'assert'
@@ -474,19 +474,14 @@ export class PlayArea extends React.Component<
 
   renderNextArea(state: PlayArea.State) {
     if (!PlayArea.isStagingAreaVariadic(this.props)) return null;
-    return <NextArea
+    return <EmptyArea
       key={this.state.areas.length}
       droppableId={'' + this.state.areas.length}
     />;
   }
 
   renderStagingArea(state: PlayArea.State) {
-    return <div style={{
-      display: 'flex',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-    }}>
+    return <div className="action staging">
       {this.state.areas.map((area, adx) => {
         if (adx === 0) return null;
         return <CardArea
@@ -503,31 +498,20 @@ export class PlayArea extends React.Component<
   }
 
   renderActionArea(state: PlayArea.State) {
-    const inner = (() => {
-      switch (this.props.phase) {
-        case ZPY.Phase.DRAW:
-        case ZPY.Phase.PREPARE:
-          return this.renderDrawArea(state);
-        case ZPY.Phase.FRIEND:
-          return this.renderFriendArea(state);
-        case ZPY.Phase.KITTY:
-        case ZPY.Phase.LEAD:
-        case ZPY.Phase.FLY:
-        case ZPY.Phase.FOLLOW:
-          return this.renderStagingArea(state);
-        default: break;
-      }
-      return null;
-    })();
-    if (inner === null) return null;
-
-    return <div style={{
-      minWidth: 4 * dims.card_width,
-      minHeight: 1.5 * dims.card_height,
-      backgroundColor: 'rgb(169, 191, 212)',
-    }}>
-      {inner}
-    </div>;
+    switch (this.props.phase) {
+      case ZPY.Phase.DRAW:
+      case ZPY.Phase.PREPARE:
+        return this.renderDrawArea(state);
+      case ZPY.Phase.FRIEND:
+        return this.renderFriendArea(state);
+      case ZPY.Phase.KITTY:
+      case ZPY.Phase.LEAD:
+      case ZPY.Phase.FLY:
+      case ZPY.Phase.FOLLOW:
+        return this.renderStagingArea(state);
+      default: break;
+    }
+    return null;
   }
 
   render() {
@@ -539,13 +523,15 @@ export class PlayArea extends React.Component<
         onDragEnd={this.onDragEnd}
       >
         {this.renderActionArea(state)}
-        <CardArea
-          droppableId="0"
-          cards={state.areas[0].ordered}
-          selected={state.selected}
-          multidrag={state.multidrag}
-          onSelect={this.onSelect}
-        />
+        <div className="hand">
+          <CardArea
+            droppableId="0"
+            cards={state.areas[0].ordered}
+            selected={state.selected}
+            multidrag={state.multidrag}
+            onSelect={this.onSelect}
+          />
+        </div>
       </DragDropContext>
     );
   }
