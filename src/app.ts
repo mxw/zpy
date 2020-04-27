@@ -20,8 +20,6 @@ app.use(Session.middleware);
 const server = HTTP.createServer(app);
 const gs = new GameServer(ZPYEngine, server, "zpy");
 
-const games: Record<Session.Id, GameId> = {};
-
 app.get('/api/session', (req, res) => {
   const r = req as (typeof req & {session: Session.T});
   res.send(r.session.id);
@@ -30,7 +28,6 @@ app.get('/api/session', (req, res) => {
 app.post('/api/new_game', (req, res) => {
   const r = req as (typeof req & {session: Session.T});
   const game_id = gs.begin_game(undefined, r.session.id);
-  games[r.session.id] = game_id;
   console.log(`/zpy/${game_id} initiated by ${r.session.id}`);
   res.send(game_id);
 });
