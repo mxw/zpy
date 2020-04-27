@@ -22,10 +22,11 @@ export const Card = C.type({
 });
 export type Card = TypeOf<typeof Card>;
 
-export const State = C.type({
+const State_ = C.type({
   cards: C.array(Card)
 });
-export type State = TypeOf<typeof State>;
+export const State = (s: State) => State_;
+export type State = TypeOf<typeof State_>;
 
 export const ClientState = State;
 export type ClientState = State;

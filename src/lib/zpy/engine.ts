@@ -23,7 +23,7 @@ import {
   Hand,
 } from 'lib/zpy/trick.ts';
 
-import { ZPY } from 'lib/zpy/zpy.ts';
+import { ZPY, Data as ZPYData } from 'lib/zpy/zpy.ts';
 
 import { Result, OK, Err } from 'utils/result.ts'
 
@@ -47,24 +47,33 @@ export type Config = ZPY.RuleModifiers;
 
 export type UpdateError = ZPY.Error;
 
-export const UpdateError = C.make(
-  {decode: (u: unknown) => D.success(new ZPY.Error())},
-  {encode: (u: UpdateError) => ''}
+const cd_UE = C.type({
+  classname: C.string,
+  msg: C.nullable(C.string),
+});
+export const UpdateError: C.Codec<ZPY.Error> = C.make(
+  D.parse(cd_UE, ({classname, msg}) => {
+    const result = (() => {
+      switch (classname) {
+        case 'InvalidArgError': return new ZPY.InvalidArgError(msg);
+        case 'DuplicateActionError': return new ZPY.DuplicateActionError(msg);
+        case 'WrongPlayerError': return new ZPY.WrongPlayerError(msg);
+        case 'OutOfTurnError': return new ZPY.OutOfTurnError(msg);
+        case 'InvalidPlayError': return new ZPY.InvalidPlayError(msg);
+        case 'Error': return new ZPY.Error(msg);
+        default: break;
+      }
+      return null;
+    })();
+    return result !== null
+      ? P.success(result)
+      : P.failure(`invalid Error class ${classname}`)
+  }),
+  {encode: (e: ZPY.Error) => cd_UE.encode({
+    classname: e.constructor.name,
+    msg: e.msg || null
+  })}
 );
-
-///////////////////////////////////////////////////////////////////////////////
-/*
- * state codecs.
- */
-
-export type State = ZPY<P.UserID>;
-export type ClientState = ZPY<P.UserID>;
-
-export const State = C.make(
-  {decode: (u: unknown) => D.success({} as State)},
-  {encode: (u: State) => ''}
-);
-export const ClientState = State;
 
 ///////////////////////////////////////////////////////////////////////////////
 /*
@@ -83,6 +92,10 @@ const cd_CardBase: C.Codec<CardBase> = C.make(
     )
   ),
   {encode: (cb: CardBase) => cd_CB.encode(cb)}
+);
+const cd_TrumpMeta: C.Codec<TrumpMeta> = C.make(
+  D.parse(cd_CB, ({suit, rank}) => P.success(new TrumpMeta(suit, rank))),
+  {encode: (tr: TrumpMeta) => cd_CB.encode(tr)}
 );
 
 const cd_Card = (tr: TrumpMeta): C.Codec<Card> => C.make(
@@ -190,11 +203,75 @@ const cd_Hand = (tr: TrumpMeta): C.Codec<Hand> => C.make(
 
 ///////////////////////////////////////////////////////////////////////////////
 /*
- * intent and effect codecs.
+ * state codecs.
  */
 
 const PlayerID = P.UserID;
 type PlayerID = P.UserID;
+
+export type State = ZPY<PlayerID>;
+export type ClientState = ZPY<PlayerID>;
+
+const cd_ZPYData = (
+  tr: TrumpMeta
+): C.Codec<ZPYData.Type<PlayerID>> => C.type({
+  phase: P.Enum<ZPY.Phase>(ZPY.Phase),
+  rules: Config,
+  identity: C.nullable(PlayerID),
+
+  owner: C.nullable(PlayerID),
+  players: C.array(PlayerID),
+  ranks: C.record(C.type({
+    rank: P.Enum<Rank>(Rank),
+    start: P.Enum<Rank>(Rank),
+    last_host: P.Enum<Rank>(Rank),
+  })),
+  ndecks: C.number,
+
+  round: C.number,
+  order: C.record(C.number),
+  consensus: P.set(PlayerID),
+
+  deck: C.array(cd_CardBase),
+  deck_sz: C.number,
+  kitty: C.array(cd_CardBase),
+  bids: C.array(C.type({
+    player: PlayerID,
+    card: cd_CardBase,
+    n: C.number,
+  })),
+  draws: C.record(cd_CardPile(tr)),
+  current: C.number,
+
+  host: C.nullable(PlayerID),
+  tr: C.nullable(cd_TrumpMeta),
+  hands: cd_Hand(tr),
+  points: C.record(C.array(cd_CardBase)),
+  friends: C.array(C.type({
+    card: cd_CardBase,
+    nth: C.number,
+  })),
+  joins: C.number,
+  host_team: P.set(PlayerID),
+  atk_team: P.set(PlayerID),
+
+  leader: C.nullable(PlayerID),
+  lead: cd_Flight(tr),
+  plays: C.record(cd_Play(tr)),
+  winning: C.nullable(PlayerID),
+});
+const cd_ZPY = (tr: TrumpMeta): C.Codec<ZPY<PlayerID>> => C.make(
+  D.parse(cd_ZPYData(tr), data => P.success(ZPY.from<PlayerID>(data))),
+  {encode: (zpy: ZPY<PlayerID>) => cd_ZPYData(tr).encode(zpy)}
+);
+
+export const State = (s: State): C.Codec<State> => cd_ZPY(s.tr);
+export const ClientState = State;
+
+///////////////////////////////////////////////////////////////////////////////
+/*
+ * intent and effect codecs.
+ */
 
 const trivial = <L extends string> (
   literal: L
@@ -342,7 +419,7 @@ export const Effect = (cs: ClientState): C.Codec<Effect> => Effect_(cs.tr);
 ///////////////////////////////////////////////////////////////////////////////
 
 export const init = (options: Config): State => {
-  return new ZPY<P.UserID>(options);
+  return new ZPY<PlayerID>(options);
 };
 
 export const predict = (

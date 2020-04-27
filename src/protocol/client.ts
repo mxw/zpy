@@ -87,7 +87,7 @@ export class GameClient<
       let payload = JSON.parse(ev.data);
 
       let ServerMessage = P.ServerMessage(
-        this.engine.ClientState,
+        this.engine.ClientState(this.state),
         this.engine.Effect(this.state),
         this.engine.UpdateError
       );

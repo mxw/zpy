@@ -31,6 +31,13 @@ export function Enum<E>(
   };
 }
 
+export function set<T>(t: C.Codec<T>): C.Codec<Set<T>> {
+  return C.make(
+    D.parse(C.array(t), (arr: T[]) => success(new Set(arr))),
+    {encode: (v: Set<T>) => C.array(t).encode([...v])}
+  );
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 export type Version = number;
