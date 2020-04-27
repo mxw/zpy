@@ -15,6 +15,6 @@ export type Client = GameClient<
 
 
 export function createGame(gameId: string): Client {
-  return new GameClient(CardEngine, gameId);
+  return new GameClient(CardEngine, 'sandbox', gameId);
 }
 

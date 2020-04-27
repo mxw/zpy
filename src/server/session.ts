@@ -3,20 +3,23 @@ import * as Crypto from 'crypto'
 
 export type Id = string;
 
-export interface Session {
+export interface T {
   id: Id;
   token: string;
 }
 
-let activeSessions: Record<Id, Session> = {};
+let activeSessions: Record<Id, T> = {};
 
-export function make(): Session {
+export const regex =
+  /[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i;
+
+export function make(): T {
   let id = Uuid.v4();
   let token = Crypto.randomBytes(64).toString("hex");
   return activeSessions[id] = {id, token};
 }
 
-export function get(id: Id): Session | null {
+export function get(id: Id): T | null {
   return (id in activeSessions) ? activeSessions[id] : null;
 }
 

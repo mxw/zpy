@@ -1,6 +1,6 @@
-import * as CardEngine from 'lib/sandbox/engine.ts'
+import * as ZPYEngine from 'lib/zpy/engine.ts'
 
-import { GameServer } from 'server/server.ts'
+import { GameServer, GameId } from 'server/server.ts'
 import * as Session from 'server/session.ts'
 
 import CookieParser from 'cookie-parser'
@@ -8,7 +8,7 @@ import express from 'express'
 import * as HTTP from 'http'
 import * as WebSocket from 'ws'
 
-let app = express();
+const app = express();
 
 app.use('/', express.static("assets/html"))
 app.use('/static/js', express.static("dist/ui"))
@@ -17,24 +17,24 @@ app.use('/static/svg', express.static("assets/svg"))
 app.use(CookieParser());
 app.use(Session.middleware);
 
-let server = HTTP.createServer(app);
-let gs = new GameServer(CardEngine, server, "game");
+const server = HTTP.createServer(app);
+const gs = new GameServer(ZPYEngine, server, "zpy");
 
-var activeGame: string | null = null;
+const games: Record<Session.Id, GameId> = {};
 
 app.get('/api/session', (req, res) => {
-  let r = req as (typeof req & {session: Session.Session});
+  const r = req as (typeof req & {session: Session.T});
   res.send(r.session.id);
 });
 
-app.get('/api/activeGame', (req, res) => {
-  let r = req as (typeof req & {session: Session.Session});
-  res.send(activeGame);
+app.post('/api/new_game', (req, res) => {
+  const r = req as (typeof req & {session: Session.T});
+  const game_id = gs.begin_game(undefined, r.session.id);
+  games[r.session.id] = game_id;
+  console.log(`/zpy/${game_id} initiated by ${r.session.id}`);
+  res.send(game_id);
 });
 
 server.listen(8080, () => {
   console.log("listening on port 8080");
-
-  activeGame = gs.begin_game(undefined, "jgriego");
-  console.log(activeGame);
 })

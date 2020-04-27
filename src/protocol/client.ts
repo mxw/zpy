@@ -68,10 +68,10 @@ export class GameClient<
   onReset: null | ((cl: this) => void) = null;
 
   // connect to the given gameId with the appropriate engine
-  constructor(engine: Eng, gameId: string) {
+  constructor(engine: Eng, url_pref: string, game_id: string) {
     this.engine = engine;
     this.socket = new WebSocket(
-      "ws://" + document.location.host + "/game/" + gameId + "/"
+      `ws://${document.location.host}/${url_pref}/${game_id}/`
     );
     this.waitState = "pending-reset";
 

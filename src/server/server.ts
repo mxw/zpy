@@ -160,7 +160,7 @@ class Game<
 
   // handle a new connection for the given session and websocket; the game
   // takes ownership of the websocket at this point
-  connect(session: Session.Session, sock: WebSocket) {
+  connect(session: Session.T, sock: WebSocket) {
     let client: Client = {
       principal: session.id,
       user: null,
@@ -280,7 +280,7 @@ export class GameServer<
       req: Http.IncomingMessage,
       game: Game<Config, Intent, State, Action,
                  ClientState, Effect, UpdateError, Eng>,
-      session: Session.Session
+      session: Session.T
     ) => {
       return game.connect(session, ws);
     });

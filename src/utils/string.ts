@@ -3,7 +3,7 @@
  */
 
 /*
- * Color text.
+ * color text
  */
 export namespace ansi {
   export const BLACK = '\u001b[30m';
@@ -15,4 +15,11 @@ export namespace ansi {
   export const CYAN = '\u001b[36m';
   export const WHITE = '\u001b[37m';
   export const RESET = '\u001b[0m';
+}
+
+/*
+ * convert every \ to \\
+ */
+export function escape_backslashes(s: string): string {
+  return s.replace(/\\/g, '\\\\');
 }
