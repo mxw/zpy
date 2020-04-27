@@ -25,6 +25,8 @@ export class Area extends React.Component<Area.Props, {}> {
   }
 
   render() {
+    const classes = ["cardarea", ...(this.props.classes ?? [])].join(' ');
+
     return <Droppable
       droppableId={this.props.droppableId}
       direction="horizontal"
@@ -32,13 +34,8 @@ export class Area extends React.Component<Area.Props, {}> {
       {(provided: DroppableProvided, snapshot: DroppableStateSnapshot) => (
         <div
           ref={provided.innerRef}
+          className={classes}
           {...provided.droppableProps}
-          style={{
-            display: 'flex',
-            overflow: 'auto',
-            padding: 15,
-            paddingRight: 90,
-          }}
         >
           {this.props.children}
           {provided.placeholder}
@@ -52,6 +49,7 @@ export namespace Area {
 
 export type Props = {
   droppableId: string;
+  classes?: string[];
   children?: any;
 };
 
@@ -65,7 +63,7 @@ export class EmptyArea extends React.Component<EmptyArea.Props, {}> {
   }
 
   render() {
-    return <Area {...this.props}>
+    return <Area classes={["empty"]} {...this.props}>
       <CardShape
         width={dims.card_width}
         style={{

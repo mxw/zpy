@@ -49,9 +49,11 @@ export const CardShape = (props: CardShapeProps) => {
 
     let prefix = `linear-gradient(rgba(0,0,0,${dim}), rgba(0,0,0,${dim}))`;
 
-    return ('backgroundImage' in style)
-      ? `${prefix}, ${style.backgroundImage}`
-      : prefix;
+    return {
+      backgroundImage: ('backgroundImage' in style)
+        ? `${prefix}, ${style.backgroundImage}`
+        : prefix
+    };
   })();
 
   return <div className="card"

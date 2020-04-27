@@ -50,4 +50,31 @@
   border-radius: rhythm.rh(0.5);
   border-style: solid;
   border-color: lightgrey;
+
+  &.draw {
+    > .deck {
+      @include flex-row;
+      flex-basis: 40%;
+
+      > .card:hover {
+        cursor: pointer;
+      }
+    }
+
+    > .bids {
+      @include flex-row;
+      flex-basis: 60%;
+    }
+  }
+}
+
+.cardarea {
+  display: flex;
+  overflow: auto;
+  padding: rhythm.rh(1);
+  padding-right: rhythm.rh(1) + 0.75 * card.$def-width;
+
+  &.empty {
+    padding-right: rhythm.rh(1);
+  }
 }

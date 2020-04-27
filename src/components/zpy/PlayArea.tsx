@@ -13,6 +13,7 @@ import { CardBase, TrumpMeta } from 'lib/zpy/cards.ts'
 import { ZPY } from 'lib/zpy/zpy.ts'
 
 import { CardID, dims } from 'components/zpy/common.ts'
+import { CardImage } from 'components/zpy/CardImage.tsx'
 import { CardArea, EmptyArea } from 'components/zpy/CardArea.tsx'
 import { isWindows } from 'components/utils/platform.ts'
 
@@ -460,11 +461,28 @@ export class PlayArea extends React.Component<
   /////////////////////////////////////////////////////////////////////////////
 
   renderDrawArea(state: PlayArea.State) {
-    return <div></div>;
+    return <div className="action draw">
+      <div className="deck">
+        <CardImage
+          card="back"
+          width={dims.card_width}
+        />
+      </div>
+      <div className="bids">
+        <CardArea
+          droppableId="1"
+          cards={state.areas?.[1]?.ordered ?? []}
+          selected={state.selected}
+          multidrag={state.multidrag}
+          onSelect={this.onSelect}
+        />
+      </div>
+    </div>;
   }
 
   renderFriendArea(state: PlayArea.State) {
-    return <div></div>;
+    return <div className="action friend">
+    </div>;
   }
 
   static isStagingAreaVariadic(props: PlayArea.Props) {
