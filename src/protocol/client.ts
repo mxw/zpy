@@ -55,7 +55,8 @@ export class GameClient<
   // the next unused transaction id
   next_tx: P.TxID = 0;
 
-  // update requests that are outstanding
+  // update requests that are outstanding, along with callbacks to be invoked
+  // upon their completion
   pending: Record<P.TxID, {
     predicted: boolean;
     ctx: any,
@@ -82,7 +83,9 @@ export class GameClient<
   onReset: null | ((cl: this) => void);
   onUpdate: null | ((cl: this, cm: P.Command<Effect>) => void);
 
-  // connect to the given gameId with the appropriate engine
+  /*
+   * connect to :url_pref/:game_id with the appropriate engine
+   */
   constructor(
     engine: Eng,
     url_pref: string,
@@ -199,6 +202,8 @@ export class GameClient<
         cb?.onUpdate?.(this, command, cb?.ctx);
         delete this.pending[tx];
       } else {
+        // invoke the toplevel onUpdate for tx-less updates (typically protocol
+        // actions)
         this.onUpdate?.(this, command);
       }
       return;
@@ -209,12 +214,16 @@ export class GameClient<
 
   /*
    * attempt to carry out an intent
+   *
+   * onUpdate and onReject are invoked whenever the effect of `intent` is
+   * applied, which might be immediately (if we can predict it), or will
+   * otherwise be when the server replies back
    */
   attempt(
     intent: Intent,
     onUpdate: (cl: this, cm: P.Command<Effect>, ctx: any) => void = null,
     onReject: (cl: this, ue: UpdateError, ctx: any) => void = null,
-    ctx: any = null,
+    ctx?: any,
   ) {
     // TODO we could queue updates locally if we're desynced
     // but it's not necessary for ZPY--it's easier to pretend it can't happen
