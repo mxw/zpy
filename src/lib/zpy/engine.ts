@@ -612,6 +612,10 @@ export const apply_client = (
   me: P.User,
 ): Result<ClientState, UpdateError> => {
   if ('verb' in effect) {
+    switch (effect.verb) {
+      case 'user:join': return OK(state);
+      case 'user:part': return OK(state);
+    }
     return Err(new ZPY.Error('protocol actions not implemented'));
   }
 

@@ -85,28 +85,28 @@ export const RequestHello = C.type({
   verb: C.literal("req:hello"),
   nick: C.string,
 });
-type RequestHello = TypeOf<typeof RequestHello>;
+export type RequestHello = TypeOf<typeof RequestHello>;
 
 export const Hello = C.type({
   verb: C.literal("hello"),
   you: User,
 });
-type Hello = TypeOf<typeof Hello>;
+export type Hello = TypeOf<typeof Hello>;
 
 export const RequestBye = C.type({
   verb: C.literal("req:bye"),
 });
-type RequestBye = TypeOf<typeof RequestBye>;
+export type RequestBye = TypeOf<typeof RequestBye>;
 
 export const Bye = C.type({
   verb: C.literal("bye"),
 });
-type Bye = TypeOf<typeof Bye>;
+export type Bye = TypeOf<typeof Bye>;
 
 export const RequestReset = C.type({
   verb: C.literal("req:reset"),
 });
-type RequestReset = TypeOf<typeof RequestReset>;
+export type RequestReset = TypeOf<typeof RequestReset>;
 
 export function Reset<
   ClientState extends C.Codec<any>
@@ -117,7 +117,7 @@ export function Reset<
     who: C.array(User),
   });
 }
-type Reset<ClientState> = {
+export type Reset<ClientState> = {
   verb: "reset",
   state: ClientState,
   who: User[],
@@ -132,7 +132,7 @@ export function RequestUpdate<
     intent: int,
   });
 };
-type RequestUpdate<Intent> = {
+export type RequestUpdate<Intent> = {
   verb: "req:update",
   tx: TxID,
   intent: Intent,
@@ -156,7 +156,7 @@ export function Update<
     }),
   });
 }
-type Update<Effect> = {
+export type Update<Effect> = {
   verb: "update",
   tx: null | TxID,
   effect:
@@ -179,7 +179,7 @@ export function UpdateReject<
     reason: ue,
   });
 }
-type UpdateReject<UpdateError> = {
+export type UpdateReject<UpdateError> = {
   verb: "reject",
   tx: TxID,
   reason: UpdateError,

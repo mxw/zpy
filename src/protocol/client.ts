@@ -137,22 +137,7 @@ export class GameClient<
                 break;
               }
             }
-
-            const result = this.engine.apply_client(
-              this.state,
-              msg.effect.eff,
-              this.me
-            );
-
-            if (isErr(result)) {
-              console.error(result.err);
-              assert(false);
-            } else {
-              assert(isOK(result));
-              this.state = result.ok;
-              this.status === "sync";
-              this.onUpdate?.(this, msg.effect.eff);
-            }
+            this.update(msg.effect);
             break;
           }
 
@@ -167,6 +152,33 @@ export class GameClient<
         }
       },
       (e: any) => console.error(P.draw_error(e), payload));
+    }
+  }
+
+  update(effect: P.Update<Effect>['effect']) {
+    if (effect.kind === 'protocol') {
+      const pa: P.ProtocolAction = effect.eff;
+
+      switch (pa.verb) {
+        case 'user:join':
+          this.users.push(pa.who);
+          break;
+        case 'user:part':
+          this.users = this.users.filter(u => u.id !== pa.id);
+          break;
+      }
+    }
+
+    const result = this.engine.apply_client(this.state, effect.eff, this.me);
+
+    if (isErr(result)) {
+      console.error(result.err);
+      assert(false);
+    } else {
+      assert(isOK(result));
+      this.state = result.ok;
+      this.status === "sync";
+      this.onUpdate?.(this, effect.eff);
     }
   }
 
