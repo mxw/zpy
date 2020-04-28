@@ -4,19 +4,35 @@
 import { GameClient } from 'protocol/client.ts'
 
 import { CardBase } from "lib/zpy/cards.ts"
-import * as Engine from "lib/zpy/engine.ts"
+import * as ZPYEngine from "lib/zpy/engine.ts"
+
 
 export type Client = GameClient<
-  Engine.Config,
-  Engine.Intent,
-  Engine.State,
-  Engine.Action,
-  Engine.ClientState,
-  Engine.Effect,
-  Engine.UpdateError,
-  typeof Engine
+  ZPYEngine.Config,
+  ZPYEngine.Intent,
+  ZPYEngine.State,
+  ZPYEngine.Action,
+  ZPYEngine.ClientState,
+  ZPYEngine.Effect,
+  ZPYEngine.UpdateError,
+  typeof ZPYEngine
 >;
-export type ZPY = Engine.ClientState;
+
+/*
+ * callback table threaded through the component hierarchy
+ */
+export type EngineCallbacks<T> = {
+  attempt: (
+    intent: ZPYEngine.Intent,
+    onUpdate: (effect: ZPYEngine.Effect, ctx?: T) => void,
+    onReject: (ue: ZPYEngine.UpdateError, ctx?: T) => void,
+    ctx?: T,
+  ) => void;
+
+  subscribeReset: (
+    callback: (state: ZPYEngine.ClientState) => void
+  ) => void;
+};
 
 /*
  * drag-n-drop card identifier

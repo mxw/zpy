@@ -9,6 +9,7 @@ import { CardBase, Suit, Rank } from 'lib/zpy/cards.ts'
 import { ZPY } from 'lib/zpy/zpy.ts'
 import * as ZPYEngine from 'lib/zpy/engine.ts'
 
+import { EngineCallbacks } from 'components/zpy/common.ts'
 import { RoundInfo } from 'components/zpy/RoundInfo.tsx'
 import { PlayArea } from 'components/zpy/PlayArea.tsx'
 
@@ -21,26 +22,40 @@ export class Board extends React.Component<Board.Props, Board.State> {
   }
 
   render() {
+    const zpy = this.props.zpy;
+
+    const id = this.props.me.id;
+    const hand: Iterable<CardBase> =
+      id in zpy.hands ? zpy.hands[id].pile.gen_cards() :
+      id in zpy.draws ? zpy.draws[id].gen_cards() : [];
+
     return (
       <div className="board">
-        <RoundInfo zpy={this.props.zpy} users={this.props.users} />
+        <RoundInfo zpy={zpy} users={this.props.users} />
         <PlayArea
+          key={zpy.round} // reset on every round
+          me={this.props.me}
+          //phase={zpy.phase}
+          tr={zpy.tr}
+          /*
+          hand={hand}
+          kitty={id === zpy.host ? zpy.kitty : []}
+          */
           phase={ZPY.Phase.KITTY}
-          tr={this.props.zpy.tr}
           hand={[
-            {cb: new CardBase(Suit.DIAMONDS, Rank.K), id: '0'},
-            {cb: new CardBase(Suit.DIAMONDS, Rank.A), id: '1'},
-            {cb: new CardBase(Suit.SPADES, 4), id: '2'},
-            {cb: new CardBase(Suit.SPADES, 7), id: '3'},
-            {cb: new CardBase(Suit.HEARTS, Rank.Q), id: '4'},
-            {cb: new CardBase(Suit.HEARTS, Rank.Q), id: '5'},
-            {cb: new CardBase(Suit.TRUMP, Rank.B), id: '6'},
+            new CardBase(Suit.DIAMONDS, Rank.K),
+            new CardBase(Suit.DIAMONDS, Rank.A),
+            new CardBase(Suit.SPADES, 4),
+            new CardBase(Suit.SPADES, 7),
+            new CardBase(Suit.HEARTS, Rank.Q),
+            new CardBase(Suit.HEARTS, Rank.Q),
+            new CardBase(Suit.TRUMP, Rank.B),
           ]}
           kitty={[
-            {cb: new CardBase(Suit.CLUBS, 10), id: '7'},
-            {cb: new CardBase(Suit.CLUBS, 2), id: '8'},
+            new CardBase(Suit.CLUBS, 10),
+            new CardBase(Suit.CLUBS, 2),
           ]}
-          attempt={this.props.attempt}
+          funcs={this.props.funcs}
         />
       </div>
     );
@@ -54,13 +69,9 @@ export type Props = {
   zpy: ZPYEngine.State;
   users: P.User[];
 
-  attempt: (
-    intent: ZPYEngine.Intent,
-    ctx: any,
-    onUpdate: (effect: ZPYEngine.Effect, ctx: any) => void,
-    onReject: (ue: ZPYEngine.UpdateError, ctx: any) => void,
-  ) => void;
+  funcs: EngineCallbacks<any>;
 };
+
 export type State = {};
 
 }

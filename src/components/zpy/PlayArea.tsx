@@ -9,11 +9,13 @@ import {
   DragStart, DropResult,
 } from 'react-beautiful-dnd'
 
+import * as P from 'protocol/protocol.ts'
+
 import { CardBase, TrumpMeta } from 'lib/zpy/cards.ts'
 import { ZPY } from 'lib/zpy/zpy.ts'
 import * as ZPYEngine from 'lib/zpy/engine.ts'
 
-import { CardID } from 'components/zpy/common.ts'
+import { CardID, EngineCallbacks } from 'components/zpy/common.ts'
 import { CardImage } from 'components/zpy/CardImage.tsx'
 import { card_width, CardArea, EmptyArea } from 'components/zpy/CardArea.tsx'
 import { isWindows } from 'components/utils/platform.ts'
@@ -35,32 +37,32 @@ export class PlayArea extends React.Component<
   constructor(props: PlayArea.Props) {
     super(props);
 
-    const areas = this.props.kitty !== null
-      ? [this.props.hand, this.props.kitty]
-      : [this.props.hand];
-
-    this.state = PlayArea.validate({
-      id_set: new Set([
-        ...this.props.hand.map(card => card.id),
-        ...this.props.kitty.map(card => card.id),
-      ]),
-      areas: areas.map(cards => ({
-        ordered: [...cards],
-        id_to_pos: id_to_pos(cards),
-      })),
-      id_to_area: {
-        ...id_to_cns(this.props.hand, 0),
-        ...id_to_cns(this.props.kitty, 1),
-      },
-      selected: new Set(),
-      prev_start: null,
-      prev_stop: null,
-      multidrag: null,
-    });
+    this.onSubmit = this.onSubmit.bind(this);
+    this.onEffect = this.onEffect.bind(this);
 
     this.onSelect = this.onSelect.bind(this);
     this.onDragStart = this.onDragStart.bind(this);
     this.onDragEnd = this.onDragEnd.bind(this);
+
+    let state = PlayArea.withCardsAdded({
+      seen: [],
+      id_set: new Set(),
+      areas: [{ordered: [], id_to_pos: {}}],
+      id_to_area: {},
+      selected: new Set(),
+      prev_start: null,
+      prev_stop: null,
+      multidrag: null,
+      action: {
+        pending: false,
+      },
+    }, props.hand, 0);
+
+    if (props.kitty !== null) {
+      state.areas.push({ordered: [], id_to_pos: {}});
+      state = PlayArea.withCardsAdded(state, props.kitty, 1);
+    }
+    this.state = PlayArea.validate(state);
   }
 
   componentDidMount() {
@@ -90,13 +92,14 @@ export class PlayArea extends React.Component<
     }
 
     // areas should be tracked and correct
-    assert(state.areas.every((area, adx) =>
-      area.ordered.every(card => state.id_to_area[card.id] === adx)
+    assert(state.areas.every(
+      (area, adx) => area.ordered.every(
+        (card, i) => (
+          state.id_to_area[card.id] === adx &&
+          area.id_to_pos[card.id] === i
+        )
+      )
     ));
-    assert(state.areas.every((area, adx) =>
-      area.ordered.every((card, i) => area.id_to_pos[card.id] === i)
-    ));
-
     return state;
   }
 
@@ -105,7 +108,8 @@ export class PlayArea extends React.Component<
    */
   static copyState(state: PlayArea.State): PlayArea.State {
     return {
-      id_set: new Set(...state.id_set),
+      seen: [...state.seen],
+      id_set: new Set(state.id_set),
       areas: state.areas.map(({ordered, id_to_pos}) => ({
         ordered: [...ordered],
         id_to_pos: {...id_to_pos},
@@ -115,56 +119,43 @@ export class PlayArea extends React.Component<
       prev_start: state.prev_start,
       prev_stop: state.prev_stop,
       multidrag: state.multidrag,
+      action: {...state.action},
     }
   }
 
   /*
-   * whether `state` is up-to-date for `props`
+   * return a copy of `state` with `to_add` added to area `adx`
+   *
+   * we treat `cards` as never-before-seen objects, and assign them id's
    */
-  static checkSync(
+  static withCardsAdded(
     state: PlayArea.State,
-    props: PlayArea.Props
-  ): boolean {
-    return props.hand.length + props.kitty.length === state.id_set.size &&
-           props.hand.every(card => state.id_set.has(card.id)) &&
-          (props.kitty?.every(card => state.id_set.has(card.id)) ?? true);
+    to_add: Iterable<CardBase>,
+    adx: number,
+  ): PlayArea.State {
+    state = PlayArea.copyState(state);
+
+    for (let cb of to_add) {
+      const c = {cb, id: ('' + state.seen.length)};
+
+      state.seen.push(c);
+      state.id_set.add(c.id);
+      state.areas[adx].id_to_pos[c.id] = state.areas[adx].ordered.length;
+      state.areas[adx].ordered.push(c);
+      state.id_to_area[c.id] = adx;
+    }
+    return state;
   }
 
   /*
-   * return a new State from `state` and updated `props`
+   * return a copy of `state` with `to_rm` removed
    */
-  static updateForProps(
+  static withCardsRemoved(
     state: PlayArea.State,
-    props: PlayArea.Props
+    props: PlayArea.Props,
+    to_rm: CardID[],
   ): PlayArea.State {
-    if (PlayArea.checkSync(state, props)) return state;
-    state = PlayArea.copyState(state);
-
-    // new cards are easy; just stuff them at the end of the appropriate area
-    const add_cards = (cards: CardID[], adx: number) => {
-      for (let c of cards) {
-        if (state.id_set.has(c.id)) continue;
-
-        state.id_set.add(c.id);
-        state.areas[adx].ordered.push(c);
-        state.areas[adx].id_to_pos[c.id] = state.areas[adx].ordered.length - 1;
-        state.id_to_area[c.id] = adx;
-      }
-    };
-    add_cards(props.hand, 0);
-    if (props.kitty !== null) add_cards(props.kitty, 1);
-
-    // removing cards is more of a pain
-    const props_ids = new Set([
-      ...props.hand.map(card => card.id),
-      ...props.kitty.map(card => card.id),
-    ]);
-    const removed_ids = new Set(
-      [...state.id_set].filter(id => !props_ids.has(id))
-    );
-    if (removed_ids.size === 0) return state;
-
-    for (let id of removed_ids) {
+    for (let {cb, id} of to_rm) {
       state.id_set.delete(id);
       state.selected.delete(id);
 
@@ -178,9 +169,11 @@ export class PlayArea extends React.Component<
         state.prev_stop = null;
       }
     }
+    const rm_ids = new Set(to_rm.map(c => c.id));
+
     for (let area of state.areas) {
       const prev_len = area.ordered.length;
-      area.ordered = area.ordered.filter(card => !removed_ids.has(card.id));
+      area.ordered = area.ordered.filter(c => !rm_ids.has(c.id));
 
       if (area.ordered.length !== prev_len) {
         area.id_to_pos = id_to_pos(area.ordered);
@@ -229,6 +222,80 @@ export class PlayArea extends React.Component<
 
   /////////////////////////////////////////////////////////////////////////////
 
+  submitStartGame(): boolean {
+    this.props.funcs.attempt(
+      {kind: 'start_game', args: [this.props.me.id]},
+      this.onEffect, this.onEffect
+    );
+    return true;
+  }
+
+  submitBid(): boolean {
+    return false;
+  }
+
+  /*
+   * shared logic around an attempt completing
+   */
+  onEffect(_: any) {
+    this.setState({action: {pending: false}});
+  }
+
+  /*
+   * attempt a context-dependent action, returning whether or not we did
+   * anything at all (even if we failed)
+   */
+  onSubmit(): boolean {
+    if (this.state.action.pending) return false;
+
+    switch (this.props.phase) {
+      case ZPY.Phase.INIT: return this.submitStartGame();
+      case ZPY.Phase.DRAW: return this.submitBid();
+        break;
+      case ZPY.Phase.PREPARE:
+        break;
+      case ZPY.Phase.KITTY:
+        break;
+      case ZPY.Phase.FRIEND:
+        break;
+      case ZPY.Phase.LEAD:
+        break;
+      case ZPY.Phase.FLY:
+        break;
+      case ZPY.Phase.FOLLOW:
+        break;
+      case ZPY.Phase.FINISH:
+        break;
+      case ZPY.Phase.WAIT:
+        break;
+    }
+    return false;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+
+  /*
+   * intercepted keypresses:
+   *
+   *  {ctrl,cmd}-a: select all cards
+   *  enter: perform an action (typically submitting staged cards)
+   */
+  onKeyDown(ev: React.KeyboardEvent) {
+    const metaKey = isWindows() ? ev.ctrlKey : ev.metaKey;
+
+    if (ev.key === 'a') {
+      ev.preventDefault();
+      this.selectAll();
+      return;
+    }
+    if (ev.key === 'Enter') {
+      if (this.onSubmit()) {
+        ev.preventDefault();
+      }
+      return;
+    }
+  }
+
   /*
    * handler for click and touch events to trigger selection behavior
    */
@@ -246,8 +313,6 @@ export class PlayArea extends React.Component<
     ev.preventDefault(); // bypass window handler
 
     this.setState((state, props): PlayArea.State => {
-      state = PlayArea.updateForProps(state, props);
-
       assert(state.prev_start === null ||
              state.selected.has(state.prev_start));
 
@@ -305,26 +370,6 @@ export class PlayArea extends React.Component<
   }
 
   /*
-   * intercepted keypresses:
-   *
-   *  {ctrl,cmd}-a: select all cards
-   *  enter: submit staged cards
-   */
-  onKeyDown(ev: React.KeyboardEvent) {
-    const metaKey = isWindows() ? ev.ctrlKey : ev.metaKey;
-
-    if (ev.key === 'a') {
-      ev.preventDefault();
-      this.selectAll();
-      return;
-    }
-    if (ev.key === 'Enter') {
-      ev.preventDefault();
-      return;
-    }
-  }
-
-  /*
    * event handler for clicking outside of all selectable items
    */
   onClickOut(ev: React.MouseEvent | React.TouchEvent) {
@@ -336,20 +381,16 @@ export class PlayArea extends React.Component<
     if (!this.state.selected.has(start.draggableId)) {
       this.deselectAll();
     }
-    if (PlayArea.checkSync(this.state, this.props) &&
-        this.state.selected.size <= 1) {
+    if (this.state.selected.size <= 1) {
       return;
     }
     // cards were added or removed, or we need to trigger multi-drag rendering
-    this.setState((state, props): PlayArea.State => {
+    this.setState((state, props) => {
       let pile = PlayArea
         .filter(state, card => state.selected.has(card.id))
         .map(card => card.cb);
 
-      return {
-        ...PlayArea.updateForProps(state, props),
-        multidrag: {id: start.draggableId, pile}
-      };
+      return {multidrag: {id: start.draggableId, pile}};
     });
   }
 
@@ -362,8 +403,6 @@ export class PlayArea extends React.Component<
     }
 
     this.setState((state, props): PlayArea.State => {
-      state = PlayArea.updateForProps(state, props);
-
       const multidrag_id = state.multidrag?.id;
       state = {...state, multidrag: null};
 
@@ -443,11 +482,7 @@ export class PlayArea extends React.Component<
 
   selectAll() {
     this.setState((state, props) => {
-      state = PlayArea.updateForProps(state, props);
-      return {
-        ...state,
-        selected: new Set(state.id_set),
-      };
+      return {selected: new Set(state.id_set)};
     });
   }
 
@@ -467,6 +502,7 @@ export class PlayArea extends React.Component<
         <CardImage
           card="back"
           width={card_width}
+          onClick={this.onSubmit}
         />
       </div>
       <div className="bids">
@@ -534,20 +570,18 @@ export class PlayArea extends React.Component<
   }
 
   render() {
-    const state = PlayArea.updateForProps(this.state, this.props);
-
     return (
       <DragDropContext
         onDragStart={this.onDragStart}
         onDragEnd={this.onDragEnd}
       >
-        {this.renderActionArea(state)}
+        {this.renderActionArea(this.state)}
         <div className="hand">
           <CardArea
             droppableId="0"
-            cards={state.areas[0].ordered}
-            selected={state.selected}
-            multidrag={state.multidrag}
+            cards={this.state.areas[0].ordered}
+            selected={this.state.selected}
+            multidrag={this.state.multidrag}
             onSelect={this.onSelect}
           />
         </div>
@@ -580,26 +614,38 @@ type Area = {
 };
 
 export type Props = {
+  me: P.User;
   phase: ZPY.Phase;
   tr: null | TrumpMeta;
-  hand: CardID[];
-  kitty: null | CardID[];
 
-  attempt: (
-    intent: ZPYEngine.Intent,
-    ctx: any,
-    onUpdate: (effect: ZPYEngine.Effect, ctx: any) => void,
-    onReject: (ue: ZPYEngine.UpdateError, ctx: any) => void,
-  ) => void;
+  // initial hand and kitty
+  hand: Iterable<CardBase>;
+  kitty: null | CardBase[];
+
+  funcs: EngineCallbacks<any>;
 };
 
 export type State = {
-  // set of all card ids managed by this PlayArea
+  // all cards that have ever been a part of our hand.  we update this whenever
+  // new cards are passed in through Props#hand or Props#kitty.  correctness
+  // relies on two facts:
+  //
+  //    1/ within a ZPY round, [...hand, ...kitty] strictly grows, then we
+  //       update state at least once, then it strictly decreases
+  //    2/ the lifetime of the PlayArea component does not outlast a round
+  //
+  // (1) holds by the rules of the game and the requirement that the player
+  // submit "ready" before play begins.  (2) holds from our parent using the
+  // round as our key.
+  seen: CardID[];
+
+  // set of all card ids currently in this PlayArea
   id_set: Set<string>;
-  // card areas; 0 is the Hand, [1:] are the PlayPiles
+  // card areas; 0 is the Hand, [1:] are the action areas
   areas: Area[];
   // map from card id to enclosing droppable area id
   id_to_area: Record<string, number>;
+
   // currently selected card ids
   selected: Set<string>;
   // last card id to start being selected
@@ -612,6 +658,12 @@ export type State = {
     id: string;
     // list of all cards in the pile
     pile: CardBase[];
+  };
+
+  // player action-related metadata
+  action: {
+    // is there an action pending?
+    pending: boolean;
   };
 };
 

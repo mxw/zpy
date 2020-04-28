@@ -501,6 +501,7 @@ export class Hand {
    * Property getters.
    */
   get tr(): TrumpMeta { return this.pile.tr; }
+  get size(): number { return this.pile.size; }
 
   /*
    * Remove `n` copies of `c`, updating internal data structures.

@@ -6,27 +6,18 @@
  */
 import * as React from 'react'
 
+import * as P from 'protocol/protocol.ts'
 import { GameId } from 'server/server.ts'
 import { GameClient } from 'protocol/client.ts'
-import * as P from 'protocol/protocol.ts'
 
+import { ZPY } from 'lib/zpy/zpy.ts'
 import * as ZPYEngine from 'lib/zpy/engine.ts'
 
+import { Client, EngineCallbacks } from 'components/zpy/common.ts'
 import { Board } from 'components/zpy/Board.tsx'
 
 import { strict as assert} from 'assert'
 
-
-export type Client = GameClient<
-  ZPYEngine.Config,
-  ZPYEngine.Intent,
-  ZPYEngine.State,
-  ZPYEngine.Action,
-  ZPYEngine.ClientState,
-  ZPYEngine.Effect,
-  ZPYEngine.UpdateError,
-  typeof ZPYEngine
->;
 
 export class Game extends React.Component<Game.Props, Game.State> {
   constructor(props: Game.Props) {
@@ -34,9 +25,14 @@ export class Game extends React.Component<Game.Props, Game.State> {
 
     this.onClose = this.onClose.bind(this);
     this.onReset = this.onReset.bind(this);
-    this.attempt = this.attempt.bind(this);
 
-    this.state = {client: null};
+    this.attempt = this.attempt.bind(this);
+    this.subscribeReset = this.subscribeReset.bind(this);
+
+    this.state = {
+      client: null,
+      subscriptions: [],
+    };
   }
 
   componentDidMount() {
@@ -68,17 +64,22 @@ export class Game extends React.Component<Game.Props, Game.State> {
   }
 
   onReset(client: Client) {
-    if (!client.state.players.includes(client.me.id)) {
+    if (client.state.phase === ZPY.Phase.INIT &&
+        !client.state.players.includes(client.me.id)) {
       const err = client.attempt({
         kind: 'add_player',
         args: [client.me.id],
       });
     }
     this.setState({client});
+
+    for (let callback of this.state.subscriptions) {
+      callback(client.state);
+    }
   }
 
   onUpdate<T>(
-    cb: null | ((effect: ZPYEngine.Effect, ctx: T) => void),
+    cb: null | ((effect: ZPYEngine.Effect, ctx?: T) => void),
     client: Client,
     command: P.Command<ZPYEngine.Effect>,
     ctx?: T,
@@ -86,12 +87,11 @@ export class Game extends React.Component<Game.Props, Game.State> {
     if (command.kind === 'engine') {
       cb?.(command.effect, ctx);
     }
-    console.log('onUpdate');
     this.setState({client});
   }
 
   onReject<T>(
-    cb: null | ((ue: ZPYEngine.UpdateError, ctx: T) => void),
+    cb: null | ((ue: ZPYEngine.UpdateError, ctx?: T) => void),
     client: Client,
     ue: ZPYEngine.UpdateError,
     ctx?: T,
@@ -102,9 +102,9 @@ export class Game extends React.Component<Game.Props, Game.State> {
 
   attempt(
     intent: ZPYEngine.Intent,
-    ctx: any,
-    onUpdate: (effect: ZPYEngine.Effect, ctx: any) => void,
-    onReject: (ue: ZPYEngine.UpdateError, ctx: any) => void,
+    onUpdate: (effect: ZPYEngine.Effect, ctx?: any) => void,
+    onReject: (ue: ZPYEngine.UpdateError, ctx?: any) => void,
+    ctx?: any,
   ) {
     this.state.client.attempt(
       intent,
@@ -112,6 +112,12 @@ export class Game extends React.Component<Game.Props, Game.State> {
       this.onReject.bind(this, onReject),
       ctx
     );
+  }
+
+  subscribeReset(callback: (state: ZPYEngine.ClientState) => void) {
+    this.setState((state, props) => ({
+      subscriptions: [...state.subscriptions, callback]
+    }));
   }
 
   render() {
@@ -128,7 +134,10 @@ export class Game extends React.Component<Game.Props, Game.State> {
       me={client.me}
       zpy={client.state}
       users={client.users}
-      attempt={this.attempt}
+      funcs={{
+        attempt: this.attempt,
+        subscribeReset: this.subscribeReset,
+      }}
     />;
   }
 }
@@ -143,6 +152,7 @@ export type Props = {
 
 export type State = {
   client: null | Client;
+  subscriptions: ((state: ZPYEngine.ClientState) => void)[];
 };
 
 }
