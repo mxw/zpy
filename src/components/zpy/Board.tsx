@@ -3,9 +3,13 @@
  */
 import * as React from 'react'
 
+import * as P from 'protocol/protocol.ts'
+
 import { CardBase, Suit, Rank } from 'lib/zpy/cards.ts'
 import { ZPY } from 'lib/zpy/zpy.ts'
+import * as ZPYEngine from 'lib/zpy/engine.ts'
 
+import { RoundState } from 'components/zpy/RoundState.tsx'
 import { PlayArea } from 'components/zpy/PlayArea.tsx'
 
 import { strict as assert} from 'assert'
@@ -18,14 +22,11 @@ export class Board extends React.Component<Board.Props, Board.State> {
 
   render() {
     return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-      }}>
+      <div className="board">
+        <RoundState zpy={this.props.zpy} users={this.props.users} />
         <PlayArea
           phase={ZPY.Phase.KITTY}
-          tr={null}
+          tr={this.props.zpy.tr}
           hand={[
             {cb: new CardBase(Suit.DIAMONDS, Rank.K), id: '0'},
             {cb: new CardBase(Suit.DIAMONDS, Rank.A), id: '1'},
@@ -47,7 +48,10 @@ export class Board extends React.Component<Board.Props, Board.State> {
 
 export namespace Board {
 
-export type Props = {};
+export type Props = {
+  zpy: ZPYEngine.State;
+  users: P.User[];
+};
 export type State = {};
 
 }

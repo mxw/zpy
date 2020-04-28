@@ -7,17 +7,32 @@
 
 @use "common/rhythm";
 
-@mixin flex-row {
+@mixin flex-row-center {
   display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
 }
 
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.board {
+  @include flex-column;
+}
+
+.round {
+  @include flex-row-center;
+  align-items: flex-start;
+}
+
 .hand {
   height: rhythm.rh(10);
 
-  @include flex-row;
+  @include flex-row-center;
   position: relative;
 
   @include rhythm.rh-border-full();
@@ -44,7 +59,7 @@
   height: rhythm.rh(10);
   background-color: rgb(169, 191, 212);
 
-  @include flex-row;
+  @include flex-row-center;
 
   @include rhythm.rh-border-full();
   border-radius: rhythm.rh(0.5);
@@ -53,7 +68,7 @@
 
   &.draw {
     > .deck {
-      @include flex-row;
+      @include flex-row-center;
       flex-basis: 40%;
 
       > .card:hover {
@@ -62,7 +77,7 @@
     }
 
     > .bids {
-      @include flex-row;
+      @include flex-row-center;
       flex-basis: 60%;
     }
   }

@@ -62,12 +62,16 @@ export class Game extends React.Component<Game.Props, Game.State> {
   }
 
   render() {
-    if (this.state.client === null) {
+    const client = this.state.client;
+
+    if (client === null) {
       return <div className="done">
         the game has ended
       </div>;
     }
-    return <Board/>;
+    if (client.state === null) return null;
+
+    return <Board zpy={client.state} users={client.users} />;
   }
 }
 
