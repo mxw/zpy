@@ -966,13 +966,17 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     }
     copy.bids    = this.bids;
     // other players' draws are redacted
-    copy.draws[player] = this.draws[player];
+    if (player in this.draws) {
+      copy.draws[player] = this.draws[player];
+    }
     copy.current = this.current;
 
     copy.host = this.host;
     copy.tr   = this.tr;
     // other players' hands are redacted
-    copy.hands[player] = this.hands[player];
+    if (player in this.hands) {
+      copy.hands[player] = this.hands[player];
+    }
     copy.points  = this.points;
     copy.friends = this.friends;
     copy.joins   = this.joins;

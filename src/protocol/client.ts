@@ -26,7 +26,7 @@ export class GameClient<
   engine: Eng;
   socket: WebSocket;
 
-  // the client engine state; null iff waitState is "pending-reset"
+  // the client engine state; null iff status is "pending-reset"
   state: null | ClientState = null;
 
   // whether we are synchronized w/ the server.
@@ -44,12 +44,12 @@ export class GameClient<
   //        v            |              |
   //  pending-reset --> sync <--> pending-update --> disconnect
   //
-  waitState: "pending-reset" | "sync" | "pending-update" | "disconnect";
+  status: "pending-reset" | "sync" | "pending-update" | "disconnect";
 
-  // all users on the server; empty iff waitState is "pending-reset"
+  // all users on the server; empty iff status is "pending-reset"
   users: P.User[] = [];
 
-  // this client's user; null iff waitState is "pending-reset"
+  // this client's user; null iff status is "pending-reset"
   me: null | P.User = null;
 
   // the next unused transaction id
@@ -62,25 +62,31 @@ export class GameClient<
     eff: null | Effect; // null iff predicted is false
   }> = {};
 
-  // callbacks for react to use
-  onClose: null | ((cl: this) => void) = null;
-  onUpdate: null | ((cl: this, e: Effect | P.ProtocolAction) => void) = null;
-  onReset: null | ((cl: this) => void) = null;
+  onClose: null | ((cl: this) => void);
+  onReset: null | ((cl: this) => void);
+  onUpdate: null | ((cl: this, e: Effect | P.ProtocolAction) => void);
 
   // connect to the given gameId with the appropriate engine
-  constructor(engine: Eng, url_pref: string, game_id: string) {
+  constructor(
+    engine: Eng,
+    url_pref: string,
+    game_id: string,
+    nick: string,
+  ) {
     this.engine = engine;
     this.socket = new WebSocket(
       `ws://${document.location.host}/${url_pref}/${game_id}/`
     );
-    this.waitState = "pending-reset";
+    this.status = "pending-reset";
 
     this.socket.onopen = () => {
       // on connect we must send hello
-      this.socket.send(JSON.stringify({
-        verb: "req:hello",
-        nick: "jgriego"
-      }));
+      this.socket.send(JSON.stringify(
+        P.RequestHello.encode({
+          verb: "req:hello",
+          nick: nick,
+        })
+      ));
     };
 
     this.socket.onmessage = (ev: MessageEvent) => {
@@ -98,24 +104,29 @@ export class GameClient<
         switch (msg.verb) {
           case "hello":
             this.me = msg.you;
-            this.socket.send(JSON.stringify({
-              verb: "req:reset"
-            }));
+            this.socket.send(JSON.stringify(
+              P.RequestReset.encode({
+                verb: "req:reset"
+              })
+            ));
             break;
+
           case "bye":
             this.socket.close();
             this.onClose?.(this);
             break
+
           case "reset":
             this.state = msg.state;
-            this.waitState = "sync";
+            this.status = "sync";
             this.users = msg.who;
             this.onReset?.(this);
             break;
+
           case "update": {
             assert(this.state !== null);
-            assert(this.waitState === "pending-update" ||
-                   this.waitState === "sync");
+            assert(this.status === "pending-update" ||
+                   this.status === "sync");
             if (msg.tx !== null && msg.tx in this.pending) {
               let pending = this.pending[msg.tx];
               delete this.pending[msg.tx];
@@ -141,7 +152,7 @@ export class GameClient<
       assert(false);
     } else {
       this.state = result.ok;
-      this.waitState === "sync";
+      this.status === "sync";
       this.onUpdate?.(this, effect);
     }
   }
@@ -150,14 +161,14 @@ export class GameClient<
   attempt(intent: Intent) {
     // TODO we could queue updates locally if we're desynced
     // but it's not necessary for ZPY--it's easier to pretend it can't happen
-    assert(this.waitState === "sync");
+    assert(this.status === "sync");
     assert(this.state !== null);
 
     let tx = this.next_tx++;
     let predicted = this.engine.predict(this.state, intent, this.me);
 
     if (predicted === null) {
-      this.waitState === "pending-update"
+      this.status === "pending-update"
     } else if (isErr(predicted)) {
       console.error(predicted.err)
       assert(false);
@@ -172,10 +183,14 @@ export class GameClient<
       eff: (predicted as null | {ok: Effect})?.ok
     };
 
-    this.socket.send(JSON.stringify({
-      verb: "req:update",
-      tx: tx,
-      intent: intent,
-    }));
+    const RequestUpdate = P.RequestUpdate(this.engine.Intent(this.state));
+
+    this.socket.send(JSON.stringify(
+      RequestUpdate.encode({
+        verb: "req:update",
+        tx: tx,
+        intent: intent,
+      })
+    ));
   }
 }

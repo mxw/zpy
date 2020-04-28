@@ -70,18 +70,22 @@ class Game<
     };
 
     source.user = user;
-    source.socket.send(JSON.stringify({
-      verb: "hello",
-      you: user,
-    }));
+    source.socket.send(JSON.stringify(
+      P.Hello.encode({
+        verb: "hello",
+        you: user,
+      })
+    ));
 
     for (let client of this.clients) {
       if (!client.sync) continue;
 
-      client.socket.send(JSON.stringify({
-        verb: 'user:join',
-        who: user,
-      }));
+      client.socket.send(JSON.stringify(
+        P.ProtocolAction.encode({
+          verb: 'user:join',
+          who: user,
+        })
+      ));
     }
   }
 
@@ -97,11 +101,15 @@ class Game<
     );
 
     if (isErr(result)) {
-      source.socket.send(JSON.stringify({
-        verb: "update-reject",
-        tx: tx,
-        reason: result.err,
-      }));
+      const UpdateReject = P.UpdateReject(this.engine.UpdateError);
+
+      source.socket.send(JSON.stringify(
+        UpdateReject.encode({
+          verb: "reject",
+          tx: tx,
+          reason: result.err,
+        })
+      ));
       return;
     }
     let [state, effects] = result.ok;
@@ -114,11 +122,18 @@ class Game<
 
       let for_tx = client === source ? tx : null;
 
-      client.socket.send(JSON.stringify({
-        verb: "update",
-        tx: for_tx,
-        effect: effects[client.user.id],
-      }));
+      const Update = P.Update(this.engine.Effect(this.state));
+
+      client.socket.send(JSON.stringify(
+        Update.encode({
+          verb: "update",
+          tx: for_tx,
+          effect: {
+            kind: "engine",
+            eff: effects[client.user.id],
+          },
+        })
+      ));
     }
   }
 
@@ -127,11 +142,16 @@ class Game<
   reset(client: Client) {
     let cs = this.engine.redact(this.state, client.user);
     client.sync = true;
-    client.socket.send(JSON.stringify({
-      verb: "reset",
-      state: cs,
-      who: this.clients.map(cli => cli.user),
-    }));
+
+    const Reset = P.Reset(this.engine.ClientState(this.state));
+
+    client.socket.send(JSON.stringify(
+      Reset.encode({
+        verb: "reset",
+        state: cs,
+        who: this.clients.map(cli => cli.user),
+      })
+    ));
   }
 
   // after we are finished w/ a client session, close their socket and remove
@@ -146,9 +166,11 @@ class Game<
 
   // process a bye request from a client. simply reply 'bye' and disconnect
   bye(client: Client) {
-    client.socket.send(JSON.stringify({
-      verb: "bye"
-    }));
+    client.socket.send(JSON.stringify(
+      P.Bye.encode({
+        verb: "bye"
+      })
+    ));
     this.dispose(client);
   }
 

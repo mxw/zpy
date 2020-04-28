@@ -99,6 +99,13 @@ export class TrumpMeta {
   ) {}
 
   /*
+   * Default TrumpMeta: jokers only.
+   */
+  static def(): TrumpMeta {
+    return new TrumpMeta(Suit.TRUMP, Rank.B);
+  }
+
+  /*
    * Virtualize/devirtualize a (suit, rank) pair.
    */
   virt(suit: Suit, rank: Rank): [Suit, Rank] {

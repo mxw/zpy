@@ -241,11 +241,11 @@ const cd_ZPYData = (
     n: C.number,
   })),
   draws: C.record(cd_CardPile(tr)),
-  current: C.number,
+  current: C.nullable(C.number),
 
   host: C.nullable(PlayerID),
   tr: C.nullable(cd_TrumpMeta),
-  hands: cd_Hand(tr),
+  hands: C.record(cd_Hand(tr)),
   points: C.record(C.array(cd_CardBase)),
   friends: C.array(C.type({
     card: cd_CardBase,
@@ -256,7 +256,7 @@ const cd_ZPYData = (
   atk_team: P.set(PlayerID),
 
   leader: C.nullable(PlayerID),
-  lead: cd_Flight(tr),
+  lead: C.nullable(cd_Flight(tr)),
   plays: C.record(cd_Play(tr)),
   winning: C.nullable(PlayerID),
 });
@@ -265,7 +265,10 @@ const cd_ZPY = (tr: TrumpMeta): C.Codec<ZPY<PlayerID>> => C.make(
   {encode: (zpy: ZPY<PlayerID>) => cd_ZPYData(tr).encode(zpy)}
 );
 
-export const State = (s: State): C.Codec<State> => cd_ZPY(s.tr);
+export const State = (
+  s: null | State
+): C.Codec<State> => cd_ZPY(s?.tr ?? TrumpMeta.def());
+
 export const ClientState = State;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -381,10 +384,12 @@ const Intent_ = (tr: TrumpMeta) => C.sum('kind')({
   'next_round': A.next_round,
 });
 
-const _I = Intent_(new TrumpMeta(Suit.TRUMP, Rank.B));
+const _I = Intent_(TrumpMeta.def());
 export type Intent = P.TypeOf<typeof _I>;
 
-export const Intent = (s: State): C.Codec<Intent> => Intent_(s.tr);
+export const Intent = (
+  s: null | State
+): C.Codec<Intent> => Intent_(s?.tr ?? TrumpMeta.def());
 
 export const Action = Intent;
 export type Action = Intent;
@@ -411,10 +416,12 @@ const Effect_ = (tr: TrumpMeta) => C.sum('kind')({
   'next_round': A.next_round,
 });
 
-const _E = Effect_(new TrumpMeta(Suit.TRUMP, Rank.B));
+const _E = Effect_(TrumpMeta.def());
 export type Effect = P.TypeOf<typeof _E>;
 
-export const Effect = (cs: ClientState): C.Codec<Effect> => Effect_(cs.tr);
+export const Effect = (
+  cs: null | ClientState
+): C.Codec<Effect> => Effect_(cs?.tr ?? TrumpMeta.def());
 
 ///////////////////////////////////////////////////////////////////////////////
 

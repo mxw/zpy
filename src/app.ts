@@ -27,7 +27,11 @@ app.get('/api/session', (req, res) => {
 
 app.post('/api/new_game', (req, res) => {
   const r = req as (typeof req & {session: Session.T});
-  const game_id = gs.begin_game(undefined, r.session.id);
+  const game_id = gs.begin_game({
+    renege: 0,
+    rank: 0,
+    kitty: 0,
+  }, r.session.id);
   console.log(`/zpy/${game_id} initiated by ${r.session.id}`);
   res.send(game_id);
 });

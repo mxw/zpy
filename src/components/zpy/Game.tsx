@@ -30,12 +30,25 @@ export class Game extends React.Component<Game.Props, Game.State> {
   constructor(props: Game.Props) {
     super(props);
 
-    const client: Client = new GameClient(ZPYEngine, props.path, props.id);
-    client.onClose  = this.onClose  = this.onClose.bind(this);
-    client.onReset  = this.onReset  = this.onReset.bind(this);
-    client.onUpdate = this.onUpdate = this.onUpdate.bind(this);
+    this.onClose  = this.onClose.bind(this);
+    this.onReset  = this.onReset.bind(this);
+    this.onUpdate = this.onUpdate.bind(this);
 
-    this.state = {client};
+    this.state = {client: null};
+  }
+
+  componentDidMount() {
+    const client: Client = new GameClient(
+      ZPYEngine,
+      this.props.path,
+      this.props.id,
+      this.props.nick,
+    );
+    client.onClose = this.onClose;
+    client.onReset = this.onReset;
+    client.onUpdate = this.onUpdate;
+
+    this.setState({client});
   }
 
   onClose(client: Client) {
@@ -62,6 +75,7 @@ export namespace Game {
 
 export type Props = {
   id: GameId;
+  nick: string;
   path: string;
 };
 

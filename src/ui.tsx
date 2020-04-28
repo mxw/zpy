@@ -17,7 +17,13 @@ ReactDOM.render(
       </Route>
       <Route
         path={`/zpy/:game_id(${escape_backslashes(Session.regex.source)})`}
-        render={({match}) => <Game path="zpy" id={match.params.game_id} />}
+        render={({match}) =>
+          <Game
+            path="zpy"
+            id={match.params.game_id}
+            nick="strong sad"
+          />
+        }
       />
     </Switch>
   </Router>,
