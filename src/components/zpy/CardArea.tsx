@@ -9,13 +9,16 @@ import {
 
 import { CardBase, Suit, Rank } from 'lib/zpy/cards.ts'
 
-import { CardID, dims } from "components/zpy/common.ts"
+import { CardID } from "components/zpy/common.ts"
 import { CardShape } from "components/zpy/CardImage.tsx"
 import { Card } from "components/zpy/Card.tsx"
 import { CardFan } from "components/zpy/CardFan.tsx"
 
 import { strict as assert} from 'assert'
 
+
+export const card_width = 100;
+const clip_pct = 0.25;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -65,7 +68,7 @@ export class EmptyArea extends React.Component<EmptyArea.Props, {}> {
   render() {
     return <Area classes={["empty"]} {...this.props}>
       <CardShape
-        width={dims.card_width}
+        width={card_width}
         style={{
           backgroundColor: 'lightgrey',
           border: 'solid grey 1px',
@@ -130,8 +133,8 @@ export class CardArea extends React.Component<CardArea.Props, {}> {
               {(() => {
                 if (this.props.multidrag?.id === id) {
                   return <CardFan
-                    width={dims.card_width}
-                    xclip={0.25}
+                    width={card_width}
+                    xclip={clip_pct}
                     selected={this.props.selected.has(id)}
                     pile={this.props.multidrag.pile}
                   />;
@@ -148,8 +151,8 @@ export class CardArea extends React.Component<CardArea.Props, {}> {
                 // conversion logic.
                 return <Card
                   card={cb}
-                  width={dims.card_width}
-                  xclip={0.25}
+                  width={card_width}
+                  xclip={clip_pct}
                   selected={this.props.selected.has(id) && !should_vanish}
                   dim={should_vanish ? 0.6 : null}
                 />;

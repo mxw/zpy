@@ -25,12 +25,3 @@ export type CardID = {
   cb: CardBase,
   id: string
 };
-
-/*
- * shared dimensional units
- */
-export namespace dims {
-
-export const card_width = 100;
-
-};

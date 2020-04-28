@@ -12,9 +12,9 @@ import {
 import { CardBase, TrumpMeta } from 'lib/zpy/cards.ts'
 import { ZPY } from 'lib/zpy/zpy.ts'
 
-import { CardID, dims } from 'components/zpy/common.ts'
+import { CardID } from 'components/zpy/common.ts'
 import { CardImage } from 'components/zpy/CardImage.tsx'
-import { CardArea, EmptyArea } from 'components/zpy/CardArea.tsx'
+import { card_width, CardArea, EmptyArea } from 'components/zpy/CardArea.tsx'
 import { isWindows } from 'components/utils/platform.ts'
 
 import { strict as assert} from 'assert'
@@ -465,7 +465,7 @@ export class PlayArea extends React.Component<
       <div className="deck">
         <CardImage
           card="back"
-          width={dims.card_width}
+          width={card_width}
         />
       </div>
       <div className="bids">
