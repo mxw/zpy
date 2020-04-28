@@ -9,6 +9,7 @@ import * as t from 'io-ts'
 import * as C from 'io-ts/lib/Codec'
 import * as D from 'io-ts/lib/Decoder'
 import * as E from 'io-ts/lib/Encoder'
+import { draw } from 'io-ts/lib/Tree'
 
 ///////////////////////////////////////////////////////////////////////////////
 /*
@@ -233,3 +234,5 @@ export function on_decode<R1, R2, Codec extends C.Codec<any>>(
     (v): R1 | R2 => onsuccess(v)
   ));
 }
+
+export const draw_error = (e: any): string => draw(e);

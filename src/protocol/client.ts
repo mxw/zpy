@@ -65,6 +65,7 @@ export class GameClient<
   onClose: null | ((cl: this) => void);
   onReset: null | ((cl: this) => void);
   onUpdate: null | ((cl: this, e: Effect | P.ProtocolAction) => void);
+  onReject: null | ((cl: this, ue: UpdateError) => void);
 
   // connect to the given gameId with the appropriate engine
   constructor(
@@ -90,9 +91,9 @@ export class GameClient<
     };
 
     this.socket.onmessage = (ev: MessageEvent) => {
-      let payload = JSON.parse(ev.data);
+      const payload = JSON.parse(ev.data);
 
-      let ServerMessage = P.ServerMessage(
+      const ServerMessage = P.ServerMessage(
         this.engine.ClientState(this.state),
         this.engine.Effect(this.state),
         this.engine.UpdateError
@@ -118,8 +119,8 @@ export class GameClient<
 
           case "reset":
             this.state = msg.state;
-            this.status = "sync";
             this.users = msg.who;
+            this.status = "sync";
             this.onReset?.(this);
             break;
 
@@ -129,7 +130,7 @@ export class GameClient<
                    this.status === "sync");
 
             if (msg.tx !== null && msg.tx in this.pending) {
-              let pending = this.pending[msg.tx];
+              const pending = this.pending[msg.tx];
               delete this.pending[msg.tx];
               if (pending.predicted) {
                 // don't bother processing this update if we predicted it
@@ -137,7 +138,7 @@ export class GameClient<
               }
             }
 
-            let result = this.engine.apply_client(
+            const result = this.engine.apply_client(
               this.state,
               msg.effect.eff,
               this.me
@@ -154,8 +155,18 @@ export class GameClient<
             }
             break;
           }
+
+          case "reject":
+            assert(this.state !== null);
+            assert(this.status === "pending-update" ||
+                   this.status === "sync");
+
+            this.onReject?.(this, msg.reason);
+            delete this.pending[msg.tx];
+            break;
         }
-      }, (e: any) => console.error(e, payload));
+      },
+      (e: any) => console.error(P.draw_error(e), payload));
     }
   }
 

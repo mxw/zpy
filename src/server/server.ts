@@ -203,7 +203,8 @@ class Game<
           case "req:reset": this.reset(client); break
           case "req:update": this.update(client, d.tx, d.intent); break;
         }
-      }, (_: any) => {
+      }, (e: any) => {
+        console.error(P.draw_error(e), d);
         this.kick(client, "invalid msg");
       });
     })
