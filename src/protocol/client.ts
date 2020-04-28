@@ -57,15 +57,30 @@ export class GameClient<
 
   // update requests that are outstanding
   pending: Record<P.TxID, {
-    intent: Intent;
-    predicted: boolean
-    eff: null | Effect; // null iff predicted is false
+    predicted: boolean;
+    ctx: any,
+    onUpdate: null | ((
+      cl: GameClient<
+        Config, Intent, State, Action,
+        ClientState, Effect, UpdateError, Eng
+      >,
+      cm: P.Command<Effect>,
+      ctx: any
+    ) => void);
+    onReject: null | ((
+      cl: GameClient<
+        Config, Intent, State, Action,
+        ClientState, Effect, UpdateError, Eng
+      >,
+      ue: UpdateError,
+      ctx: any
+    ) => void);
   }> = {};
 
+  // callbacks for react
   onClose: null | ((cl: this) => void);
   onReset: null | ((cl: this) => void);
-  onUpdate: null | ((cl: this, e: Effect | P.ProtocolAction) => void);
-  onReject: null | ((cl: this, ue: UpdateError) => void);
+  onUpdate: null | ((cl: this, cm: P.Command<Effect>) => void);
 
   // connect to the given gameId with the appropriate engine
   constructor(
@@ -129,15 +144,7 @@ export class GameClient<
             assert(this.status === "pending-update" ||
                    this.status === "sync");
 
-            if (msg.tx !== null && msg.tx in this.pending) {
-              const pending = this.pending[msg.tx];
-              delete this.pending[msg.tx];
-              if (pending.predicted) {
-                // don't bother processing this update if we predicted it
-                break;
-              }
-            }
-            this.update(msg.effect);
+            this.update(msg.tx, msg.command);
             break;
           }
 
@@ -146,7 +153,8 @@ export class GameClient<
             assert(this.status === "pending-update" ||
                    this.status === "sync");
 
-            this.onReject?.(this, msg.reason);
+            const cb = this.pending[msg.tx];
+            cb?.onReject?.(this, msg.reason, cb?.ctx);
             delete this.pending[msg.tx];
             break;
         }
@@ -155,9 +163,20 @@ export class GameClient<
     }
   }
 
-  update(effect: P.Update<Effect>['effect']) {
-    if (effect.kind === 'protocol') {
-      const pa: P.ProtocolAction = effect.eff;
+  /*
+   * process an update message from the server
+   */
+  update(tx: null | P.TxID, command: P.Command<Effect>) {
+    if (tx !== null &&
+        tx in this.pending &&
+        this.pending[tx].predicted) {
+      // don't bother processing this update if we predicted it
+      delete this.pending[tx];
+      return;
+    }
+
+    if (command.kind === 'protocol') {
+      const pa: P.ProtocolAction = command.effect;
 
       switch (pa.verb) {
         case 'user:join':
@@ -169,21 +188,34 @@ export class GameClient<
       }
     }
 
-    const result = this.engine.apply_client(this.state, effect.eff, this.me);
+    const result = this.engine.apply_client(this.state, command, this.me);
 
-    if (isErr(result)) {
-      console.error(result.err);
-      assert(false);
-    } else {
-      assert(isOK(result));
+    if (isOK(result)) {
       this.state = result.ok;
       this.status === "sync";
-      this.onUpdate?.(this, effect.eff);
+
+      if (tx in this.pending) {
+        const cb = this.pending[tx];
+        cb?.onUpdate?.(this, command, cb?.ctx);
+        delete this.pending[tx];
+      } else {
+        this.onUpdate?.(this, command);
+      }
+      return;
     }
+    console.error(result.err);
+    assert(false);
   }
 
-  // attempt to carry out an intent; synchronizing this state w/ the server
-  attempt(intent: Intent): null | UpdateError {
+  /*
+   * attempt to carry out an intent
+   */
+  attempt(
+    intent: Intent,
+    onUpdate: (cl: this, cm: P.Command<Effect>, ctx: any) => void = null,
+    onReject: (cl: this, ue: UpdateError, ctx: any) => void = null,
+    ctx: any = null,
+  ) {
     // TODO we could queue updates locally if we're desynced
     // but it's not necessary for ZPY--it's easier to pretend it can't happen
     assert(this.status === "sync");
@@ -195,18 +227,20 @@ export class GameClient<
     if (predicted === null) {
       this.status === "pending-update"
     } else if (isErr(predicted)) {
-      return predicted.err;
+      return onReject?.(this, predicted.err, ctx);
     } else {
       assert(isOK(predicted));
 
       this.state = predicted.ok.state;
-      this.onUpdate?.(this, predicted.ok.effect);
+      onUpdate?.(this, {
+        kind: 'engine',
+        effect: predicted.ok.effect
+      }, ctx);
     }
 
     this.pending[tx] = {
       predicted: (predicted !== null),
-      intent: intent,
-      eff: (predicted as null | {ok: {effect: Effect}})?.ok?.effect
+      ctx, onUpdate, onReject
     };
 
     const RequestUpdate = P.RequestUpdate(this.engine.Intent(this.state));
@@ -218,6 +252,5 @@ export class GameClient<
         intent: intent,
       })
     ));
-    return null;
   }
 }

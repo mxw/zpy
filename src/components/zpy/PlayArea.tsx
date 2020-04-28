@@ -11,6 +11,7 @@ import {
 
 import { CardBase, TrumpMeta } from 'lib/zpy/cards.ts'
 import { ZPY } from 'lib/zpy/zpy.ts'
+import * as ZPYEngine from 'lib/zpy/engine.ts'
 
 import { CardID } from 'components/zpy/common.ts'
 import { CardImage } from 'components/zpy/CardImage.tsx'
@@ -583,6 +584,13 @@ export type Props = {
   tr: null | TrumpMeta;
   hand: CardID[];
   kitty: null | CardID[];
+
+  attempt: (
+    intent: ZPYEngine.Intent,
+    ctx: any,
+    onUpdate: (effect: ZPYEngine.Effect, ctx: any) => void,
+    onReject: (ue: ZPYEngine.UpdateError, ctx: any) => void,
+  ) => void;
 };
 
 export type State = {

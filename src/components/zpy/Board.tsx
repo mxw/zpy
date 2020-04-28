@@ -40,6 +40,7 @@ export class Board extends React.Component<Board.Props, Board.State> {
             {cb: new CardBase(Suit.CLUBS, 10), id: '7'},
             {cb: new CardBase(Suit.CLUBS, 2), id: '8'},
           ]}
+          attempt={this.props.attempt}
         />
       </div>
     );
@@ -52,6 +53,13 @@ export type Props = {
   me: P.User;
   zpy: ZPYEngine.State;
   users: P.User[];
+
+  attempt: (
+    intent: ZPYEngine.Intent,
+    ctx: any,
+    onUpdate: (effect: ZPYEngine.Effect, ctx: any) => void,
+    onReject: (ue: ZPYEngine.UpdateError, ctx: any) => void,
+  ) => void;
 };
 export type State = {};
 

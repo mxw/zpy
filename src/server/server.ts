@@ -80,10 +80,19 @@ class Game<
     for (let client of this.clients) {
       if (!client.sync) continue;
 
+      const Update = P.Update(this.engine.Effect(this.state));
+
       client.socket.send(JSON.stringify(
-        P.ProtocolAction.encode({
-          verb: 'user:join',
-          who: user,
+        Update.encode({
+          verb: "update",
+          tx: null,
+          command: {
+            kind: "protocol",
+            effect: {
+              verb: "user:join",
+              who: user,
+            },
+          },
         })
       ));
     }
@@ -128,9 +137,9 @@ class Game<
         Update.encode({
           verb: "update",
           tx: for_tx,
-          effect: {
+          command: {
             kind: "engine",
-            eff: effects[client.user.id],
+            effect: effects[client.user.id],
           },
         })
       ));

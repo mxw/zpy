@@ -52,7 +52,7 @@
  *   State ------redact------> ClientState
  */
 
-import { ProtocolAction, User, UserID } from 'protocol/protocol.ts'
+import * as P from 'protocol/protocol.ts'
 import { Result } from 'utils/result.ts'
 
 import { Codec } from 'io-ts/lib/Codec'
@@ -86,10 +86,10 @@ export interface Engine<
   larp: (
     state: State,
     intent: Intent,
-    who: User,
-    clients: User[],
+    who: P.User,
+    clients: P.User[],
   ) => Result<
-    [State, Record<UserID, Effect>],
+    [State, Record<P.UserID, Effect>],
     UpdateError
   >;
 
@@ -98,16 +98,16 @@ export interface Engine<
   predict: (
     state: ClientState,
     intent: Intent,
-    me: User
+    me: P.User
   ) => null | Result<{effect: Effect, state: ClientState}, UpdateError>;
 
   // same as apply, on the client side
   apply_client: (
     state: ClientState,
-    effect: Effect | ProtocolAction,
-    me: User
+    command: P.Command<Effect>,
+    me: P.User
   ) => Result<ClientState, UpdateError>;
 
   // redact a server state into a client-side state for the given recipient
-  redact: (state: State, who: User) => ClientState;
+  redact: (state: State, who: P.User) => ClientState;
 };

@@ -32,9 +32,9 @@ export class Game extends React.Component<Game.Props, Game.State> {
   constructor(props: Game.Props) {
     super(props);
 
-    this.onClose  = this.onClose.bind(this);
-    this.onReset  = this.onReset.bind(this);
-    this.onUpdate = this.onUpdate.bind(this);
+    this.onClose = this.onClose.bind(this);
+    this.onReset = this.onReset.bind(this);
+    this.attempt = this.attempt.bind(this);
 
     this.state = {client: null};
   }
@@ -57,7 +57,7 @@ export class Game extends React.Component<Game.Props, Game.State> {
     );
     client.onClose = this.onClose;
     client.onReset = this.onReset;
-    client.onUpdate = this.onUpdate;
+    client.onUpdate = this.onUpdate.bind(this, null);
 
     this.setState({client});
     return client;
@@ -73,13 +73,45 @@ export class Game extends React.Component<Game.Props, Game.State> {
         kind: 'add_player',
         args: [client.me.id],
       });
-      assert(err === null);
     }
     this.setState({client});
   }
 
-  onUpdate(client: Client, effect: ZPYEngine.Effect | P.ProtocolAction) {
+  onUpdate<T>(
+    cb: null | ((effect: ZPYEngine.Effect, ctx: T) => void),
+    client: Client,
+    command: P.Command<ZPYEngine.Effect>,
+    ctx?: T,
+  ) {
+    if (command.kind === 'engine') {
+      cb?.(command.effect, ctx);
+    }
+    console.log('onUpdate');
     this.setState({client});
+  }
+
+  onReject<T>(
+    cb: null | ((ue: ZPYEngine.UpdateError, ctx: T) => void),
+    client: Client,
+    ue: ZPYEngine.UpdateError,
+    ctx?: T,
+  ) {
+    cb?.(ue, ctx);
+    this.setState({client});
+  }
+
+  attempt(
+    intent: ZPYEngine.Intent,
+    ctx: any,
+    onUpdate: (effect: ZPYEngine.Effect, ctx: any) => void,
+    onReject: (ue: ZPYEngine.UpdateError, ctx: any) => void,
+  ) {
+    this.state.client.attempt(
+      intent,
+      this.onUpdate.bind(this, onUpdate),
+      this.onReject.bind(this, onReject),
+      ctx
+    );
   }
 
   render() {
@@ -96,6 +128,7 @@ export class Game extends React.Component<Game.Props, Game.State> {
       me={client.me}
       zpy={client.state}
       users={client.users}
+      attempt={this.attempt}
     />;
   }
 }

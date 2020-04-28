@@ -138,36 +138,41 @@ export type RequestUpdate<Intent> = {
   intent: Intent,
 };
 
+export function Command<
+  Effect extends C.Codec<any>
+> (eff: Effect) {
+  return C.sum("kind")({
+    protocol: C.type({
+      kind: C.literal("protocol"),
+      effect: ProtocolAction,
+    }),
+    engine: C.type({
+      kind: C.literal("engine"),
+      effect: eff,
+    }),
+  });
+}
+export type Command<Effect> = {
+  kind: "protocol",
+  effect: ProtocolAction,
+} | {
+  kind: "engine",
+  effect: Effect,
+};
+
 export function Update<
   Effect extends C.Codec<any>
 > (eff: Effect) {
   return C.type({
     verb: C.literal("update"),
     tx: C.nullable(TxID),
-    effect: C.sum("kind")({
-      protocol: C.type({
-        kind: C.literal("protocol"),
-        eff: ProtocolAction
-      }),
-      engine: C.type({
-        kind: C.literal("engine"),
-        eff: eff
-      }),
-    }),
+    command: Command(eff),
   });
 }
 export type Update<Effect> = {
   verb: "update",
   tx: null | TxID,
-  effect:
-    | {
-      kind: "protocol",
-      eff: ProtocolAction
-    }
-    | {
-      kind: "engine",
-      eff: Effect
-    },
+  command: Command<Effect>,
 };
 
 export function UpdateReject<
