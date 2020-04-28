@@ -23,7 +23,16 @@ import { strict as assert} from 'assert'
 
 ///////////////////////////////////////////////////////////////////////////////
 
-export const aspect_ratio = 239.0 / 335.0;
+const svg_card_width = 239.0;
+const svg_card_height = 335.0;
+const svg_bounding_box_width = 264.0;
+const svg_bounding_box_height = 360.0;
+const svg_padding = 12.5;
+const svg_border_radius = 12.0;
+
+const rem_per_px = 1.0 / 16.0;
+
+export const aspect_ratio = svg_card_width / svg_card_height;
 
 export type CardShapeProps = {
   // width of the whole card
@@ -42,7 +51,17 @@ export const CardShape = (props: CardShapeProps) => {
   assert(clip >= 0 && clip <= 1);
   assert(dim === null || (dim >= 0 && dim <= 1));
 
-  const height = width / aspect_ratio;
+  // use rems for everything
+  const w = width * rem_per_px;
+  const h = w / aspect_ratio;
+
+  const bg_w = w * svg_bounding_box_width  / svg_card_width;
+  const bg_h = h * svg_bounding_box_height / svg_card_height;
+
+  const bg_off_x = -w * svg_padding / svg_card_width;
+  const bg_off_y = -h * svg_padding / svg_card_height;
+
+  const border_radius = w * svg_border_radius / svg_card_width + rem_per_px;
 
   const background_image = (() => {
     if (dim === null) return {};
@@ -58,10 +77,15 @@ export const CardShape = (props: CardShapeProps) => {
 
   return <div className="card"
     style={{
-      width: width * clip,
-      height: height,
-      paddingRight: width * (1 - clip),
-      marginRight: -width * (1 - clip),
+      width: `${w * clip}rem`,
+      height: `${h}rem`,
+      paddingRight: `${w * (1 - clip)}rem`,
+      marginRight: `${-w * (1 - clip)}rem`,
+      backgroundSize: `${bg_w}rem ${bg_h}rem`,
+      backgroundPosition: `${bg_off_x}rem ${bg_off_y}rem`,
+      borderRadius: `${border_radius}rem`,
+      border: `solid black ${rem_per_px}rem`,
+      boxShadow: `0px ${rem_per_px}rem ${rem_per_px}rem rgba(0, 0, 0, 0.4)`,
       ...style,
       ...background_image,
     }}

@@ -45,9 +45,3 @@ $def-height: $def-width / $aspect-ratio;
   background-position: -bg-off-x($width) -bg-off-y($width / $aspect-ratio);
   border-radius: -bg-border-radius($width);
 }
-
-.card {
-  @include card-shared();
-  border: solid black rhythm.$px;
-  box-shadow: 0px rhythm.$px rhythm.$px rgba(0, 0, 0, 0.4);
-}
