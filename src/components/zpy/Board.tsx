@@ -9,7 +9,7 @@ import { CardBase, Suit, Rank } from 'lib/zpy/cards.ts'
 import { ZPY } from 'lib/zpy/zpy.ts'
 import * as ZPYEngine from 'lib/zpy/engine.ts'
 
-import { RoundState } from 'components/zpy/RoundState.tsx'
+import { RoundInfo } from 'components/zpy/RoundInfo.tsx'
 import { PlayArea } from 'components/zpy/PlayArea.tsx'
 
 import { strict as assert} from 'assert'
@@ -23,7 +23,7 @@ export class Board extends React.Component<Board.Props, Board.State> {
   render() {
     return (
       <div className="board">
-        <RoundState zpy={this.props.zpy} users={this.props.users} />
+        <RoundInfo zpy={this.props.zpy} users={this.props.users} />
         <PlayArea
           phase={ZPY.Phase.KITTY}
           tr={this.props.zpy.tr}

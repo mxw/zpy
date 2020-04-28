@@ -9,12 +9,14 @@ import { CardBase } from 'lib/zpy/cards.ts'
 import { ZPY } from 'lib/zpy/zpy.ts'
 import { State as Z } from 'lib/zpy/engine.ts'
 
+import { ActionInfo } from 'components/zpy/ActionInfo.tsx'
 import { PlayerInfo } from 'components/zpy/PlayerInfo.tsx'
+import { ScoreInfo } from 'components/zpy/ScoreInfo.tsx'
 
 import { strict as assert} from 'assert'
 
 
-export class Column extends React.Component<Column.Props, {}> {
+class Column extends React.Component<Column.Props, {}> {
   constructor(props: Column.Props) {
     super(props);
   }
@@ -24,6 +26,7 @@ export class Column extends React.Component<Column.Props, {}> {
 
     return <div className="player-column">
       <PlayerInfo
+        key="player"
         phase={pr.phase}
         user={pr.user}
         owner={pr.owner}
@@ -32,38 +35,40 @@ export class Column extends React.Component<Column.Props, {}> {
         host={pr.host}
         team={pr.team}
       />
+      <ActionInfo
+        key="action"
+        phase={pr.phase}
+        user={pr.user}
+        bids={pr.bids}
+        play={pr.play}
+        ready={pr.ready}
+        leader={pr.leader}
+        winning={pr.winning}
+      />
+      <ScoreInfo
+        key="score"
+        phase={pr.phase}
+        user={pr.user}
+        rank_meta={pr.rank_meta}
+        points={pr.points}
+      />
     </div>;
   }
 }
 
-export namespace Column {
+namespace Column {
 
-export type Props = PlayerInfo.Props & {
-  rank_meta: Z['ranks'][P.UserID];
-
-  kitty: CardBase[];
-  bids: Z['bids'];
-
-  tr: Z['tr'];
-  points: Z['points'][P.UserID];
-
-  leader: boolean;
-  play: Z['plays'][P.UserID];
-  winning: boolean;
-};
-
-export type State = {
-};
+export type Props = PlayerInfo.Props & ActionInfo.Props & ScoreInfo.Props;
 
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
-export class RoundState extends React.Component<
-  RoundState.Props,
-  RoundState.State
+export class RoundInfo extends React.Component<
+  RoundInfo.Props,
+  RoundInfo.State
 > {
-  constructor(props: RoundState.Props) {
+  constructor(props: RoundInfo.Props) {
     super(props);
   }
 
@@ -81,6 +86,7 @@ export class RoundState extends React.Component<
     return <div className="round">
       {ordered.map(uid =>
         <Column
+          key={uid}
           phase={zpy.phase}
           user={users[uid]}
           owner={uid === zpy.owner}
@@ -92,20 +98,18 @@ export class RoundState extends React.Component<
             zpy.atk_team.has(uid) ? 'atk' : null
           }
           rank_meta={zpy.ranks[uid]}
-          kitty={zpy.kitty}
           bids={zpy.bids.filter(({player}) => uid === player)}
-          tr={zpy.tr}
           points={zpy.points[uid]}
           leader={uid === zpy.leader}
-          play={zpy.plays[uid]}
           winning={uid === zpy.winning}
+          play={zpy.plays[uid]}
         />
       )}
     </div>;
   }
 }
 
-export namespace RoundState {
+export namespace RoundInfo {
 
 export type Props = {
   zpy: Z;
