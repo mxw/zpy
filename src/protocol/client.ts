@@ -195,5 +195,6 @@ export class GameClient<
         intent: intent,
       })
     ));
+    return null;
   }
 }
