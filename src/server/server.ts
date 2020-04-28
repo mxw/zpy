@@ -143,6 +143,7 @@ class Game<
     let cs = this.engine.redact(this.state, client.user);
     client.sync = true;
 
+    console.log('reset', client.user);
     const Reset = P.Reset(this.engine.ClientState(this.state));
 
     client.socket.send(JSON.stringify(
@@ -203,7 +204,7 @@ class Game<
           case "req:reset": this.reset(client); break
           case "req:update": this.update(client, d.tx, d.intent); break;
         }
-      }, () => {
+      }, (_: any) => {
         this.kick(client, "invalid msg");
       });
     })

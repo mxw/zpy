@@ -33,7 +33,7 @@ export class Data<PlayerID extends keyof any> {
   ranks: Record<PlayerID, {
     rank: Rank,  // current rank
     start: Rank, // most recent starting rank
-    last_host: Rank, // last hosted rank
+    last_host: null | Rank, // last hosted rank
   }> = {} as any;
   // number of decks
   ndecks: number = 0;
@@ -162,7 +162,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     this.ranks[player] = {
       rank: 2,
       start: 2,
-      last_host: 0,
+      last_host: null,
     }
   }
 

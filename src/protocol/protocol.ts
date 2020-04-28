@@ -226,10 +226,10 @@ export function on_decode<R1, R2, Codec extends C.Codec<any>>(
   codec: Codec,
   input: unknown,
   onsuccess: (value: TypeOf<Codec>) => R1,
-  onfail?: R2 | (() => R2),
+  onfail?: R2 | ((err: any) => R2),
 ): R1 | R2 {
   return pipe(codec.decode(input), fold(
-    (_): R1 | R2 => onfail instanceof Function ? onfail() : onfail,
+    (e): R1 | R2 => onfail instanceof Function ? onfail(e) : onfail,
     (v): R1 | R2 => onsuccess(v)
   ));
 }

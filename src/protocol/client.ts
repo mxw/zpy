@@ -155,7 +155,7 @@ export class GameClient<
             break;
           }
         }
-      });
+      }, (e: any) => console.error(e, payload));
     }
   }
 

@@ -224,7 +224,7 @@ const cd_ZPYData = (
   ranks: C.record(C.type({
     rank: P.Enum<Rank>(Rank),
     start: P.Enum<Rank>(Rank),
-    last_host: P.Enum<Rank>(Rank),
+    last_host: C.nullable(P.Enum<Rank>(Rank)),
   })),
   ndecks: C.number,
 
