@@ -9,6 +9,19 @@ import { Game } from 'components/zpy/Game.tsx';
 
 import { escape_backslashes } from 'utils/string.ts';
 
+
+class RouterDebugger_ extends React.Component {
+  UNSAFE_componentWillUpdate(nextProps: any, nextState: any) {
+    console.log('componentWillUpdate', nextProps, nextState);
+  }
+  componentDidUpdate(prevProps: any) {
+    console.log('componentDidUpdate', prevProps);
+  }
+  render(): any { return null; }
+}
+const RouterDebugger = withRouter(RouterDebugger_ as any);
+
+
 ReactDOM.render(
   <Router>
     <Switch>

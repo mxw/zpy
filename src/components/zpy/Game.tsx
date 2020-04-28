@@ -40,6 +40,15 @@ export class Game extends React.Component<Game.Props, Game.State> {
   }
 
   componentDidMount() {
+    this.ensureClient();
+  }
+  componentDidUpdate() {
+    this.ensureClient();
+  }
+
+  ensureClient(): Client {
+    if (this.state.client !== null) return this.state.client;
+
     const client: Client = new GameClient(
       ZPYEngine,
       this.props.path,
@@ -51,11 +60,13 @@ export class Game extends React.Component<Game.Props, Game.State> {
     client.onUpdate = this.onUpdate;
 
     this.setState({client});
+    return client;
   }
 
   onClose(client: Client) {
     this.setState({client: null});
   }
+
   onReset(client: Client) {
     if (!client.state.players.includes(client.me.id)) {
       const err = client.attempt({
@@ -66,6 +77,7 @@ export class Game extends React.Component<Game.Props, Game.State> {
     }
     this.setState({client});
   }
+
   onUpdate(client: Client, effect: ZPYEngine.Effect | P.ProtocolAction) {
     this.setState({client});
   }
