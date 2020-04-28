@@ -14,7 +14,7 @@ export class Card extends React.Component<Card.Props> {
   }
 
   render() {
-    const {card, width, selected, style, ...more} = this.props;
+    const {card, width, selected = false, style, ...more} = this.props;
 
     const suit = ((suit: Suit) => {
       switch (suit) {
@@ -55,7 +55,7 @@ export namespace Card {
 export type Props = {
   card: CardBase;
   width: number;
-  selected: boolean;
+  selected?: boolean;
   [more: string]: any;
 };
 

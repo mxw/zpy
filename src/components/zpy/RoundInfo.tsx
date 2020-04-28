@@ -39,6 +39,7 @@ class Column extends React.Component<Column.Props, {}> {
         key="action"
         phase={pr.phase}
         user={pr.user}
+        tr={pr.tr}
         bids={pr.bids}
         play={pr.play}
         ready={pr.ready}
@@ -92,6 +93,7 @@ export class RoundInfo extends React.Component<
           owner={uid === zpy.owner}
           ready={zpy.consensus.has(uid)}
           current={uid === zpy.current}
+          tr={zpy.tr}
           host={uid === zpy.host}
           team={
             zpy.host_team.has(uid) ? 'host' :
@@ -102,7 +104,7 @@ export class RoundInfo extends React.Component<
           points={zpy.points[uid]}
           leader={uid === zpy.leader}
           winning={uid === zpy.winning}
-          play={zpy.plays[uid]}
+          play={zpy.plays[uid] ?? null}
         />
       )}
     </div>;

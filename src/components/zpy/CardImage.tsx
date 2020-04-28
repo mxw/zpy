@@ -30,15 +30,16 @@ const svg_bounding_box_height = 360.0;
 const svg_padding = 12.5;
 const svg_border_radius = 12.0;
 
-const rem_per_px = 1.0 / 16.0;
+export const rem_per_px = 1.0 / 16.0;
 
 export const aspect_ratio = svg_card_width / svg_card_height;
 
 export type CardShapeProps = {
   // width of the whole card
   width: number;
-  // fraction of the card (from the left edge) to set the div width to
-  clip?: number; // in [0, 1]
+  // fraction of the card (from the left/top edge) to set the div width to
+  xclip?: number; // in [0, 1]
+  yclip?: number; // in [0, 1]
   // amount of dimming to apply to the image
   dim?: number; // in [0, 1]
 
@@ -47,8 +48,17 @@ export type CardShapeProps = {
 };
 
 export const CardShape = (props: CardShapeProps) => {
-  const {width, clip = 1, dim = null, style = {}, ...more} = props;
-  assert(clip >= 0 && clip <= 1);
+  const {
+    width,
+    xclip = 1,
+    yclip = 1,
+    dim = null,
+    style = {},
+    ...more
+  } = props;
+
+  assert(xclip >= 0 && xclip <= 1);
+  assert(yclip >= 0 && yclip <= 1);
   assert(dim === null || (dim >= 0 && dim <= 1));
 
   // use rems for everything
@@ -77,10 +87,12 @@ export const CardShape = (props: CardShapeProps) => {
 
   return <div className="card"
     style={{
-      width: `${w * clip}rem`,
-      height: `${h}rem`,
-      paddingRight: `${w * (1 - clip)}rem`,
-      marginRight: `${-w * (1 - clip)}rem`,
+      width: `${w * xclip}rem`,
+      height: `${h * yclip}rem`,
+      paddingRight: `${w * (1 - xclip)}rem`,
+      marginRight: `${-w * (1 - xclip)}rem`,
+      paddingBottom: `${h * (1 - yclip)}rem`,
+      marginBottom: `${-h * (1 - yclip)}rem`,
       backgroundSize: `${bg_w}rem ${bg_h}rem`,
       backgroundPosition: `${bg_off_x}rem ${bg_off_y}rem`,
       borderRadius: `${border_radius}rem`,

@@ -131,7 +131,7 @@ export class CardArea extends React.Component<CardArea.Props, {}> {
                 if (this.props.multidrag?.id === id) {
                   return <CardFan
                     width={dims.card_width}
-                    clip={0.25}
+                    xclip={0.25}
                     selected={this.props.selected.has(id)}
                     pile={this.props.multidrag.pile}
                   />;
@@ -149,7 +149,7 @@ export class CardArea extends React.Component<CardArea.Props, {}> {
                 return <Card
                   card={cb}
                   width={dims.card_width}
-                  clip={0.25}
+                  xclip={0.25}
                   selected={this.props.selected.has(id) && !should_vanish}
                   dim={should_vanish ? 0.6 : null}
                 />;

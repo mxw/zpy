@@ -42,13 +42,29 @@ $px: 1rem * (1px / $default-font-size);
 @mixin rh-trailer($lines: 1, $property: margin) {
   #{$property}-bottom: rh($lines);
 }
-@mixin rh-margins($lines: 1) {
+
+@mixin rh-margins-x($lines: 1) {
+  margin-left: rh($lines);
+  margin-right: rh($lines);
+}
+@mixin rh-margins-y($lines: 1) {
   margin-top: rh($lines);
   margin-bottom: rh($lines);
 }
-@mixin rh-padding($lines: 1) {
+@mixin rh-margins($lines: 1) {
+  margin: rh($lines) rh($lines) rh($lines) rh($lines);
+}
+
+@mixin rh-padding-x($lines: 1) {
+  padding-left: rh($lines);
+  padding-right: rh($lines);
+}
+@mixin rh-padding-y($lines: 1) {
   padding-top: rh($lines);
   padding-bottom: rh($lines);
+}
+@mixin rh-padding($lines: 1) {
+  padding: rh($lines) rh($lines) rh($lines) rh($lines);
 }
 
 $default-border-width: 1rem / 16 !default;
