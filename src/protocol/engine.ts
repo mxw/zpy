@@ -93,13 +93,13 @@ export interface Engine<
     UpdateError
   >;
 
-  // predict the outcome of an intent based on the client state; return null if
-  // the outcome is unknown
+  // predict and apply the outcome of an intent based on the client state;
+  // return null if the outcome is unknown
   predict: (
     state: ClientState,
     intent: Intent,
     me: User
-  ) => null | Result<Effect, UpdateError>;
+  ) => null | Result<{effect: Effect, state: ClientState}, UpdateError>;
 
   // same as apply, on the client side
   apply_client: (

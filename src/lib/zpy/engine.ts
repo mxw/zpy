@@ -433,15 +433,19 @@ export const predict = (
   state: ClientState,
   intent: Intent,
   me: P.User,
-): null | Result<Effect, UpdateError> => {
+): null | Result<{effect: Effect, state: ClientState}, UpdateError> => {
   switch (intent.kind) {
     case 'add_player': {
       let result = state[intent.kind](...intent.args);
-      return (result instanceof ZPY.Error) ? Err(result) : OK(intent);
+      return (result instanceof ZPY.Error)
+        ? Err(result)
+        : OK({effect: intent, state});
     }
     case 'set_decks': {
       let result = state[intent.kind](...intent.args);
-      return (result instanceof ZPY.Error) ? Err(result) : OK(intent);
+      return (result instanceof ZPY.Error)
+        ? Err(result)
+        : OK({effect: intent, state});
     }
     case 'start_game': break;
     case 'draw_card': break;
@@ -450,21 +454,29 @@ export const predict = (
     case 'ready': break;
     case 'replace_kitty': {
       let result = state[intent.kind](...intent.args);
-      return (result instanceof ZPY.Error) ? Err(result) : OK(intent);
+      return (result instanceof ZPY.Error)
+        ? Err(result)
+        : OK({effect: intent, state});
     }
     case 'call_friends': {
       let result = state[intent.kind](...intent.args);
-      return (result instanceof ZPY.Error) ? Err(result) : OK(intent);
+      return (result instanceof ZPY.Error)
+        ? Err(result)
+        : OK({effect: intent, state});
     }
     case 'lead_play': {
       let result = state[intent.kind](...intent.args);
-      return (result instanceof ZPY.Error) ? Err(result) : OK(intent);
+      return (result instanceof ZPY.Error)
+        ? Err(result)
+        : OK({effect: intent, state});
     }
     case 'contest_fly': break;
     case 'pass_contest': break;
     case 'follow_lead': {
       let result = state[intent.kind](...intent.args);
-      return (result instanceof ZPY.Error) ? Err(result) : OK(intent);
+      return (result instanceof ZPY.Error)
+        ? Err(result)
+        : OK({effect: intent, state});
     }
     case 'end_round': break;
     case 'next_round': break;

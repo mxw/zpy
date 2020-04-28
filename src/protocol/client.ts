@@ -127,6 +127,7 @@ export class GameClient<
             assert(this.state !== null);
             assert(this.status === "pending-update" ||
                    this.status === "sync");
+
             if (msg.tx !== null && msg.tx in this.pending) {
               let pending = this.pending[msg.tx];
               delete this.pending[msg.tx];
@@ -135,7 +136,22 @@ export class GameClient<
                 break;
               }
             }
-            this.manifest(msg.effect.eff);
+
+            let result = this.engine.apply_client(
+              this.state,
+              msg.effect.eff,
+              this.me
+            );
+
+            if (isErr(result)) {
+              console.error(result.err);
+              assert(false);
+            } else {
+              assert(isOK(result));
+              this.state = result.ok;
+              this.status === "sync";
+              this.onUpdate?.(this, msg.effect.eff);
+            }
             break;
           }
         }
@@ -143,44 +159,31 @@ export class GameClient<
     }
   }
 
-  // process an effect either as predicted or as the server instructs
-  manifest(effect: Effect | P.ProtocolAction) {
-    let result = this.engine.apply_client(this.state, effect, this.me);
-
-    if (isErr(result)) {
-      console.error(result.err);
-      assert(false);
-    } else {
-      this.state = result.ok;
-      this.status === "sync";
-      this.onUpdate?.(this, effect);
-    }
-  }
-
   // attempt to carry out an intent; synchronizing this state w/ the server
-  attempt(intent: Intent) {
+  attempt(intent: Intent): null | UpdateError {
     // TODO we could queue updates locally if we're desynced
     // but it's not necessary for ZPY--it's easier to pretend it can't happen
     assert(this.status === "sync");
     assert(this.state !== null);
 
-    let tx = this.next_tx++;
-    let predicted = this.engine.predict(this.state, intent, this.me);
+    const tx = this.next_tx++;
+    const predicted = this.engine.predict(this.state, intent, this.me);
 
     if (predicted === null) {
       this.status === "pending-update"
     } else if (isErr(predicted)) {
-      console.error(predicted.err)
-      assert(false);
-      return
+      return predicted.err;
     } else {
-      this.manifest(predicted.ok);
+      assert(isOK(predicted));
+
+      this.state = predicted.ok.state;
+      this.onUpdate?.(this, predicted.ok.effect);
     }
 
     this.pending[tx] = {
       predicted: (predicted !== null),
       intent: intent,
-      eff: (predicted as null | {ok: Effect})?.ok
+      eff: (predicted as null | {ok: {effect: Effect}})?.ok?.effect
     };
 
     const RequestUpdate = P.RequestUpdate(this.engine.Intent(this.state));

@@ -14,6 +14,8 @@ import * as ZPYEngine from 'lib/zpy/engine.ts'
 
 import { Board } from 'components/zpy/Board.tsx'
 
+import { strict as assert} from 'assert'
+
 
 export type Client = GameClient<
   ZPYEngine.Config,
@@ -55,6 +57,13 @@ export class Game extends React.Component<Game.Props, Game.State> {
     this.setState({client: null});
   }
   onReset(client: Client) {
+    if (!client.state.players.includes(client.me.id)) {
+      const err = client.attempt({
+        kind: 'add_player',
+        args: [client.me.id],
+      });
+      assert(err === null);
+    }
     this.setState({client});
   }
   onUpdate(client: Client, effect: ZPYEngine.Effect | P.ProtocolAction) {
@@ -71,7 +80,11 @@ export class Game extends React.Component<Game.Props, Game.State> {
     }
     if (client.state === null) return null;
 
-    return <Board zpy={client.state} users={client.users} />;
+    return <Board
+      me={client.me}
+      zpy={client.state}
+      users={client.users}
+    />;
   }
 }
 

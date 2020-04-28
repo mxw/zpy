@@ -49,6 +49,7 @@ export class Board extends React.Component<Board.Props, Board.State> {
 export namespace Board {
 
 export type Props = {
+  me: P.User;
   zpy: ZPYEngine.State;
   users: P.User[];
 };
