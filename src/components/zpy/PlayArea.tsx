@@ -39,6 +39,10 @@ export class PlayArea extends React.Component<
 
     this.onSubmit = this.onSubmit.bind(this);
     this.onEffect = this.onEffect.bind(this);
+    this.onClickDeck = this.onClickDeck.bind(this);
+
+    this.onClickOut = this.onClickOut.bind(this);
+    this.onKeyDown = this.onKeyDown.bind(this);
 
     this.onSelect = this.onSelect.bind(this);
     this.onDragStart = this.onDragStart.bind(this);
@@ -66,9 +70,15 @@ export class PlayArea extends React.Component<
   }
 
   componentDidMount() {
-    window.addEventListener('click', this.onClickOut.bind(this));
-    window.addEventListener('touchend', this.onClickOut.bind(this));
-    window.addEventListener('keydown', this.onKeyDown.bind(this));
+    window.addEventListener('click', this.onClickOut);
+    window.addEventListener('touchend', this.onClickOut);
+    window.addEventListener('keydown', this.onKeyDown);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('click', this.onClickOut);
+    window.removeEventListener('touchend', this.onClickOut);
+    window.removeEventListener('keydown', this.onKeyDown);
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -230,6 +240,27 @@ export class PlayArea extends React.Component<
     return true;
   }
 
+  onClickDeck(ev: React.MouseEvent | React.TouchEvent) {
+    if (ev.defaultPrevented) return;
+    if ('button' in ev && ev.button !== 0) return;
+
+    this.props.funcs.attempt(
+      {kind: 'draw_card', args: [this.props.me.id]},
+      (effect: ZPYEngine.Effect) => {
+        if (effect.kind !== 'add_to_hand') {
+          assert(false);
+          return;
+        }
+        if (effect.args[0] !== this.props.me.id) return;
+
+        this.setState((state, props) =>
+          PlayArea.withCardsAdded(state, [effect.args[1]], 0)
+        );
+      },
+      this.onEffect
+    );
+  }
+
   submitBid(): boolean {
     return false;
   }
@@ -280,7 +311,7 @@ export class PlayArea extends React.Component<
    *  {ctrl,cmd}-a: select all cards
    *  enter: perform an action (typically submitting staged cards)
    */
-  onKeyDown(ev: React.KeyboardEvent) {
+  onKeyDown(ev: React.KeyboardEvent | KeyboardEvent) {
     const metaKey = isWindows() ? ev.ctrlKey : ev.metaKey;
 
     if (ev.key === 'a') {
@@ -372,7 +403,9 @@ export class PlayArea extends React.Component<
   /*
    * event handler for clicking outside of all selectable items
    */
-  onClickOut(ev: React.MouseEvent | React.TouchEvent) {
+  onClickOut(
+    ev: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent
+  ) {
     if (ev.defaultPrevented) return;
     this.deselectAll();
   }
@@ -502,7 +535,7 @@ export class PlayArea extends React.Component<
         <CardImage
           card="back"
           width={card_width}
-          onClick={this.onSubmit}
+          onClick={this.onClickDeck}
         />
       </div>
       <div className="bids">
