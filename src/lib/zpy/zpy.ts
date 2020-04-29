@@ -152,6 +152,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
    * Add a player to the game.  The first player added is the game owner.
    */
   add_player(player: PlayerID): ZPY.Result {
+    if (this.phase !== ZPY.Phase.INIT) {
+      return ZPY.BadPhaseError.from('add_player', this.phase);
+    }
     if (this.players.find(p => p === player)) {
       return new ZPY.DuplicateActionError('already joined game');
     }
@@ -172,6 +175,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
    * Set the number of decks.  Game owner only.
    */
   set_decks(player: PlayerID, ndecks: number): ZPY.Result {
+    if (this.phase !== ZPY.Phase.INIT) {
+      return ZPY.BadPhaseError.from('set_decks', this.phase);
+    }
     if (player !== this.owner) {
       return new ZPY.WrongPlayerError('game owner only');
     }
@@ -272,6 +278,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
    * Start the game and transition to Phase.DRAW.  Game owner only.
    */
   start_game(player: PlayerID): ZPY.Result<[PlayerID[]]> {
+    if (this.phase !== ZPY.Phase.INIT) {
+      return ZPY.BadPhaseError.from('start_game', this.phase);
+    }
     if (player !== this.owner) {
       return new ZPY.WrongPlayerError('game owner only');
     }
@@ -306,6 +315,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
    * the deck empties.
    */
   draw_card(player: PlayerID): ZPY.Result<[CardBase]> {
+    if (this.phase !== ZPY.Phase.DRAW) {
+      return ZPY.BadPhaseError.from('draw_card', this.phase);
+    }
     if (player !== this.players[this.current]) {
       return new ZPY.OutOfTurnError();
     }
@@ -335,6 +347,10 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     card: CardBase,
     n: number
   ): ZPY.Result<[CardBase, number]> {
+    if (this.phase !== ZPY.Phase.DRAW &&
+        this.phase !== ZPY.Phase.PREPARE) {
+      return ZPY.BadPhaseError.from('bid_trump', this.phase);
+    }
     if (n < 1) {
       return new ZPY.InvalidArgError('bid is empty');
     }
@@ -392,6 +408,10 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
    * points in hand.
    */
   request_redeal(player: PlayerID): ZPY.Result<[]> {
+    if (this.phase !== ZPY.Phase.PREPARE) {
+      return ZPY.BadPhaseError.from('request_redeal', this.phase);
+    }
+
     let points = 0;
     for (let [card, n] of this.draws[player]) {
       points += card.point_value() * n;
@@ -419,6 +439,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
    * in order and use that to determine the trump.
    */
   ready(player: PlayerID): ZPY.Result<null | [PlayerID, CardBase[]]> {
+    if (this.phase !== ZPY.Phase.PREPARE) {
+      return ZPY.BadPhaseError.from('ready', this.phase);
+    }
     this.consensus.add(player);
     if (this.consensus.size !== this.players.length) return null;
 
@@ -492,6 +515,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
    * transition to Phase.FRIEND.
    */
   replace_kitty(player: PlayerID, kitty: CardBase[]): ZPY.Result<[]> {
+    if (this.phase !== ZPY.Phase.KITTY) {
+      return ZPY.BadPhaseError.from('replace_kitty', this.phase);
+    }
     if (player !== this.host) {
       return new ZPY.WrongPlayerError('host only');
     }
@@ -532,6 +558,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     player: PlayerID,
     friends: [CardBase, number][]
   ): ZPY.Result {
+    if (this.phase !== ZPY.Phase.FRIEND) {
+      return ZPY.BadPhaseError.from('call_friends', this.phase);
+    }
     if (player !== this.host) {
       return new ZPY.WrongPlayerError('host only');
     }
@@ -647,6 +676,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
    * Phase.FOLLOW.
    */
   lead_play(player: PlayerID, play: Flight): ZPY.Result<[Flight]> {
+    if (this.phase !== ZPY.Phase.LEAD) {
+      return ZPY.BadPhaseError.from('lead_play', this.phase);
+    }
     let play_pile = this.init_play(player, play);
     if (play_pile instanceof ZPY.Error) return play_pile;
 
@@ -678,6 +710,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     player: PlayerID,
     reveal: CardBase[]
   ): ZPY.Result<[CardBase[], Tractor]> {
+    if (this.phase !== ZPY.Phase.FLY) {
+      return ZPY.BadPhaseError.from('contest_fly', this.phase);
+    }
     if (player === this.leader) {
       return new ZPY.WrongPlayerError('cannot contest own flight');
     }
@@ -730,6 +765,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
    * succeeds and play continues to Phase.FOLLOW.
    */
   pass_contest(player: PlayerID): ZPY.Result {
+    if (this.phase !== ZPY.Phase.FLY) {
+      return ZPY.BadPhaseError.from('pass_contest', this.phase);
+    }
     this.consensus.add(player);
     if (this.consensus.size !== this.players.length) return;
 
@@ -748,6 +786,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
    * has ended.
    */
   follow_lead(player: PlayerID, play: Play): ZPY.Result<[Play]> {
+    if (this.phase !== ZPY.Phase.FOLLOW) {
+      return ZPY.BadPhaseError.from('follow_lead', this.phase);
+    }
     let play_pile = this.init_play(player, play);
     if (play_pile instanceof ZPY.Error) return play_pile;
 
@@ -863,6 +904,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
    * Score and finish up the round.  Transitions to Phase.WAIT.
    */
   end_round(player: PlayerID): ZPY.Result<[CardBase[]]> {
+    if (this.phase !== ZPY.Phase.FINISH) {
+      return ZPY.BadPhaseError.from('end_round', this.phase);
+    }
     if (player !== this.host) {
       return new ZPY.WrongPlayerError('host only');
     }
@@ -923,6 +967,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
    * Start a new round.
    */
   next_round(player: PlayerID): ZPY.Result {
+    if (this.phase !== ZPY.Phase.WAIT) {
+      return ZPY.BadPhaseError.from('next_round', this.phase);
+    }
     if (player !== this.owner) {
       return new ZPY.WrongPlayerError('host only');
     }
@@ -1105,6 +1152,14 @@ export namespace ZPY {
   export class Error {
     constructor(readonly msg?: string) {}
     toString(): string { return `${this.constructor.name}: ${this.msg}`; }
+  }
+  export class BadPhaseError extends Error {
+    static from(intent: string, phase: Phase) {
+      return new BadPhaseError(
+        `${intent} not valid for Phase.${Phase[phase]}`
+      );
+    }
+    constructor(msg?: string) { super(msg); }
   }
   export class InvalidArgError extends Error {
     constructor(msg?: string) { super(msg); }

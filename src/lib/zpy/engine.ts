@@ -55,6 +55,7 @@ export const UpdateError: C.Codec<ZPY.Error> = C.make(
   D.parse(cd_UE, ({classname, msg}) => {
     const result = (() => {
       switch (classname) {
+        case 'bp': return new ZPY.BadPhaseError(msg);
         case 'ia': return new ZPY.InvalidArgError(msg);
         case 'da': return new ZPY.DuplicateActionError(msg);
         case 'wp': return new ZPY.WrongPlayerError(msg);
@@ -71,6 +72,7 @@ export const UpdateError: C.Codec<ZPY.Error> = C.make(
   }),
   {encode: (e: ZPY.Error) => cd_UE.encode({
     classname: ((e) => {
+      if (e instanceof ZPY.BadPhaseError) return 'bp';
       if (e instanceof ZPY.InvalidArgError) return 'ia';
       if (e instanceof ZPY.DuplicateActionError) return 'da';
       if (e instanceof ZPY.WrongPlayerError) return 'wp';
