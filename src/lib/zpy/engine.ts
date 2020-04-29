@@ -55,12 +55,12 @@ export const UpdateError: C.Codec<ZPY.Error> = C.make(
   D.parse(cd_UE, ({classname, msg}) => {
     const result = (() => {
       switch (classname) {
-        case 'InvalidArgError': return new ZPY.InvalidArgError(msg);
-        case 'DuplicateActionError': return new ZPY.DuplicateActionError(msg);
-        case 'WrongPlayerError': return new ZPY.WrongPlayerError(msg);
-        case 'OutOfTurnError': return new ZPY.OutOfTurnError(msg);
-        case 'InvalidPlayError': return new ZPY.InvalidPlayError(msg);
-        case 'Error': return new ZPY.Error(msg);
+        case 'ia': return new ZPY.InvalidArgError(msg);
+        case 'da': return new ZPY.DuplicateActionError(msg);
+        case 'wp': return new ZPY.WrongPlayerError(msg);
+        case 'ot': return new ZPY.OutOfTurnError(msg);
+        case 'ip': return new ZPY.InvalidPlayError(msg);
+        case 'e': return new ZPY.Error(msg);
         default: break;
       }
       return null;
@@ -70,7 +70,14 @@ export const UpdateError: C.Codec<ZPY.Error> = C.make(
       : P.failure(`invalid Error class ${classname}`)
   }),
   {encode: (e: ZPY.Error) => cd_UE.encode({
-    classname: e.constructor.name,
+    classname: ((e) => {
+      if (e instanceof ZPY.InvalidArgError) return 'ia';
+      if (e instanceof ZPY.DuplicateActionError) return 'da';
+      if (e instanceof ZPY.WrongPlayerError) return 'wp';
+      if (e instanceof ZPY.OutOfTurnError) return 'ot';
+      if (e instanceof ZPY.InvalidPlayError) return 'ip';
+      return 'e';
+    })(e),
     msg: e.msg || null
   })}
 );
@@ -481,6 +488,7 @@ export const predict = (
     case 'end_round': break;
     case 'next_round': break;
   }
+  return null;
 };
 
 export const larp = (
