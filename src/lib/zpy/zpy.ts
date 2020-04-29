@@ -40,7 +40,7 @@ export class Data<PlayerID extends keyof any> {
 
   // round counter; > 0 iff phase > INIT
   round: number = 0;
-  // playing to order index mapping; valid iff phase > INIT
+  // player to order index mapping; valid iff phase > INIT
   order: Record<PlayerID, number> = {} as any;
   // general-purpose player set for reaching consensus
   consensus: Set<PlayerID> = new Set();
