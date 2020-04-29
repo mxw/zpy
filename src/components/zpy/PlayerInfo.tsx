@@ -35,12 +35,18 @@ export class PlayerInfo extends React.Component<
     let div_class = ["player-info"];
     if (pr.current) div_class.push("current");
 
-    let ava_class = ["avatar"];
-    if (pr.host) ava_class.push("host");
+    const host = !pr.host ? null :
+      <img
+        key="host"
+        className="host"
+        src="/static/png/icons/crown.png"
+      />;
 
     return <div className={div_class.join(' ')}>
+      {host}
       <img
-        className={ava_class.join(' ')}
+        key="avatar"
+        className="avatar"
         src={`/static/png/avatars/${avatar_id}.png`}
       />
       <div className="nick">{pr.user.nick}</div>

@@ -460,9 +460,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     this.ranks[this.host].last_host = this.ranks[this.host].rank;
 
     if (this.bids.length === 0) {
-      this.reveal_kitty(this.host, this.kitty);
+      this.reveal_kitty(this.host, kitty);
     }
-    this.receive_kitty(this.host, this.kitty);
+    this.receive_kitty(this.host, kitty);
 
     this.kitty = kitty;
     this.phase = ZPY.Phase.KITTY;

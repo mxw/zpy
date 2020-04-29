@@ -103,6 +103,7 @@ export class Game extends React.Component<Game.Props, Game.State> {
     ue: ZPYEngine.UpdateError,
     ctx?: T,
   ) {
+    console.error(ue);
     cb?.(ue, ctx);
     this.setState({client});
   }

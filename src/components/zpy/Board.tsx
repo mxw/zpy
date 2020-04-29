@@ -23,11 +23,12 @@ export class Board extends React.Component<Board.Props, Board.State> {
 
   render() {
     const zpy = this.props.zpy;
+    console.log(ZPY.Phase[zpy.phase]);
 
     return (
       <div className="board">
         <RoundInfo
-          key="roundinfo"
+          key="round-info"
           me={this.props.me}
           zpy={zpy}
           users={this.props.users}

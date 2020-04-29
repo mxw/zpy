@@ -8,6 +8,11 @@
 @use "common/flex";
 @use "common/rhythm";
 
+$card-width-hand: rhythm.px-to-rem(100px);
+$card-width-friend: rhythm.px-to-rem(80px);
+$card-width-play: rhythm.px-to-rem(64px);
+$card-clip: 0.25;
+
 body {
   font-family: "Minion Pro", "Minion", "Trebuchet MS", "Trebuchet", sans-serif;
 }
@@ -15,6 +20,8 @@ body {
 .board {
   @include flex.column;
 }
+
+///////////////////////////////////////////////////////////////////////////////
 
 .round {
   @include flex.row-center;
@@ -25,14 +32,16 @@ body {
   position: relative;
   @include flex.column;
 
-  @include rhythm.rh-padding();
+  padding: rhythm.rh(1);
 
   > div {
-    @include rhythm.rh-padding-x(0.5);
-    @include rhythm.rh-padding-y();
+    padding: rhythm.rh(0.5);
+    @include rhythm.rh-margin-y(0.5);
   }
 
   > .player-info {
+    position: relative;
+
     @include flex.row-center;
     justify-items: flex-start;
 
@@ -41,6 +50,14 @@ body {
       border-radius: rhythm.rh(0.5);
       border-style: solid;
       border-color: green;
+    }
+
+    > .host {
+      position: absolute;
+      width: rhythm.rh(2.25);
+      height: rhythm.rh(2.25);
+      top: rhythm.rh(-0.875);
+      left: rhythm.rh(0.625);
     }
 
     > .avatar {
@@ -55,10 +72,21 @@ body {
   }
 
   > .action-info {
+    @include flex.column;
+    justify-content: center;
+
     width: 100%;
     min-height: rhythm.rh(10);
 
-    @include flex.column;
+    > .ready {
+      padding: rhythm.rh(1);
+      border-radius: rhythm.rh(4.5);
+      background-color: lightgreen;
+
+      > img {
+        width: rhythm.rh(4.5);
+      }
+    }
   }
 
   > .score-info {
@@ -67,50 +95,30 @@ body {
 
     &::before {
       content: "";
+      position: absolute;
       width: 100%;
       height: 1px;
-      position: absolute;
       left: 0;
       background-image: linear-gradient(to right, transparent, #666, transparent);
     }
   }
 }
 
-.hand {
-  height: rhythm.rh(10);
-
-  @include flex.row-center;
-  position: relative;
-
-  @include rhythm.rh-padding();
-
-  &::after {
-    content: "[hand]";
-
-    position: absolute;
-    bottom: 0;
-    right: 0;
-
-    opacity: 0;
-    transition: all ease-in 4s;
-  }
-  &:hover::after {
-    opacity: 1;
-    transition: all 0s;
-  }
-}
+///////////////////////////////////////////////////////////////////////////////
 
 .action {
-  min-width: card.$def-width * 6;
-  height: rhythm.rh(10);
-  background-color: rgb(169, 191, 212);
-
+  position: relative;
   @include flex.row-center;
+
+  min-width: $card-width-hand * 6;
+  height: rhythm.rh(10);
 
   @include rhythm.rh-border-full();
   border-radius: rhythm.rh(0.5);
   border-style: solid;
   border-color: lightgrey;
+
+  background-color: rgb(169, 191, 212);
 
   &.draw {
     > .deck {
@@ -129,13 +137,78 @@ body {
   }
 }
 
+@mixin card-container($rh-lines, $card-width, $clip: $card-clip) {
+  padding: rhythm.rh($rh-lines);
+  padding-right: rhythm.rh($rh-lines) + (1 - $clip) * $card-width + rhythm.$px;
+}
+
+@function card-fit-width($n, $card-width, $clip: $card-clip) {
+  // same as the fit_width computation in CardFan
+  @return (
+    ($card-width * $clip + 2 * rhythm.$px) * $n +
+    $card-width * (1 - $clip)
+  );
+}
+
 .cardarea {
   display: flex;
   overflow: auto;
-  padding: rhythm.rh(1);
-  padding-right: rhythm.rh(1) + 0.75 * card.$def-width;
+  @include card-container(1, $card-width-hand);
 
   &.empty {
     padding-right: rhythm.rh(1);
+  }
+}
+
+.friend-selector-container {
+  position: absolute;
+  @include flex.column;
+
+  bottom: -1 * rhythm.$px;  // account for our parent's border
+
+  width: card-fit-width(24, $card-width-friend);
+  &.fsc-trump {
+    width: card-fit-width(26, $card-width-friend);
+  }
+
+  @include rhythm.rh-border-full(2);
+  padding-bottom: (
+    rhythm.rh(2, rhythm.$px) +
+    (1 - $card-clip) * card.height-for($card-width-friend) + rhythm.$px
+  );
+  border-radius: inherit;
+  background-color: inherit;
+}
+
+.friend-selector-unit {
+  display: flex;
+  flex-wrap: wrap;
+
+  @include card-container(0, $card-width-friend);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+.hand {
+  position: relative;
+  @include flex.row-center;
+
+  height: rhythm.rh(10);
+
+  padding: rhythm.rh(1);
+
+  &::after {
+    content: "[hand]";
+
+    position: absolute;
+    bottom: 0;
+    right: 0;
+
+    opacity: 0;
+    transition: all ease-in 4s;
+  }
+  &:hover::after {
+    opacity: 1;
+    transition: all 0s;
   }
 }

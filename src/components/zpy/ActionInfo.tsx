@@ -36,10 +36,6 @@ export class ActionInfo extends React.Component<ActionInfo.Props> {
   }
 
   renderBid() {
-    if (this.props.phase < ZPY.Phase.DRAW ||
-        this.props.phase > ZPY.Phase.PREPARE) {
-      return null;
-    }
     if (this.props.bids.length === 0) return null;
 
     const bid = this.props.bids[this.props.bids.length - 1];
@@ -50,11 +46,19 @@ export class ActionInfo extends React.Component<ActionInfo.Props> {
     />;
   }
 
-  renderPlay() {
-    if (this.props.phase < ZPY.Phase.LEAD ||
-        this.props.phase > ZPY.Phase.FINISH) {
+  renderReady() {
+    if (!this.props.ready &&
+        this.props.phase !== ZPY.Phase.KITTY) {
+      // we "hold" the ready state across the KITTY phase
       return null;
     }
+
+    return <div className="ready">
+      <img src="/static/png/icons/check-mark.png"/>
+    </div>;
+  }
+
+  renderPlay() {
     const play = this.props.play;
     if (play === null) return null;
 
@@ -102,10 +106,25 @@ export class ActionInfo extends React.Component<ActionInfo.Props> {
     return tractors.reverse();
   }
 
+  renderInner() {
+    if (this.props.phase === ZPY.Phase.DRAW) {
+      return this.renderBid();
+    }
+    if (this.props.phase === ZPY.Phase.PREPARE) {
+      return this.renderReady() ?? this.renderBid();
+    }
+    if (this.props.phase === ZPY.Phase.KITTY) {
+      return this.renderReady();
+    }
+    if (this.props.phase >= ZPY.Phase.LEAD &&
+        this.props.phase <= ZPY.Phase.FINISH) {
+      return this.renderPlay() ?? this.renderReady();
+    }
+  }
+
   render() {
     return <div className="action-info">
-      {this.renderBid()}
-      {this.renderPlay()}
+      {this.renderInner()}
     </div>;
   }
 }

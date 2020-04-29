@@ -18,10 +18,10 @@ export class CardFan extends React.Component<CardFan.Props> {
     const {pile, ...props} = this.props;
 
     const fit_width =
-      // length of all card clips, plus 1px for border
-      ((props.width * (props.xclip ?? 1) + 1) * pile.length) +
-      // padding of the last card, plus 1px for border
-      props.width * (1 - (props.xclip ?? 1)) + 1;
+      // length of all card clips, plus 1px for each border
+      ((props.width * (props.xclip ?? 1) + 2) * pile.length) +
+      // padding of the last card
+      props.width * (1 - (props.xclip ?? 1));
 
     return <div style={{
       display: 'flex',

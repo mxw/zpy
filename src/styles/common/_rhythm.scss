@@ -43,15 +43,15 @@ $px: 1rem * (1px / $default-font-size);
   #{$property}-bottom: rh($lines);
 }
 
-@mixin rh-margins-x($lines: 1) {
+@mixin rh-margin-x($lines: 1) {
   margin-left: rh($lines);
   margin-right: rh($lines);
 }
-@mixin rh-margins-y($lines: 1) {
+@mixin rh-margin-y($lines: 1) {
   margin-top: rh($lines);
   margin-bottom: rh($lines);
 }
-@mixin rh-margins($lines: 1) {
+@mixin rh-margin($lines: 1) {
   margin: rh($lines) rh($lines) rh($lines) rh($lines);
 }
 

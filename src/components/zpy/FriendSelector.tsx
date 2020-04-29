@@ -12,7 +12,7 @@ import { Card } from 'components/zpy/Card.tsx'
 import { strict as assert} from 'assert'
 
 
-const card_width = 64;
+const card_width = 80;
 const clip_pct = 0.25;
 
 export class FriendSelector extends React.Component<FriendSelector.Props, {}> {
@@ -24,27 +24,36 @@ export class FriendSelector extends React.Component<FriendSelector.Props, {}> {
     const deck = [...gen_deck()].filter(cb => (
       cb.rank !== Rank.S &&
       cb.rank !== Rank.B &&
-      (cb.suit !== this.props.tr.suit || cb.rank !== this.props.tr.rank)
+      cb.rank !== this.props.tr.rank
     ));
 
-    return this.props.selected.map((selected, i) =>
-      <div
-        key={i}
-        className="friend-selector-unit"
-      >
-        {deck.map(cb => {
-          const key = cb.toString();
-          return <Card
-            key={key}
-            card={cb}
-            width={card_width}
-            xclip={clip_pct}
-            yclip={clip_pct}
-            selected={key in selected}
-          />;
-        })}
-      </div>
-    );
+    let classes = ["friend-selector-container"];
+    if (this.props.tr.suit === Suit.TRUMP) classes.push("fsc-trump");
+
+    return <div className={classes.join(' ')}>
+      {this.props.selected.map((fr, i) =>
+        <div
+          key={'' + i}
+          className="friend-selector-unit"
+        >
+          {deck.map(cb => {
+            const key = cb.toString();
+            return <div
+              key={key}
+              onClick={ev => this.props.onSelect(cb, i, ev)}
+            >
+              <Card
+                card={cb}
+                width={card_width}
+                xclip={clip_pct}
+                yclip={clip_pct}
+                selected={key in fr}
+              />
+            </div>;
+          })}
+        </div>
+      )}
+    </div>;
   }
 }
 

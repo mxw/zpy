@@ -55,6 +55,7 @@ export class PlayArea extends React.Component<
 
     // drag/drop/select handlers
     this.onSelect = this.onSelect.bind(this);
+    this.onFriendSelect = this.onFriendSelect.bind(this);
     this.onDragStart = this.onDragStart.bind(this);
     this.onDragEnd = this.onDragEnd.bind(this);
 
@@ -347,7 +348,7 @@ export class PlayArea extends React.Component<
   }
 
   submitReplaceKitty(): boolean {
-    const cards = this.state.areas[1].ordered;
+    const cards = this.state.areas[1]?.ordered ?? [];
     if (cards.length === 0) return false;
 
     this.props.funcs.attempt(
@@ -648,22 +649,34 @@ export class PlayArea extends React.Component<
     </div>;
   }
 
+  onFriendSelect(
+    cb: CardBase,
+    nth: number,
+    ev: React.MouseEvent | React.TouchEvent
+  ) {
+    this.setState((state, props) => ({
+      fr_select: state.fr_select.map((fr, i) => {
+        if (i !== nth) return fr;
+        const key = cb.toString();
+
+        if (key in fr) {
+          const result = {...fr};
+          delete result[key];
+          return result;
+        }
+        return {...fr, [key]: [cb, nth]};
+      })
+    }));
+  }
+
   renderFriendArea(state: PlayArea.State) {
+    if (this.props.me.id !== this.props.zpy.host) return null;
+
     return <div className="action friend">
       <FriendSelector
         tr={this.props.zpy.tr}
         selected={this.state.fr_select}
-        onSelect={(
-          cb: CardBase,
-          nth: number,
-          ev: React.MouseEvent | React.TouchEvent
-        ) => {
-          this.setState((state, props) => ({
-            fr_select: state.fr_select.map(
-              (fr, i) => i === nth ? {...fr, [cb.toString()]: [cb, nth]} : fr
-            )
-          }));
-        }}
+        onSelect={this.onFriendSelect}
       />
     </div>;
   }
@@ -699,20 +712,23 @@ export class PlayArea extends React.Component<
   }
 
   renderActionArea(state: PlayArea.State) {
-    switch (this.props.phase) {
-      case ZPY.Phase.DRAW:
-      case ZPY.Phase.PREPARE:
-        return this.renderDrawArea(state);
-      case ZPY.Phase.FRIEND:
-        return this.renderFriendArea(state);
-      case ZPY.Phase.KITTY:
-      case ZPY.Phase.LEAD:
-      case ZPY.Phase.FLY:
-      case ZPY.Phase.FOLLOW:
-        return this.renderStagingArea(state);
-      default: break;
-    }
-    return null;
+    const component = (() => {
+      switch (this.props.phase) {
+        case ZPY.Phase.DRAW:
+        case ZPY.Phase.PREPARE:
+          return this.renderDrawArea(state);
+        case ZPY.Phase.FRIEND:
+          return this.renderFriendArea(state);
+        case ZPY.Phase.KITTY:
+        case ZPY.Phase.LEAD:
+        case ZPY.Phase.FLY:
+        case ZPY.Phase.FOLLOW:
+          return this.renderStagingArea(state);
+        default: break;
+      }
+      return null;
+    })();
+    return component ?? (<div className="action"></div>);
   }
 
   render() {
