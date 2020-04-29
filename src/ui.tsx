@@ -4,6 +4,7 @@ import { withRouter, BrowserRouter as Router, Switch, Route } from 'react-router
 
 import * as Session from 'server/session.ts';
 
+import { WithSession } from 'components/zpy/WithSession.tsx';
 import { Home } from 'components/zpy/Home.tsx';
 import { Game } from 'components/zpy/Game.tsx';
 
@@ -26,16 +27,20 @@ ReactDOM.render(
   <Router>
     <Switch>
       <Route exact path="/">
-        <Home/>
+        <WithSession>
+          <Home/>
+        </WithSession>
       </Route>
       <Route
         path={`/zpy/:game_id(${escape_backslashes(Session.regex.source)})`}
         render={({match}) =>
-          <Game
-            path="zpy"
-            id={match.params.game_id}
-            nick="strong sad"
-          />
+          <WithSession>
+            <Game
+              path="zpy"
+              id={match.params.game_id}
+              nick="strong sad"
+            />
+          </WithSession>
         }
       />
     </Switch>

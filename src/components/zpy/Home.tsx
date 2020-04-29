@@ -5,7 +5,6 @@ import * as React from "react"
 import { Redirect } from 'react-router-dom';
 import axios from "axios"
 
-import * as Session from 'server/session.ts'
 import { GameId } from 'server/server.ts'
 
 import 'styles/zpy/zpy.scss'
@@ -15,21 +14,10 @@ export class Home extends React.Component<{}, Home.State> {
   constructor(props: {}) {
     super(props);
 
-    this.state = {
-      session_id: null,
-      game_id: null,
-    };
+    this.state = {game_id: null};
   }
 
   render() {
-    if (this.state.session_id === null) {
-      (async () => {
-        const response = await axios.get('/api/session');
-        this.setState({session_id: response.data});
-      })();
-      return null;
-    }
-
     if (this.state.game_id === null) {
       (async () => {
         const response = await axios.post('/api/new_game');
@@ -45,7 +33,6 @@ export class Home extends React.Component<{}, Home.State> {
 export namespace Home {
 
 export type State = {
-  session_id: null | Session.Id;
   game_id: null | GameId;
 };
 

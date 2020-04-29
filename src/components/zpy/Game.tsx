@@ -18,6 +18,8 @@ import { Board } from 'components/zpy/Board.tsx'
 
 import { strict as assert} from 'assert'
 
+import 'styles/zpy/zpy.scss'
+
 
 export class Game extends React.Component<Game.Props, Game.State> {
   constructor(props: Game.Props) {
