@@ -23,3 +23,14 @@ export namespace ansi {
 export function escape_backslashes(s: string): string {
   return s.replace(/\\/g, '\\\\');
 }
+
+/*
+ * simple, extremely non-cryptographic numeric hash
+ */
+export function hash_code(s: string): number {
+  let h = 0;
+  for (var i = 0; i < s.length; ++i) {
+    h = Math.imul(31, h) + s.charCodeAt(i) | 0;
+  }
+  return h;
+}

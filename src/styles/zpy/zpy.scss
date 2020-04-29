@@ -8,6 +8,10 @@
 @use "common/flex";
 @use "common/rhythm";
 
+body {
+  font-family: "Minion Pro", "Minion", "Trebuchet MS", "Trebuchet", sans-serif;
+}
+
 .board {
   @include flex.column;
 }
@@ -19,6 +23,32 @@
 
 .player-column {
   @include flex.column;
+
+  @include rhythm.rh-padding();
+
+  > .player-info {
+    @include flex.row-center;
+    justify-items: flex-start;
+
+    @include rhythm.rh-padding(0.5);
+
+    &.current {
+      @include rhythm.rh-border-full(0.5, 1rem / 8);
+      border-radius: rhythm.rh(0.5);
+      border-style: solid;
+      border-color: green;
+    }
+
+    > .avatar {
+      width: rhythm.rh(2.25);
+      height: rhythm.rh(2.25);
+      @include rhythm.rh-padding-x(0.25);
+    }
+
+    > .nick {
+      @include rhythm.rh-padding-x(0.25);
+    }
+  }
 
   > .action-info {
     min-height: rhythm.rh(10);
@@ -38,7 +68,6 @@
 
   &::after {
     content: "[hand]";
-    font-family: monospace;
 
     position: absolute;
     bottom: 0;

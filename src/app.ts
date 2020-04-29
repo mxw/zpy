@@ -21,6 +21,7 @@ app.use(
 app.use('/static/js', express.static("dist/ui"));
 app.use('/static/style', express.static("assets/style"));
 app.use('/static/svg', express.static("assets/svg"));
+app.use('/static/png', express.static("assets/png"));
 
 app.use(CookieParser());
 app.use(Session.middleware);

@@ -24,7 +24,10 @@ class Column extends React.Component<Column.Props, {}> {
   render() {
     const pr = this.props;
 
-    return <div className="player-column">
+    let classes = ["player-column"];
+    if (pr.current) classes.push("current");
+
+    return <div className={classes.join(' ')}>
       <PlayerInfo
         key="player"
         phase={pr.phase}

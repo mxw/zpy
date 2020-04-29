@@ -15,6 +15,8 @@ import * as P from 'protocol/protocol.ts'
 
 import { ZPY } from 'lib/zpy/zpy.ts'
 
+import { hash_code } from 'utils/string.ts'
+
 import { strict as assert} from 'assert'
 
 
@@ -27,14 +29,21 @@ export class PlayerInfo extends React.Component<
   }
 
   render() {
-    const avatar_url = "";
+    const pr = this.props;
+    const avatar_id = hash_code(`${pr.user.id}:${pr.user.nick}`) % 78 + 1;
 
-    return <div className="player-info">
+    let div_class = ["player-info"];
+    if (pr.current) div_class.push("current");
+
+    let ava_class = ["avatar"];
+    if (pr.host) ava_class.push("host");
+
+    return <div className={div_class.join(' ')}>
       <img
-        className="avatar"
-        src={avatar_url}
+        className={ava_class.join(' ')}
+        src={`/static/png/avatars/${avatar_id}.png`}
       />
-      <div className="nick">{this.props.user.nick}</div>
+      <div className="nick">{pr.user.nick}</div>
     </div>;
   }
 }
