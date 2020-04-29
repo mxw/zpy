@@ -227,7 +227,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     ++this.round;
     this.consensus.clear();
 
-    let kitty_sz = this.deck.length % this.nplayers;
+    let kitty_sz = (this.ndecks * 54) % this.nplayers;
     if (kitty_sz === 0) kitty_sz = this.nplayers;
     while (kitty_sz > 10) kitty_sz -= this.nplayers;
     while (kitty_sz <= 4) kitty_sz += this.nplayers;

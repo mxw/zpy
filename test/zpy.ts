@@ -200,15 +200,6 @@ describe('ZPY', () => {
       expect(follow_impl(p, ...cards));
     };
 
-    expect_err(
-      follow_impl(c, [Suit.DIAMONDS, Rank.A]),
-      ZPY.OutOfTurnError
-    );
-    expect_err(
-      follow_impl(b, [Suit.DIAMONDS, Rank.A]),
-      ZPY.InvalidPlayError, 'play not part of hand'
-    );
-
     lead(b, [Suit.DIAMONDS, Rank.K]);
 
     expect_err(
