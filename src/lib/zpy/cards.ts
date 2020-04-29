@@ -205,6 +205,16 @@ export class CardBase {
   }
 }
 
+export function* gen_deck(): Generator<CardBase, void> {
+  for (let suit of CardBase.SUITS) {
+    for (let rank = 2; rank <= Rank.A; ++rank) {
+      yield new CardBase(suit, rank);
+    }
+  }
+  yield new CardBase(Suit.TRUMP, Rank.S);
+  yield new CardBase(Suit.TRUMP, Rank.B);
+}
+
 /*
  * A ZPY-context-sensitive card.
  *

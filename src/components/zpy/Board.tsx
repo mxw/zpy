@@ -24,11 +24,6 @@ export class Board extends React.Component<Board.Props, Board.State> {
   render() {
     const zpy = this.props.zpy;
 
-    const id = this.props.me.id;
-    const hand: Iterable<CardBase> =
-      id in zpy.hands ? zpy.hands[id].pile.gen_cards() :
-      id in zpy.draws ? zpy.draws[id].gen_cards() : [];
-
     return (
       <div className="board">
         <RoundInfo
@@ -41,9 +36,7 @@ export class Board extends React.Component<Board.Props, Board.State> {
           key={zpy.round} // reset on every round
           me={this.props.me}
           phase={zpy.phase}
-          tr={zpy.tr}
-          hand={hand}
-          kitty={id === zpy.host ? zpy.kitty : []}
+          zpy={zpy}
           funcs={this.props.funcs}
         />
       </div>

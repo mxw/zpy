@@ -28,6 +28,7 @@ export class Game extends React.Component<Game.Props, Game.State> {
 
     this.attempt = this.attempt.bind(this);
     this.subscribeReset = this.subscribeReset.bind(this);
+    this.subscribeUpdate = this.subscribeUpdate.bind(this);
 
     this.state = {
       client: null,

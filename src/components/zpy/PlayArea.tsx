@@ -18,7 +18,10 @@ import * as ZPYEngine from 'lib/zpy/engine.ts'
 import { CardID, EngineCallbacks } from 'components/zpy/common.ts'
 import { CardImage } from 'components/zpy/CardImage.tsx'
 import { card_width, CardArea, EmptyArea } from 'components/zpy/CardArea.tsx'
+import { FriendSelector } from 'components/zpy/FriendSelector.tsx'
 import { isWindows } from 'components/utils/platform.ts'
+
+import { array_fill } from 'utils/array.ts'
 
 import { strict as assert} from 'assert'
 
@@ -55,23 +58,35 @@ export class PlayArea extends React.Component<
     this.onDragStart = this.onDragStart.bind(this);
     this.onDragEnd = this.onDragEnd.bind(this);
 
+    const zpy = this.props.zpy;
+    const id = this.props.me.id;
+
+    const hand: Iterable<CardBase> =
+      id in zpy.hands ? zpy.hands[id].pile.gen_cards() :
+      id in zpy.draws ? zpy.draws[id].gen_cards() : [];
+
     let state = PlayArea.withCardsAdded({
       seen: [],
+
       id_set: new Set(),
       areas: [{ordered: [], id_to_pos: {}}],
       id_to_area: {},
+
       selected: new Set(),
       prev_start: null,
       prev_stop: null,
       multidrag: null,
+
+      fr_select: array_fill(zpy.ndecks, () => ({})),
+
       action: {
         pending: false,
       },
-    }, props.hand, 0);
+    }, hand, 0);
 
-    if (props.kitty !== null) {
+    if (id === zpy.host && zpy.kitty.length > 0) {
       state.areas.push({ordered: [], id_to_pos: {}});
-      state = PlayArea.withCardsAdded(state, props.kitty, 1);
+      state = PlayArea.withCardsAdded(state, zpy.kitty, 1);
     }
     this.state = PlayArea.validate(state);
 
@@ -129,16 +144,21 @@ export class PlayArea extends React.Component<
   static copyState(state: PlayArea.State): PlayArea.State {
     return {
       seen: [...state.seen],
+
       id_set: new Set(state.id_set),
       areas: state.areas.map(({ordered, id_to_pos}) => ({
         ordered: [...ordered],
         id_to_pos: {...id_to_pos},
       })),
       id_to_area: {...state.id_to_area},
-      selected: new Set(...state.selected),
+
+      selected: new Set(state.selected),
       prev_start: state.prev_start,
       prev_stop: state.prev_stop,
       multidrag: state.multidrag,
+
+      fr_select: state.fr_select.map(fr => ({...fr})),
+
       action: {...state.action},
     }
   }
@@ -154,6 +174,12 @@ export class PlayArea extends React.Component<
    */
   onUpdate(effect: ZPYEngine.Effect) {
     switch (effect.kind) {
+      case 'set_decks': {
+        this.setState({
+          fr_select: array_fill(this.props.zpy.ndecks, () => ({}))
+        });
+        break;
+      }
       case 'install_host': {
         const kitty = effect.args[1];
         if (kitty.length > 0) {
@@ -161,6 +187,7 @@ export class PlayArea extends React.Component<
             PlayArea.withCardsAdded(state, kitty, 1)
           );
         }
+        break;
       }
       default: break;
     }
@@ -317,6 +344,27 @@ export class PlayArea extends React.Component<
     return true;
   }
 
+  submitReplaceKitty(): boolean {
+    const cards = this.state.areas[1].ordered;
+    if (cards.length === 0) return false;
+
+    this.props.funcs.attempt(
+      {kind: 'replace_kitty', args: [this.props.me.id, cards.map(c => c.cb)]},
+      this.onEffect, this.onEffect
+    );
+    return true;
+  }
+
+  submitCallFriends(): boolean {
+    const friends = this.state.fr_select.flatMap(fr => Object.values(fr));
+    if (friends.length === 0) return false;
+
+    this.props.funcs.attempt(
+      {kind: 'call_friends', args: [this.props.me.id, friends]},
+      this.onEffect, this.onEffect
+    );
+  }
+
   /*
    * shared logic around an attempt completing
    */
@@ -335,10 +383,8 @@ export class PlayArea extends React.Component<
       case ZPY.Phase.INIT: return this.submitStartGame();
       case ZPY.Phase.DRAW: return this.submitBidTrump();
       case ZPY.Phase.PREPARE: return this.submitReady();
-      case ZPY.Phase.KITTY:
-        break;
-      case ZPY.Phase.FRIEND:
-        break;
+      case ZPY.Phase.KITTY: return this.submitReplaceKitty();
+      case ZPY.Phase.FRIEND: return this.submitCallFriends();
       case ZPY.Phase.LEAD:
         break;
       case ZPY.Phase.FLY:
@@ -602,6 +648,21 @@ export class PlayArea extends React.Component<
 
   renderFriendArea(state: PlayArea.State) {
     return <div className="action friend">
+      <FriendSelector
+        tr={this.props.zpy.tr}
+        selected={this.state.fr_select}
+        onSelect={(
+          cb: CardBase,
+          nth: number,
+          ev: React.MouseEvent | React.TouchEvent
+        ) => {
+          this.setState((state, props) => ({
+            fr_select: state.fr_select.map(
+              (fr, i) => i === nth ? {...fr, [cb.toString()]: [cb, nth]} : fr
+            )
+          }));
+        }}
+      />
     </div>;
   }
 
@@ -699,11 +760,7 @@ type Area = {
 export type Props = {
   me: P.User;
   phase: ZPY.Phase;
-  tr: null | TrumpMeta;
-
-  // initial hand and kitty
-  hand: Iterable<CardBase>;
-  kitty: null | CardBase[];
+  zpy: ZPYEngine.ClientState;
 
   funcs: EngineCallbacks<any>;
 };
@@ -742,6 +799,8 @@ export type State = {
     // list of all cards in the pile
     pile: CardBase[];
   };
+
+  fr_select: Record<string, [CardBase, number]>[];
 
   // player action-related metadata
   action: {

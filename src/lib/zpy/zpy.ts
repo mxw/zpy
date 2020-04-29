@@ -3,7 +3,7 @@
  */
 
 import {
-  Suit, Rank, TrumpMeta, CardBase, Card, CardPile, rank_to_string
+  Suit, Rank, TrumpMeta, CardBase, Card, CardPile, rank_to_string, gen_deck
 } from 'lib/zpy/cards.ts';
 import {
   CardTuple, Tractor, Flight, Play, Hand
@@ -194,13 +194,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     let deck: CardBase[] = [];
 
     for (let i = 0; i < n; ++i) {
-      for (let suit of CardBase.SUITS) {
-        for (let rank = 2; rank <= Rank.A; ++rank) {
-          deck.push(new CardBase(suit, rank));
-        }
-      }
-      deck.push(new CardBase(Suit.TRUMP, Rank.S));
-      deck.push(new CardBase(Suit.TRUMP, Rank.B));
+      deck = [...deck, ...gen_deck()];
     }
     assert(deck.length === n * 54);
 
