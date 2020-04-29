@@ -276,6 +276,10 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (this.nplayers < 4) {
       return new ZPY.InvalidPlayError('must have at least 4 players');
     }
+    if (this.ndecks === 0) {
+      this.ndecks = Math.ceil(this.nplayers / 2);
+    }
+
     let players = !this.debug
       ? array_shuffle(this.players)
       : this.players;
