@@ -31,7 +31,8 @@ export class Game extends React.Component<Game.Props, Game.State> {
 
     this.state = {
       client: null,
-      subscriptions: [],
+      reset_subs: [],
+      update_subs: [],
     };
   }
 
@@ -73,7 +74,7 @@ export class Game extends React.Component<Game.Props, Game.State> {
     }
     this.setState({client});
 
-    for (let callback of this.state.subscriptions) {
+    for (let callback of this.state.reset_subs) {
       callback(client.state);
     }
   }
@@ -85,6 +86,9 @@ export class Game extends React.Component<Game.Props, Game.State> {
     ctx?: T,
   ) {
     if (command.kind === 'engine') {
+      for (let callback of this.state.update_subs) {
+        callback(command.effect);
+      }
       cb?.(command.effect, ctx);
     }
     this.setState({client});
@@ -116,7 +120,12 @@ export class Game extends React.Component<Game.Props, Game.State> {
 
   subscribeReset(callback: (state: ZPYEngine.ClientState) => void) {
     this.setState((state, props) => ({
-      subscriptions: [...state.subscriptions, callback]
+      reset_subs: [...state.reset_subs, callback]
+    }));
+  }
+  subscribeUpdate(callback: (effect: ZPYEngine.Effect) => void) {
+    this.setState((state, props) => ({
+      update_subs: [...state.update_subs, callback]
     }));
   }
 
@@ -137,6 +146,7 @@ export class Game extends React.Component<Game.Props, Game.State> {
       funcs={{
         attempt: this.attempt,
         subscribeReset: this.subscribeReset,
+        subscribeUpdate: this.subscribeUpdate,
       }}
     />;
   }
@@ -152,7 +162,8 @@ export type Props = {
 
 export type State = {
   client: null | Client;
-  subscriptions: ((state: ZPYEngine.ClientState) => void)[];
+  reset_subs: ((state: ZPYEngine.ClientState) => void)[];
+  update_subs: ((effect: ZPYEngine.Effect) => void)[];
 };
 
 }

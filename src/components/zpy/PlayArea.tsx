@@ -37,13 +37,20 @@ export class PlayArea extends React.Component<
   constructor(props: PlayArea.Props) {
     super(props);
 
+    // server message callbacks
+    this.onReset = this.onReset.bind(this);
+    this.onUpdate = this.onUpdate.bind(this);
+
+    // player actions
     this.onSubmit = this.onSubmit.bind(this);
     this.onEffect = this.onEffect.bind(this);
     this.onClickDeck = this.onClickDeck.bind(this);
 
+    // window event listeners
     this.onClickOut = this.onClickOut.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
 
+    // drag/drop/select handlers
     this.onSelect = this.onSelect.bind(this);
     this.onDragStart = this.onDragStart.bind(this);
     this.onDragEnd = this.onDragEnd.bind(this);
@@ -67,6 +74,9 @@ export class PlayArea extends React.Component<
       state = PlayArea.withCardsAdded(state, props.kitty, 1);
     }
     this.state = PlayArea.validate(state);
+
+    this.props.funcs.subscribeReset(this.onReset);
+    this.props.funcs.subscribeUpdate(this.onUpdate);
   }
 
   componentDidMount() {
@@ -130,6 +140,29 @@ export class PlayArea extends React.Component<
       prev_stop: state.prev_stop,
       multidrag: state.multidrag,
       action: {...state.action},
+    }
+  }
+
+  /*
+   * account for new/removed cards from a server reset
+   */
+  onReset(state: ZPYEngine.ClientState) {
+  }
+
+  /*
+   * account for new/removed cards from a server update
+   */
+  onUpdate(effect: ZPYEngine.Effect) {
+    switch (effect.kind) {
+      case 'install_host': {
+        const kitty = effect.args[1];
+        if (kitty.length > 0) {
+          this.setState((state, props) =>
+            PlayArea.withCardsAdded(state, kitty, 1)
+          );
+        }
+      }
+      default: break;
     }
   }
 
@@ -264,7 +297,6 @@ export class PlayArea extends React.Component<
 
   submitBidTrump(): boolean {
     const cards = this.state.areas[1].ordered;
-    console.log(cards);
     if (cards.length === 0) return false;
 
     const cb = cards[0].cb;
@@ -272,6 +304,14 @@ export class PlayArea extends React.Component<
 
     this.props.funcs.attempt(
       {kind: 'bid_trump', args: [this.props.me.id, cb, cards.length]},
+      this.onEffect, this.onEffect
+    );
+    return true;
+  }
+
+  submitReady(): boolean {
+    this.props.funcs.attempt(
+      {kind: 'ready', args: [this.props.me.id]},
       this.onEffect, this.onEffect
     );
     return true;
@@ -294,8 +334,7 @@ export class PlayArea extends React.Component<
     switch (this.props.phase) {
       case ZPY.Phase.INIT: return this.submitStartGame();
       case ZPY.Phase.DRAW: return this.submitBidTrump();
-      case ZPY.Phase.PREPARE:
-        break;
+      case ZPY.Phase.PREPARE: return this.submitReady();
       case ZPY.Phase.KITTY:
         break;
       case ZPY.Phase.FRIEND:

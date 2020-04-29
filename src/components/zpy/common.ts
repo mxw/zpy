@@ -29,9 +29,8 @@ export type EngineCallbacks<T> = {
     ctx?: T,
   ) => void;
 
-  subscribeReset: (
-    callback: (state: ZPYEngine.ClientState) => void
-  ) => void;
+  subscribeReset: (callback: (state: ZPYEngine.ClientState) => void) => void;
+  subscribeUpdate: (callback: (effect: ZPYEngine.Effect) => void) => void;
 };
 
 /*
