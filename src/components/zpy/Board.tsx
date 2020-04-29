@@ -31,7 +31,12 @@ export class Board extends React.Component<Board.Props, Board.State> {
 
     return (
       <div className="board">
-        <RoundInfo zpy={zpy} users={this.props.users} />
+        <RoundInfo
+          key="roundinfo"
+          me={this.props.me}
+          zpy={zpy}
+          users={this.props.users}
+        />
         <PlayArea
           key={zpy.round} // reset on every round
           me={this.props.me}

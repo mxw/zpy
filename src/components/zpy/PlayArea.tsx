@@ -256,19 +256,31 @@ export class PlayArea extends React.Component<
         this.setState((state, props) =>
           PlayArea.withCardsAdded(state, [effect.args[1]], 0)
         );
+        this.onEffect();
       },
       this.onEffect
     );
   }
 
-  submitBid(): boolean {
-    return false;
+  submitBidTrump(): boolean {
+    const cards = this.state.areas[1].ordered;
+    console.log(cards);
+    if (cards.length === 0) return false;
+
+    const cb = cards[0].cb;
+    if (!cards.every(c => CardBase.same(c.cb, cb))) return false;
+
+    this.props.funcs.attempt(
+      {kind: 'bid_trump', args: [this.props.me.id, cb, cards.length]},
+      this.onEffect, this.onEffect
+    );
+    return true;
   }
 
   /*
    * shared logic around an attempt completing
    */
-  onEffect(_: any) {
+  onEffect(_?: any) {
     this.setState({action: {pending: false}});
   }
 
@@ -281,8 +293,7 @@ export class PlayArea extends React.Component<
 
     switch (this.props.phase) {
       case ZPY.Phase.INIT: return this.submitStartGame();
-      case ZPY.Phase.DRAW: return this.submitBid();
-        break;
+      case ZPY.Phase.DRAW: return this.submitBidTrump();
       case ZPY.Phase.PREPARE:
         break;
       case ZPY.Phase.KITTY:

@@ -13,6 +13,8 @@ import { State as Z } from 'lib/zpy/engine.ts'
 
 import { CardFan } from 'components/zpy/CardFan.tsx'
 
+import { array_fill } from 'utils/array.ts'
+
 import { strict as assert} from 'assert'
 
 
@@ -33,7 +35,26 @@ export class ActionInfo extends React.Component<ActionInfo.Props> {
     />;
   }
 
+  renderBid() {
+    if (this.props.phase < ZPY.Phase.DRAW ||
+        this.props.phase > ZPY.Phase.PREPARE) {
+      return null;
+    }
+    if (this.props.bids.length === 0) return null;
+
+    const bid = this.props.bids[this.props.bids.length - 1];
+    return <CardFan
+      width={card_width}
+      xclip={clip_pct}
+      pile={array_fill(bid.n, bid.card)}
+    />;
+  }
+
   renderPlay() {
+    if (this.props.phase < ZPY.Phase.LEAD ||
+        this.props.phase > ZPY.Phase.FINISH) {
+      return null;
+    }
     const play = this.props.play;
     if (play === null) return null;
 
@@ -83,6 +104,7 @@ export class ActionInfo extends React.Component<ActionInfo.Props> {
 
   render() {
     return <div className="action-info">
+      {this.renderBid()}
       {this.renderPlay()}
     </div>;
   }

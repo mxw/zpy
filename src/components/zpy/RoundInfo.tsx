@@ -114,6 +114,7 @@ export class RoundInfo extends React.Component<
 export namespace RoundInfo {
 
 export type Props = {
+  me: P.User;
   zpy: Z;
   users: P.User[];
 };

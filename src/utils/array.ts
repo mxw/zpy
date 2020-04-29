@@ -5,7 +5,10 @@
 /*
  * Fill an array with `n` copies of `val`, or val() if `val` is a function.
  */
-export function array_fill<T>(n: number, val: T): T[] {
+export function array_fill<T>(
+  n: number,
+  val: T | (() => T)
+): T[] {
   let a : T[] = [];
   a.length = n;
   if (val instanceof Function) {

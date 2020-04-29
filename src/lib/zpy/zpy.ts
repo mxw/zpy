@@ -221,19 +221,21 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     ++this.round;
     this.consensus.clear();
 
+    let kitty_sz = this.deck.length % this.nplayers;
+    if (kitty_sz === 0) kitty_sz = this.nplayers;
+    while (kitty_sz > 10) kitty_sz -= this.nplayers;
+    while (kitty_sz <= 4) kitty_sz += this.nplayers;
+
     if (this.identity === null) {
       this.deck = this.shuffled_deck(this.ndecks);
       this.deck_sz = this.deck.length;
-
-      let kitty_sz = this.deck.length % this.nplayers;
-      if (kitty_sz === 0) kitty_sz = this.nplayers;
-      while (kitty_sz > 10) kitty_sz -= this.nplayers;
-      while (kitty_sz <= 4) kitty_sz += this.nplayers;
 
       this.kitty = [];
       for (let i = 0; i < kitty_sz; ++i) {
         this.kitty.push(this.draw());
       }
+    } else {
+      this.deck_sz = this.ndecks * 54 - kitty_sz;
     }
     this.bids = [];
     this.draws = {} as any;
