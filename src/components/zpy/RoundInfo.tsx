@@ -87,6 +87,9 @@ export class RoundInfo extends React.Component<
       ]
       : zpy.players;
 
+    console.log(ordered);
+    console.log(zpy.current);
+
     return <div className="round">
       {ordered.map(uid =>
         <Column
@@ -95,7 +98,7 @@ export class RoundInfo extends React.Component<
           user={users[uid]}
           owner={uid === zpy.owner}
           ready={zpy.consensus.has(uid)}
-          current={uid === zpy.order[zpy.current]}
+          current={uid === zpy.players[zpy.current]}
           tr={zpy.tr}
           host={uid === zpy.host}
           team={
