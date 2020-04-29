@@ -117,6 +117,13 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   get nfriends(): number {
     return Math.floor(0.35 * this.nplayers);
   }
+  get kitty_sz(): number {
+    let kitty_sz = (this.ndecks * 54) % this.nplayers;
+    if (kitty_sz === 0) kitty_sz = this.nplayers;
+    while (kitty_sz > 10) kitty_sz -= this.nplayers;
+    while (kitty_sz <= 4) kitty_sz += this.nplayers;
+    return kitty_sz;
+  }
 
   /*
    * Debugging helpers.
@@ -205,9 +212,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
    * Draw a card from deck.
    */
   private draw(): CardBase {
-    assert(this.deck.length === this.deck_sz);
     assert(this.deck.length > 0);
-    --this.deck_sz;
     return this.deck.pop();
   }
 
@@ -221,22 +226,18 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     ++this.round;
     this.consensus.clear();
 
-    let kitty_sz = (this.ndecks * 54) % this.nplayers;
-    if (kitty_sz === 0) kitty_sz = this.nplayers;
-    while (kitty_sz > 10) kitty_sz -= this.nplayers;
-    while (kitty_sz <= 4) kitty_sz += this.nplayers;
+    const kitty_sz = this.kitty_sz;
 
     if (this.identity === null) {
       this.deck = this.shuffled_deck(this.ndecks);
-      this.deck_sz = this.deck.length;
 
       this.kitty = [];
       for (let i = 0; i < kitty_sz; ++i) {
         this.kitty.push(this.draw());
       }
-    } else {
-      this.deck_sz = this.ndecks * 54 - kitty_sz;
     }
+    this.deck_sz = this.ndecks * 54 - kitty_sz;
+
     this.bids = [];
     this.draws = {} as any;
     this.current = this.order[starting];
@@ -281,9 +282,6 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (this.nplayers < 4) {
       return new ZPY.InvalidPlayError('must have at least 4 players');
     }
-    if (this.ndecks === 0) {
-      this.ndecks = Math.ceil(this.nplayers / 2);
-    }
 
     let players = !this.debug
       ? array_shuffle(this.players)
@@ -296,6 +294,10 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     this.players = players;
     for (let i = 0; i < this.nplayers; ++i) {
       this.order[this.players[i]] = i;
+    }
+    if (this.ndecks === 0) {
+      this.ndecks = Math.ceil(this.nplayers / 2);
+      this.ndecks = 1;
     }
     this.reset_round(this.owner, false);
     this.phase = ZPY.Phase.DRAW;
@@ -323,7 +325,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (this.can_see(player) && cb !== null) {
       this.draws[player].insert(cb);
     }
-    if (this.deck_sz === 0) {
+    if (--this.deck_sz === 0) {
       this.phase = ZPY.Phase.PREPARE;
     }
     this.current = this.next_player_idx(this.current);

@@ -322,23 +322,25 @@ export class PlayArea extends React.Component<
     );
   }
 
-  submitBidTrump(): boolean {
-    const cards = this.state.areas[1].ordered;
-    if (cards.length === 0) return false;
+  submitBidOrReady(): boolean {
+    const cards = this.state.areas[1]?.ordered ?? [];
+
+    if (cards.length === 0) {
+      if (this.props.phase === ZPY.Phase.PREPARE) {
+        this.props.funcs.attempt(
+          {kind: 'ready', args: [this.props.me.id]},
+          this.onEffect, this.onEffect
+        );
+        return true;
+      }
+      return false;
+    }
 
     const cb = cards[0].cb;
     if (!cards.every(c => CardBase.same(c.cb, cb))) return false;
 
     this.props.funcs.attempt(
       {kind: 'bid_trump', args: [this.props.me.id, cb, cards.length]},
-      this.onEffect, this.onEffect
-    );
-    return true;
-  }
-
-  submitReady(): boolean {
-    this.props.funcs.attempt(
-      {kind: 'ready', args: [this.props.me.id]},
       this.onEffect, this.onEffect
     );
     return true;
@@ -381,8 +383,8 @@ export class PlayArea extends React.Component<
 
     switch (this.props.phase) {
       case ZPY.Phase.INIT: return this.submitStartGame();
-      case ZPY.Phase.DRAW: return this.submitBidTrump();
-      case ZPY.Phase.PREPARE: return this.submitReady();
+      case ZPY.Phase.DRAW: return this.submitBidOrReady();
+      case ZPY.Phase.PREPARE: return this.submitBidOrReady();
       case ZPY.Phase.KITTY: return this.submitReplaceKitty();
       case ZPY.Phase.FRIEND: return this.submitCallFriends();
       case ZPY.Phase.LEAD:

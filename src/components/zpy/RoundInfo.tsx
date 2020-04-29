@@ -87,9 +87,6 @@ export class RoundInfo extends React.Component<
       ]
       : zpy.players;
 
-    console.log(ordered);
-    console.log(zpy.current);
-
     return <div className="round">
       {ordered.map(uid =>
         <Column
