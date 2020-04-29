@@ -35,26 +35,10 @@ export class Board extends React.Component<Board.Props, Board.State> {
         <PlayArea
           key={zpy.round} // reset on every round
           me={this.props.me}
-          //phase={zpy.phase}
+          phase={zpy.phase}
           tr={zpy.tr}
-          /*
           hand={hand}
           kitty={id === zpy.host ? zpy.kitty : []}
-          */
-          phase={ZPY.Phase.KITTY}
-          hand={[
-            new CardBase(Suit.DIAMONDS, Rank.K),
-            new CardBase(Suit.DIAMONDS, Rank.A),
-            new CardBase(Suit.SPADES, 4),
-            new CardBase(Suit.SPADES, 7),
-            new CardBase(Suit.HEARTS, Rank.Q),
-            new CardBase(Suit.HEARTS, Rank.Q),
-            new CardBase(Suit.TRUMP, Rank.B),
-          ]}
-          kitty={[
-            new CardBase(Suit.CLUBS, 10),
-            new CardBase(Suit.CLUBS, 2),
-          ]}
           funcs={this.props.funcs}
         />
       </div>
