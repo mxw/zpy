@@ -451,7 +451,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       ? this.bids[nbids - 1].player
       : this.players[this.current]  // starting player defaults to host
     );
-    this.install_host(this.host, this.kitty);
+    this.install_host(host, this.kitty);
     return [host, this.kitty];
   }
   install_host(
