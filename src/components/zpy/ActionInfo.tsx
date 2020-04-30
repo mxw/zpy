@@ -18,7 +18,7 @@ import { array_fill } from 'utils/array.ts'
 import { strict as assert} from 'assert'
 
 
-const card_width = 64;
+const card_width = 72;
 const clip_pct = 0.25;
 
 export class ActionInfo extends React.Component<ActionInfo.Props> {
