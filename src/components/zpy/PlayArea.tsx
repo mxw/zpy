@@ -288,18 +288,11 @@ export class PlayArea extends React.Component<
   /////////////////////////////////////////////////////////////////////////////
 
   submitStartGame(): boolean {
-    this.props.funcs.attempt(
-      {kind: 'start_game', args: [this.props.me.id]},
-      this.onEffect, this.onEffect
-    );
-    return true;
+    return this.attempt({kind: 'start_game', args: [this.props.me.id]});
   }
 
-  onClickDeck(ev: React.MouseEvent | React.TouchEvent) {
-    if (ev.defaultPrevented) return;
-    if ('button' in ev && ev.button !== 0) return;
-
-    this.props.funcs.attempt(
+  submitDrawCard(): boolean {
+    return this.attempt(
       {kind: 'draw_card', args: [this.props.me.id]},
       (effect: ZPYEngine.Effect) => {
         if (effect.kind !== 'add_to_hand') {
@@ -312,55 +305,55 @@ export class PlayArea extends React.Component<
           PlayArea.withCardsAdded(state, [effect.args[1]], 0)
         );
         this.onEffect(effect);
-      },
-      this.onEffect
+      }
     );
+  }
+
+  submitBidTrump(): boolean {
+    const cards = this.state.areas[1]?.ordered ?? [];
+    if (cards.length === 0) return false;
+
+    const cb = cards[0].cb;
+    if (!cards.every(c => CardBase.same(c.cb, cb))) return false;
+
+    return this.attempt({
+      kind: 'bid_trump',
+      args: [this.props.me.id, cb, cards.length],
+    });
+  }
+
+  submitReady(): boolean {
+    return this.attempt({kind: 'ready', args: [this.props.me.id]});
   }
 
   submitBidOrReady(): boolean {
     const cards = this.state.areas[1]?.ordered ?? [];
 
-    if (cards.length === 0) {
-      if (this.props.phase === ZPY.Phase.PREPARE) {
-        this.props.funcs.attempt(
-          {kind: 'ready', args: [this.props.me.id]},
-          this.onEffect, this.onEffect
-        );
-        return true;
-      }
-      return false;
+    if (cards.length === 0 &&
+        this.props.phase === ZPY.Phase.PREPARE) {
+      return this.submitReady();
     }
-
-    const cb = cards[0].cb;
-    if (!cards.every(c => CardBase.same(c.cb, cb))) return false;
-
-    this.props.funcs.attempt(
-      {kind: 'bid_trump', args: [this.props.me.id, cb, cards.length]},
-      this.onEffect, this.onEffect
-    );
-    return true;
+    return this.submitBidTrump();
   }
 
   submitReplaceKitty(): boolean {
     const cards = this.state.areas[1]?.ordered ?? [];
     if (cards.length === 0) return false;
 
-    this.props.funcs.attempt(
-      {kind: 'replace_kitty', args: [this.props.me.id, cards.map(c => c.cb)]},
-      this.onPlayEffect.bind(this, cards), this.onEffect
-    );
-    return true;
+    return this.attempt({
+      kind: 'replace_kitty',
+      args: [this.props.me.id, cards.map(c => c.cb)],
+    }, this.onPlayEffect.bind(this, cards));
   }
 
   submitCallFriends(): boolean {
     const friends = this.state.fr_select.flatMap(fr => Object.values(fr));
     if (friends.length === 0) return false;
 
-    this.props.funcs.attempt(
-      {kind: 'call_friends', args: [this.props.me.id, friends]},
-      this.onEffect, this.onEffect
-    );
-    return true;
+    return this.attempt({
+      kind: 'call_friends',
+      args: [this.props.me.id, friends]
+    });
   }
 
   submitLeadPlay(): boolean {
@@ -369,33 +362,66 @@ export class PlayArea extends React.Component<
 
     const to_rm = this.state.areas.slice(1).flatMap(a => a.ordered);
 
-    this.props.funcs.attempt(
+    return this.attempt(
       {kind: 'lead_play', args: [this.props.me.id, fl]},
-      this.onPlayEffect.bind(this, to_rm), this.onEffect
+      this.onPlayEffect.bind(this, to_rm)
     );
-    return true;
   }
 
-  submitFollowOrCollect(): boolean {
-    if (Object.keys(this.props.zpy.plays).length ===
-        this.props.zpy.players.length) {
-      this.props.funcs.attempt(
-        {kind: 'collect_trick', args: [this.props.me.id]},
-        this.onEffect, this.onEffect
-      );
-      return true;
-    }
-
+  submitFollowLead(): boolean {
     const play = this.extractPlay();
     if (!play) return false;
 
     const to_rm = this.state.areas.slice(1).flatMap(a => a.ordered);
 
-    this.props.funcs.attempt(
+    return this.attempt(
       {kind: 'follow_lead', args: [this.props.me.id, play]},
-      this.onPlayEffect.bind(this, to_rm), this.onEffect
+      this.onPlayEffect.bind(this, to_rm)
     );
-    return true;
+  }
+
+  submitCollectTrick(): boolean {
+    return this.attempt({kind: 'collect_trick', args: [this.props.me.id]});
+  }
+
+  submitFollowOrCollect(): boolean {
+    if (Object.keys(this.props.zpy.plays).length ===
+        this.props.zpy.players.length) {
+      return this.submitCollectTrick();
+    }
+    return this.submitFollowLead();
+  }
+
+  submitContestFly(): boolean {
+    const cards = this.state.areas[1]?.ordered ?? [];
+    if (cards.length === 0) return false;
+
+    return this.attempt({
+      kind: 'contest_fly',
+      args: [this.props.me.id, cards.map(c => c.cb)],
+    });
+  }
+
+  submitPassContest(): boolean {
+    return this.attempt({kind: 'pass_contest', args: [this.props.me.id]});
+  }
+
+  submitContestOrPass(): boolean {
+    const cards = this.state.areas[1]?.ordered ?? [];
+    if (cards.length === 0) {
+      return this.submitPassContest();
+    }
+    return this.submitContestFly();
+  }
+
+  submitEndRound(): boolean {
+    if (this.props.me.id !== this.props.zpy.host) return false;
+    return this.attempt({kind: 'end_round', args: [this.props.me.id]});
+  }
+
+  submitNextRound(): boolean {
+    if (this.props.me.id !== this.props.zpy.host) return false;
+    return this.attempt({kind: 'next_round', args: [this.props.me.id]});
   }
 
   /*
@@ -460,6 +486,21 @@ export class PlayArea extends React.Component<
   }
 
   /*
+   * convenience wrapper around this.props.funcs.attempt
+   */
+  attempt(
+    intent: ZPYEngine.Intent,
+    onUpdate?: (effect: ZPYEngine.Effect) => void,
+  ): true {
+    this.props.funcs.attempt(
+      intent,
+      onUpdate ?? this.onEffect,
+      this.onEffect
+    );
+    return true;
+  }
+
+  /*
    * shared logic around an attempt completing
    */
   onEffect(_?: any) {
@@ -480,13 +521,10 @@ export class PlayArea extends React.Component<
       case ZPY.Phase.KITTY: return this.submitReplaceKitty();
       case ZPY.Phase.FRIEND: return this.submitCallFriends();
       case ZPY.Phase.LEAD: return this.submitLeadPlay();
-      case ZPY.Phase.FLY:
-        break;
+      case ZPY.Phase.FLY: return this.submitContestOrPass();
       case ZPY.Phase.FOLLOW: return this.submitFollowOrCollect();
-      case ZPY.Phase.FINISH:
-        break;
-      case ZPY.Phase.WAIT:
-        break;
+      case ZPY.Phase.FINISH: return this.submitEndRound();
+      case ZPY.Phase.WAIT: return this.submitNextRound();
     }
     return false;
   }
@@ -741,6 +779,12 @@ export class PlayArea extends React.Component<
   }
 
   /////////////////////////////////////////////////////////////////////////////
+
+  onClickDeck(ev: React.MouseEvent | React.TouchEvent) {
+    if (ev.defaultPrevented) return;
+    if ('button' in ev && ev.button !== 0) return;
+    this.submitDrawCard();
+  }
 
   renderDrawArea(state: PlayArea.State) {
     return <div className="action draw">
