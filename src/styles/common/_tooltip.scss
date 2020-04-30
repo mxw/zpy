@@ -4,11 +4,13 @@
  * modified for SCSS
  */
 
-$balloon-border-radius: 0.125rem;
+$balloon-border-radius: 0.25rem;
 $balloon-color: rgba(16, 16, 16, 0.95);
 $balloon-text-color: #fff;
-$balloon-font-size: 0.75rem;
-$balloon-move: 0.125rem;
+$balloon-font-size: 0.875rem;
+$balloon-move: 0.125rem;  // animation distance
+$balloon-distance: 0.5rem;  // distance from target; also affects arrow size
+$balloon-arrow-offset: 1rem;  // arrow offset for un-centered positions
 
 [aria-label][data-balloon-pos] {
   overflow: visible;
@@ -23,7 +25,6 @@ $balloon-move: 0.125rem;
   transition: all 0.15s ease-out 0.15s;
 
   text-indent: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   font-weight: normal;
   font-style: normal;
   text-shadow: none;
@@ -44,7 +45,7 @@ $balloon-move: 0.125rem;
 [aria-label][data-balloon-pos]:before {
   width: 0;
   height: 0;
-  border: 5px solid transparent;
+  border: ($balloon-distance / 2) solid transparent;
   border-top-color: $balloon-color;
   opacity: 0;
   pointer-events: none;
@@ -83,7 +84,7 @@ $balloon-move: 0.125rem;
 [aria-label][data-balloon-pos][data-balloon-pos="up"]:after {
   bottom: 100%;
   left: 50%;
-  margin-bottom: 10px;
+  margin-bottom: $balloon-distance;
   transform: translate(-50%, $balloon-move);
   transform-origin: top;
 }
@@ -105,14 +106,14 @@ $balloon-move: 0.125rem;
 [aria-label][data-balloon-pos][data-balloon-pos="up-left"]:after {
   bottom: 100%;
   left: 0;
-  margin-bottom: 10px;
+  margin-bottom: $balloon-distance;
   transform: translate(0, $balloon-move);
   transform-origin: top;
 }
 
 [aria-label][data-balloon-pos][data-balloon-pos="up-left"]:before {
   bottom: 100%;
-  left: 5px;
+  left: $balloon-arrow-offset;
   transform: translate(0, $balloon-move);
   transform-origin: top;
 }
@@ -127,14 +128,14 @@ $balloon-move: 0.125rem;
 [aria-label][data-balloon-pos][data-balloon-pos="up-right"]:after {
   bottom: 100%;
   right: 0;
-  margin-bottom: 10px;
+  margin-bottom: $balloon-distance;
   transform: translate(0, $balloon-move);
   transform-origin: top;
 }
 
 [aria-label][data-balloon-pos][data-balloon-pos="up-right"]:before {
   bottom: 100%;
-  right: 5px;
+  right: $balloon-arrow-offset;
   transform: translate(0, $balloon-move);
   transform-origin: top;
 }
@@ -148,7 +149,7 @@ $balloon-move: 0.125rem;
 
 [aria-label][data-balloon-pos][data-balloon-pos="down"]:after {
   left: 50%;
-  margin-top: 10px;
+  margin-top: $balloon-distance;
   top: 100%;
   transform: translate(-50%, -1 * $balloon-move);
 }
@@ -156,7 +157,7 @@ $balloon-move: 0.125rem;
 [aria-label][data-balloon-pos][data-balloon-pos="down"]:before {
   width: 0;
   height: 0;
-  border: 5px solid transparent;
+  border: ($balloon-distance / 2) solid transparent;
   border-bottom-color: $balloon-color;
   left: 50%;
   top: 100%;
@@ -172,7 +173,7 @@ $balloon-move: 0.125rem;
 
 [aria-label][data-balloon-pos][data-balloon-pos="down-left"]:after {
   left: 0;
-  margin-top: 10px;
+  margin-top: $balloon-distance;
   top: 100%;
   transform: translate(0, -1 * $balloon-move);
 }
@@ -180,9 +181,9 @@ $balloon-move: 0.125rem;
 [aria-label][data-balloon-pos][data-balloon-pos="down-left"]:before {
   width: 0;
   height: 0;
-  border: 5px solid transparent;
+  border: ($balloon-distance / 2) solid transparent;
   border-bottom-color: $balloon-color;
-  left: 5px;
+  left: $balloon-arrow-offset;
   top: 100%;
   transform: translate(0, -1 * $balloon-move);
 }
@@ -196,7 +197,7 @@ $balloon-move: 0.125rem;
 
 [aria-label][data-balloon-pos][data-balloon-pos="down-right"]:after {
   right: 0;
-  margin-top: 10px;
+  margin-top: $balloon-distance;
   top: 100%;
   transform: translate(0, -1 * $balloon-move);
 }
@@ -204,9 +205,9 @@ $balloon-move: 0.125rem;
 [aria-label][data-balloon-pos][data-balloon-pos="down-right"]:before {
   width: 0;
   height: 0;
-  border: 5px solid transparent;
+  border: ($balloon-distance / 2) solid transparent;
   border-bottom-color: $balloon-color;
-  right: 5px;
+  right: $balloon-arrow-offset;
   top: 100%;
   transform: translate(0, -1 * $balloon-move);
 }
@@ -219,7 +220,7 @@ $balloon-move: 0.125rem;
 }
 
 [aria-label][data-balloon-pos][data-balloon-pos="left"]:after {
-  margin-right: 10px;
+  margin-right: $balloon-distance;
   right: 100%;
   top: 50%;
   transform: translate($balloon-move, -50%);
@@ -228,7 +229,7 @@ $balloon-move: 0.125rem;
 [aria-label][data-balloon-pos][data-balloon-pos="left"]:before {
   width: 0;
   height: 0;
-  border: 5px solid transparent;
+  border: ($balloon-distance / 2) solid transparent;
   border-left-color: $balloon-color;
   right: 100%;
   top: 50%;
@@ -244,7 +245,7 @@ $balloon-move: 0.125rem;
 
 [aria-label][data-balloon-pos][data-balloon-pos="right"]:after {
   left: 100%;
-  margin-left: 10px;
+  margin-left: $balloon-distance;
   top: 50%;
   transform: translate(-1 * $balloon-move, -50%);
 }
@@ -252,7 +253,7 @@ $balloon-move: 0.125rem;
 [aria-label][data-balloon-pos][data-balloon-pos="right"]:before {
   width: 0;
   height: 0;
-  border: 5px solid transparent;
+  border: ($balloon-distance / 2) solid transparent;
   border-right-color: $balloon-color;
   left: 100%;
   top: 50%;
