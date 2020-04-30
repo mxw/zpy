@@ -87,6 +87,21 @@ body {
         width: rhythm.rh(4.5);
       }
     }
+
+    > .play {
+      position: relative;
+
+      @include flex.column;
+      justify-content: center;
+
+      > .winning {
+        position: absolute;
+        width: rhythm.rh(2.25);
+        height: rhythm.rh(2.25);
+        top: -1 * rhythm.rh(1);
+        right: -1 * rhythm.rh(1);
+      }
+    }
   }
 
   > .score-info {

@@ -39,11 +39,13 @@ export class ActionInfo extends React.Component<ActionInfo.Props> {
     if (this.props.bids.length === 0) return null;
 
     const bid = this.props.bids[this.props.bids.length - 1];
-    return <CardFan
-      width={card_width}
-      xclip={clip_pct}
-      pile={array_fill(bid.n, bid.card)}
-    />;
+    return <div className="play">
+      <CardFan
+        width={card_width}
+        xclip={clip_pct}
+        pile={array_fill(bid.n, bid.card)}
+      />
+    </div>;
   }
 
   renderReady() {
@@ -68,11 +70,13 @@ export class ActionInfo extends React.Component<ActionInfo.Props> {
     const ts = play.ts();
 
     if (ts !== null) {
-      return <CardFan
-        width={card_width}
-        xclip={clip_pct}
-        pile={[...ts.gen_cards(tr)]}
-      />;
+      return <div className="play">
+        <CardFan
+          width={card_width}
+          xclip={clip_pct}
+          pile={[...ts.gen_cards(tr)]}
+        />
+      </div>;
     }
     const fl = play.fl();
 
@@ -103,7 +107,19 @@ export class ActionInfo extends React.Component<ActionInfo.Props> {
         />
       );
     }
-    return tractors.reverse();
+
+    if (this.props.winning) {
+      tractors.push(
+        <img
+          key="winning"
+          className="winning"
+          src="/static/png/icons/trophy.png"
+        />
+      );
+    }
+    return <div className="play">
+      {tractors.reverse()}
+    </div>;
   }
 
   renderInner() {

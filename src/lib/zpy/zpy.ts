@@ -624,7 +624,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
 
     // set `player` as the new winner if they're the first play or the current
     // winner fails to beat them
-    if (!this.winning ||
+    if (this.winning == null ||
         !this.plays[this.winning].fl()!.beats(play)) {
       this.winning = player;
     }
