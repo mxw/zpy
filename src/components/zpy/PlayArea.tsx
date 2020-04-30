@@ -385,8 +385,7 @@ export class PlayArea extends React.Component<
   }
 
   submitFollowOrCollect(): boolean {
-    if (Object.keys(this.props.zpy.plays).length ===
-        this.props.zpy.players.length) {
+    if (this.props.zpy.trick_over()) {
       return this.submitCollectTrick();
     }
     return this.submitFollowLead();

@@ -117,12 +117,23 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   get nfriends(): number {
     return Math.floor(0.35 * this.nplayers);
   }
-  get kitty_sz(): number {
+
+  /*
+   * Size of the kitty based on `this.ndecks`.
+   */
+  kitty_sz(): number {
     let kitty_sz = (this.ndecks * 54) % this.nplayers;
     if (kitty_sz === 0) kitty_sz = this.nplayers;
     while (kitty_sz > 10) kitty_sz -= this.nplayers;
     while (kitty_sz <= 4) kitty_sz += this.nplayers;
     return kitty_sz;
+  }
+
+  /*
+   * Whether everyone has played for a trick.
+   */
+  trick_over(): boolean {
+    return Object.keys(this.plays).length === this.players.length;
   }
 
   /*
@@ -226,7 +237,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     ++this.round;
     this.consensus.clear();
 
-    const kitty_sz = this.kitty_sz;
+    const kitty_sz = this.kitty_sz();
 
     if (this.identity === null) {
       this.deck = this.shuffled_deck(this.ndecks);
@@ -817,10 +828,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   }
   observe_follow(player: PlayerID, play: Play): ZPY.Result {
     this.commit_play(player, play);
-
-    if (Object.keys(this.plays).length === this.players.length) {
-      this.current = null;
-    }
+    if (this.trick_over()) this.current = null;
   }
 
   /*
@@ -832,7 +840,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (this.phase !== ZPY.Phase.FOLLOW) {
       return ZPY.BadPhaseError.from('collect_trick', this.phase);
     }
-    if (Object.keys(this.plays).length !== this.players.length) {
+    if (!this.trick_over()) {
       return new ZPY.InvalidPlayError('trick not finished');
     }
     if (player !== this.winning) {
