@@ -23,14 +23,7 @@
 - implement a Reveal area for shared publicized information, like a revealed
   kitty or the cards used to contest a fly
 
-- implement a "reset" shortcut for putting everything back into the hand, and
-  auto-apply it for bids during the "ready" phase
-
-- add tooltips to all icons and indicators (host crown, team symbol, current
-  trick winner trophy, attempted fly question mark, trump indicator, friends
-  indicator, points section, current player border)
-
-- add team indicators and show "team point total" somewhere
+- add team indicators (with tooltips) and show "team point total" somewhere
 
 - display errors... somewhere
 

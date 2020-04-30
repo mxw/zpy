@@ -515,7 +515,7 @@ export class PlayArea extends React.Component<
 
     switch (this.props.phase) {
       case ZPY.Phase.INIT: return this.submitStartGame();
-      case ZPY.Phase.DRAW: return this.submitBidOrReady();
+      case ZPY.Phase.DRAW: return this.submitBidTrump();
       case ZPY.Phase.PREPARE: return this.submitBidOrReady();
       case ZPY.Phase.KITTY: return this.submitReplaceKitty();
       case ZPY.Phase.FRIEND: return this.submitCallFriends();
@@ -547,6 +547,11 @@ export class PlayArea extends React.Component<
     if (ev.key === 'S') {
       ev.preventDefault();
       this.sortHand();
+      return;
+    }
+    if (ev.key === 'R') {
+      ev.preventDefault();
+      this.resetPlays();
       return;
     }
     if (ev.key === 'Enter') {
@@ -743,6 +748,8 @@ export class PlayArea extends React.Component<
     });
   };
 
+  /////////////////////////////////////////////////////////////////////////////
+
   selectAll() {
     this.setState((state, props) => ({
       selected: new Set(state.id_set),
@@ -774,6 +781,30 @@ export class PlayArea extends React.Component<
         },
         ...state.areas.slice(1)
       ]};
+    });
+  }
+
+  resetPlays() {
+    if (this.state.areas.length === 1) return;
+    if (this.state.id_set.size === this.state.areas[0].ordered.length) return;
+
+    this.setState((state, props) => {
+      const play_areas = state.areas.slice(1);
+
+      const hand_ordered = state.areas[0].ordered.concat(
+        ...play_areas.map(area => area.ordered)
+      );
+      return PlayArea.reapAreas({
+        ...state,
+        areas: [
+          {
+            ordered: hand_ordered,
+            id_to_pos: id_to_pos(hand_ordered),
+          },
+          ...play_areas.map(_ => ({ordered: [], id_to_pos: {}}))
+        ],
+        id_to_area: id_to_cns(hand_ordered, 0),
+      }, props);
     });
   }
 
