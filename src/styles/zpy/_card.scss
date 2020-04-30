@@ -50,7 +50,7 @@ $clip: 0.25;
 @function fit($n, $card-dim, $clip-pct: $clip) {
   @return (
     ($card-dim * $clip-pct + 2 * rhythm.$px) * $n +
-    $card-dim * (1 - $clip-pct)
+    $card-dim * (1 - $clip-pct) + rhythm.$px
   );
 }
 
