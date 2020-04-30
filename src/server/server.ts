@@ -206,11 +206,11 @@ class Game<
       let ClientMessage = P.ClientMessage(this.engine.Intent(this.state));
 
       P.on_decode(ClientMessage, d, msg => {
-        switch (d.verb) {
+        switch (msg.verb) {
           case "req:bye": this.bye(client); break;
-          case "req:hello": this.hello(client, d.nick); break;
+          case "req:hello": this.hello(client, msg.nick); break;
           case "req:reset": this.reset(client); break
-          case "req:update": this.update(client, d.tx, d.intent); break;
+          case "req:update": this.update(client, msg.tx, msg.intent); break;
         }
       }, (e: any) => {
         console.error(P.draw_error(e), d);
