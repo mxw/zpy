@@ -48,6 +48,7 @@ class Column extends React.Component<Column.Props, {}> {
         ready={pr.ready}
         leader={pr.leader}
         winning={pr.winning}
+        lead={pr.lead}
       />
       <ScoreInfo
         key="score"
@@ -107,6 +108,7 @@ export class RoundInfo extends React.Component<
           points={zpy.points[uid]}
           leader={uid === zpy.leader}
           winning={uid === zpy.winning}
+          lead={zpy.lead}
           play={zpy.plays[uid] ?? null}
         />
       )}

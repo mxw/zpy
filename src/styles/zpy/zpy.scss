@@ -94,7 +94,7 @@ body {
       @include flex.column;
       justify-content: center;
 
-      > .winning {
+      > .indicator {
         position: absolute;
         width: rhythm.rh(2.25);
         height: rhythm.rh(2.25);

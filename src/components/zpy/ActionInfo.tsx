@@ -61,8 +61,20 @@ export class ActionInfo extends React.Component<ActionInfo.Props> {
   }
 
   renderPlay() {
-    const play = this.props.play;
-    if (play === null) return null;
+    let indicator: any = null;
+    let play = this.props.play;
+
+    if (play === null) {
+      play = this.props.lead;
+      if (play === null) return null;
+
+      // lead without play means this is a fly attempt
+      indicator = <img
+        key="indicator"
+        className="indicator"
+        src="/static/png/icons/question-mark.png"
+      />;
+    }
 
     const tr = this.props.tr;
     assert(tr !== null);
@@ -70,6 +82,7 @@ export class ActionInfo extends React.Component<ActionInfo.Props> {
     const ts = play.ts();
 
     if (ts !== null) {
+      // NB: this case can't happen for leads
       return <div className="play">
         <CardFan
           width={card_width}
@@ -109,15 +122,16 @@ export class ActionInfo extends React.Component<ActionInfo.Props> {
     }
 
     if (this.props.winning) {
-      tractors.push(
-        <img
-          key="winning"
-          className="winning"
-          src="/static/png/icons/trophy.png"
-        />
-      );
+      assert(indicator === null);
+      indicator = <img
+        key="indicator"
+        className="indicator"
+        src="/static/png/icons/trophy.png"
+      />;
     }
+
     return <div className="play">
+      {indicator}
       {tractors.reverse()}
     </div>;
   }
@@ -154,6 +168,7 @@ export type Props = {
   tr: null | TrumpMeta;
   bids: Z['bids'];
   play: null | Z['plays'][P.UserID];
+  lead: null | Flight;
 
   ready: boolean;
   leader: boolean;
