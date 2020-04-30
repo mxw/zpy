@@ -15,10 +15,46 @@ $-svg-border-radius: 12.0;
 
 $aspect-ratio: $-svg_card_width / $-svg_card_height;
 
+$width-hand: rhythm.px-to-rem(100px);
+$width-friend: rhythm.px-to-rem(80px);
+$width-play: rhythm.px-to-rem(64px);
+$width-score: rhythm.px-to-rem(44px);
+$clip: 0.25;
+
+///////////////////////////////////////////////////////////////////////////////
+
 // get the proportional card height for a given width
 @function height-for($width) {
   @return $width / $aspect-ratio;
 }
+
+// extra padding for a container that holds clipped cards (to account for the
+// unclipped portion of the last card)
+@function container-padding($rh-lines, $card-dim, $clip-pct: $clip) {
+  @return rhythm.rh($rh-lines) + (1 - $clip-pct) * $card-dim + rhythm.$px;
+}
+
+// mixin wrappers for container-padding
+@mixin container($side, $rh-lines, $card-dim, $clip-pct) {
+  padding: rhythm.rh($rh-lines);
+  padding-#{$side}: container-padding($rh-lines, $card-dim, $clip-pct);
+}
+@mixin container-h($rh-lines, $card-width, $clip-pct: $clip) {
+  @include container("right", $rh-lines, $card-width, $clip-pct);
+}
+@mixin container-v($rh-lines, $card-height, $clip-pct: $clip) {
+  @include container("bottom", $rh-lines, $card-height, $clip-pct);
+}
+
+// total dimension of $n clipped cards; keep synced with CardFan
+@function fit($n, $card-dim, $clip-pct: $clip) {
+  @return (
+    ($card-dim * $clip-pct + 2 * rhythm.$px) * $n +
+    $card-dim * (1 - $clip-pct)
+  );
+}
+
+///////////////////////////////////////////////////////////////////////////////
 
 // for a given desired background image size, get the appropriate size
 // dimensions for the svg, factoring in the bounding boxes

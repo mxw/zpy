@@ -8,11 +8,6 @@
 @use "common/flex";
 @use "common/rhythm";
 
-$card-width-hand: rhythm.px-to-rem(100px);
-$card-width-friend: rhythm.px-to-rem(80px);
-$card-width-play: rhythm.px-to-rem(64px);
-$card-clip: 0.25;
-
 body {
   font-family: "Minion Pro", "Minion", "Trebuchet MS", "Trebuchet", sans-serif;
 }
@@ -169,7 +164,7 @@ body {
   position: relative;
   @include flex.row-center;
 
-  min-width: $card-width-hand * 6;
+  min-width: card.$width-hand * 6;
   height: rhythm.rh(10);
 
   @include rhythm.rh-border-full();
@@ -196,23 +191,10 @@ body {
   }
 }
 
-@mixin card-container($rh-lines, $card-width, $clip: $card-clip) {
-  padding: rhythm.rh($rh-lines);
-  padding-right: rhythm.rh($rh-lines) + (1 - $clip) * $card-width + rhythm.$px;
-}
-
-@function card-fit-width($n, $card-width, $clip: $card-clip) {
-  // same as the fit_width computation in CardFan
-  @return (
-    ($card-width * $clip + 2 * rhythm.$px) * $n +
-    $card-width * (1 - $clip)
-  );
-}
-
 .cardarea {
   display: flex;
   overflow: auto;
-  @include card-container(1, $card-width-hand);
+  @include card.container-h(1, card.$width-hand);
 
   &.empty {
     padding-right: rhythm.rh(1);
@@ -225,16 +207,14 @@ body {
 
   bottom: -1 * rhythm.$px;  // account for our parent's border
 
-  width: card-fit-width(24, $card-width-friend);
+  width: card.fit(24, card.$width-friend);
   &.fsc-trump {
-    width: card-fit-width(26, $card-width-friend);
+    width: card.fit(26, card.$width-friend);
   }
 
   @include rhythm.rh-border-full(2);
-  padding-bottom: (
-    rhythm.rh(2, rhythm.$px) +
-    (1 - $card-clip) * card.height-for($card-width-friend) + rhythm.$px
-  );
+  padding-bottom: card.container-padding(
+    2, card.height-for(card.$width-friend)) - rhythm.$px;
   border-radius: inherit;
   background-color: inherit;
 }
@@ -243,7 +223,7 @@ body {
   display: flex;
   flex-wrap: wrap;
 
-  @include card-container(0, $card-width-friend);
+  @include card.container-h(0, card.$width-friend);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
