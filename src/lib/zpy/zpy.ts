@@ -980,7 +980,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (this.phase !== ZPY.Phase.WAIT) {
       return ZPY.BadPhaseError.from('next_round', this.phase);
     }
-    if (player !== this.owner) {
+    if (player !== this.host) {
       return new ZPY.WrongPlayerError('host only');
     }
     if (this.nplayers < 4) {
