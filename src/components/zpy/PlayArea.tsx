@@ -888,6 +888,114 @@ export class PlayArea extends React.Component<
     return component ?? (<div className="action"></div>);
   }
 
+  renderInstructionArea() {
+    const me = this.props.me.id;
+    const zpy = this.props.zpy;
+
+    const enter = <kbd>↵ Enter</kbd>;
+
+    const is_active = (() => {
+      switch (this.props.phase) {
+        case ZPY.Phase.INIT: return me === zpy.owner;
+        case ZPY.Phase.DRAW: return true;
+        case ZPY.Phase.PREPARE: return true;
+        case ZPY.Phase.KITTY: return me === zpy.host;
+        case ZPY.Phase.FRIEND: return me === zpy.host;
+        case ZPY.Phase.LEAD: return me === zpy.leader;
+        case ZPY.Phase.FLY: return me !== zpy.leader;
+        case ZPY.Phase.FOLLOW: return zpy.current !== null
+          ? me === zpy.players[zpy.current]
+          : me === zpy.winning;
+        case ZPY.Phase.FINISH: return me === zpy.host;
+        case ZPY.Phase.WAIT: return me === zpy.host;
+      }
+      assert(false);
+      return false;
+    })();
+
+    if (!is_active) {
+      const text = (() => {
+        switch (this.props.phase) {
+          case ZPY.Phase.INIT:
+            return <>waiting for the game to start</>;
+          case ZPY.Phase.DRAW:
+            return null;
+          case ZPY.Phase.PREPARE:
+            return null;
+          case ZPY.Phase.KITTY:
+            return <>waiting for the host to discard a kitty</>;
+          case ZPY.Phase.FRIEND:
+            return <>waiting for the host to call friends</>;
+          case ZPY.Phase.LEAD:
+            return <>waiting for the trick leader to play</>;
+          case ZPY.Phase.FLY:
+            return <>waiting on others to see if the play flies</>;
+          case ZPY.Phase.FOLLOW: return zpy.current !== null
+            ? <>waiting for the next player to play</>
+            : <>waiting for the winner to collect the trick</>;
+          case ZPY.Phase.FINISH:
+            return <>waiting for the host to reveal the kitty</>;
+          case ZPY.Phase.WAIT:
+            return <>waiting for the host to start the round</>;
+        }
+        return null;
+      })();
+      return <div className="instructions inactive">{text}</div>;
+    }
+
+    const text = (() => {
+      switch (this.props.phase) {
+        case ZPY.Phase.INIT:
+          return <>press {enter} to start the game</>;
+        case ZPY.Phase.DRAW:
+          return <>
+            click the deck to draw;
+            drag cards above and press {enter} to submit a trump bid
+          </>;
+        case ZPY.Phase.PREPARE:
+          return <>
+            press {enter} to indicate you are ready,
+            or drag cards above first to submit a trump bid.
+          </>;
+        case ZPY.Phase.KITTY:
+          return <>
+            take the kitty above, then put back that many cards;
+            press {enter} to submit
+          </>;
+        case ZPY.Phase.FRIEND:
+          return <>
+            select {zpy.nfriends} {zpy.nfriends === 1 ? "friend" : "friends"}
+            and press {enter} to submit
+          </>;
+        case ZPY.Phase.LEAD:
+          return <>
+            drag cards above and press {enter} to submit your play.
+            make separate piles to have full control of an ambiguous fly.
+          </>;
+        case ZPY.Phase.FLY:
+          return <>
+            press {enter} if the play flies;
+            or drag a card, tuple, or tractor above
+            and press {enter} to contest the play
+          </>;
+        case ZPY.Phase.FOLLOW: return zpy.current !== null
+          ? <>
+              drag cards above and press {enter} to submit your play.
+              place cards in separate piles for full control of your play.
+            </>
+          : <>you won the trick; press {enter} to collect it</>;
+        case ZPY.Phase.FINISH:
+          return <>press {enter} to reveal the kitty and end the round.</>;
+        case ZPY.Phase.WAIT:
+          return <>press {enter} to start the next round.</>;
+      }
+      return null;
+    })();
+    if (text === null) return null;
+
+    return <div className="instructions active">{text}</div>;
+  }
+
   /////////////////////////////////////////////////////////////////////////////
 
   render() {
@@ -897,6 +1005,7 @@ export class PlayArea extends React.Component<
         onDragEnd={this.onDragEnd}
       >
         {this.renderActionArea()}
+        {this.renderInstructionArea()}
         <div className="hand">
           <CardArea
             droppableId="0"
