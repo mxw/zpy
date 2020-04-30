@@ -169,7 +169,6 @@ body {
   right: 0;
 
   font-size: rhythm.rh(2);
-  cursor: default;
 }
 
 .friend-indicator-wrapper {
@@ -184,7 +183,6 @@ body {
     > .friend {
       color: darkgrey;
       font-size: rhythm.rh(1);
-      cursor: default;
 
       &.found {
         color: lightgrey;
