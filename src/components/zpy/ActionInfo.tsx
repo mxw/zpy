@@ -71,11 +71,15 @@ export class ActionInfo extends React.Component<ActionInfo.Props> {
       if (play === null) return null;
 
       // lead without play means this is a fly attempt
-      indicator = <img
-        key="indicator"
-        className="indicator"
-        src="/static/png/icons/question-mark.png"
-      />;
+      indicator = <div
+        aria-label="does this fly?"
+        data-balloon-pos="up-left"
+      >
+        <img
+          className="indicator"
+          src="/static/png/icons/question-mark.png"
+        />
+      </div>;
     }
 
     const tr = this.props.tr;
@@ -125,11 +129,24 @@ export class ActionInfo extends React.Component<ActionInfo.Props> {
 
     if (this.props.winning) {
       assert(indicator === null);
-      indicator = <img
+      indicator = <div
+        aria-label="current trick winner"
+        data-balloon-pos="up-left"
+      >
+        <img
+          className="indicator"
+          src="/static/png/icons/trophy.png"
+        />
+      </div>;
+    }
+
+    if (indicator !== null) {
+      indicator = <div
         key="indicator"
-        className="indicator"
-        src="/static/png/icons/trophy.png"
-      />;
+        className="indicator-wrapper"
+      >
+        {indicator}
+      </div>;
     }
 
     return <div className="play">

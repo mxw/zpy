@@ -82,9 +82,15 @@ export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
 
     return <div
       key="trump-indicator"
-      className={`trump-indicator ${suitname}`}
+      className="trump-indicator-wrapper"
     >
-      {zpy.tr.toString()}
+      <div
+        className={`trump-indicator ${suitname}`}
+        aria-label="current trump"
+        data-balloon-pos="left"
+      >
+        {zpy.tr.toString()}
+      </div>
     </div>;
   }
 
@@ -108,9 +114,15 @@ export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
 
     return <div
       key="friend-indicator"
-      className="friend-indicator"
+      className="friend-indicator-wrapper"
     >
-      {friends}
+      <div
+        className="friend-indicator"
+        aria-label="host's friends"
+        data-balloon-pos="down"
+      >
+        {friends}
+      </div>
     </div>;
   }
 

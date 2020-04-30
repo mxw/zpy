@@ -7,6 +7,7 @@
 
 @use "common/flex";
 @use "common/rhythm";
+@use "common/tooltip";
 
 body {
   font-family: "Minion Pro", "Minion", "Trebuchet MS", "Trebuchet", sans-serif;
@@ -35,115 +36,134 @@ body {
     padding: rhythm.rh(0.5);
     @include rhythm.rh-margin-y(0.5);
   }
+}
 
-  > .player-info {
-    position: relative;
+.player-info {
+  position: relative;
 
-    @include flex.row-center;
-    justify-items: flex-start;
+  @include flex.row-center;
+  justify-items: flex-start;
 
-    &.current {
-      @include rhythm.rh-border-full(0.5, 1rem / 8);
-      border-radius: rhythm.rh(0.5);
-      border-style: solid;
-      border-color: green;
-    }
+  &.current {
+    @include rhythm.rh-border-full(0.5, 1rem / 8);
+    border-radius: rhythm.rh(0.5);
+    border-style: solid;
+    border-color: green;
 
-    > .host {
-      position: absolute;
-      width: rhythm.rh(2.25);
-      height: rhythm.rh(2.25);
+    // the host icon is positioned relative to the padding-edge of its
+    // parent, which changes depending on whether it has the "current" border
+    > .host-wrapper {
       top: rhythm.rh(-0.875);
       left: rhythm.rh(0.625);
     }
+  }
 
-    > .avatar {
-      width: rhythm.rh(2.25);
-      height: rhythm.rh(2.25);
-      @include rhythm.rh-padding-x(0.25);
-    }
+  // all tooltip icons are structured as:
+  //
+  //  <div class="foo-wrapper">
+  //    <div aria-label="tooltip text>
+  //      <img />
+  //    </div>
+  //  </div>
+  //
+  // this is because the tooltip div needs to be position: absolute, but we
+  // often want to position the icon itself absolutely, so we need another
+  // div wrapping the whole ensemble.
+  > .host-wrapper {
+    position: absolute;
+    top: rhythm.rh(-0.75);
+    left: rhythm.rh(0.75);
+  }
 
-    > .nick {
-      @include rhythm.rh-padding-x(0.25);
+  > .avatar {
+    width: rhythm.rh(2.25);
+    height: rhythm.rh(2.25);
+    @include rhythm.rh-padding-x(0.25);
+  }
+
+  > .nick {
+    @include rhythm.rh-padding-x(0.25);
+  }
+}
+
+.action-info {
+  @include flex.column;
+  justify-content: center;
+
+  width: 100%;
+  min-height: rhythm.rh(10);
+
+  > .ready {
+    padding: rhythm.rh(1);
+    border-radius: rhythm.rh(4.5);
+    background-color: lightgreen;
+
+    > img {
+      width: rhythm.rh(4.5);
     }
   }
 
-  > .action-info {
+  > .play {
+    position: relative;
+
     @include flex.column;
     justify-content: center;
 
-    width: 100%;
-    min-height: rhythm.rh(10);
-
-    > .ready {
-      padding: rhythm.rh(1);
-      border-radius: rhythm.rh(4.5);
-      background-color: lightgreen;
-
-      > img {
-        width: rhythm.rh(4.5);
-      }
-    }
-
-    > .play {
-      position: relative;
-
-      @include flex.column;
-      justify-content: center;
-
-      > .indicator {
-        position: absolute;
-        width: rhythm.rh(2.25);
-        height: rhythm.rh(2.25);
-        top: -1 * rhythm.rh(1);
-        right: -1 * rhythm.rh(1);
-      }
-    }
-  }
-
-  > .score-info {
-    width: 100%;
-    min-height: rhythm.rh(9);
-
-    @include flex.column;
-
-    &::before {
-      content: "";
+    > .indicator-wrapper {
       position: absolute;
-      width: 100%;
-      height: 1px;
-      left: 0;
-      background-image: linear-gradient(to right, transparent, #666, transparent);
-    }
-
-    > .rank {
-      display: flex;
-      justify-content: space-around;
-      align-items: baseline;
-
-      width: 100%;
-      padding: rhythm.rh(0.5);
-
-      font-size: rhythm.rh(0.75);
-    }
-
-    > .points {
-      display: flex;
-      justify-content: space-around;
-      align-items: flex-start;
-
-      width: 100%;
-      padding: rhythm.rh(0.5);
-
-      > .point-column {
-        @include flex.column;
-        padding-bottom: card.container-padding(0.5, card.height-for(card.$width-score));
-      }
+      top: -1 * rhythm.rh(1);
+      right: -1 * rhythm.rh(1);
     }
   }
 }
 
-.trump-indicator {
+.score-info {
+  @include flex.column;
+
+  width: 100%;
+  min-height: rhythm.rh(9);
+
+  &::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    left: 0;
+    background-image: linear-gradient(to right, transparent, #666, transparent);
+  }
+
+  > .rank {
+    display: flex;
+    justify-content: space-around;
+    align-items: baseline;
+
+    width: 100%;
+    padding: rhythm.rh(0.5);
+
+    font-size: rhythm.rh(0.75);
+  }
+
+  > .points {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+
+    width: 100%;
+    padding: rhythm.rh(0.5);
+
+    > .point-column {
+      @include flex.column;
+      padding-bottom: card.container-padding(0.5, card.height-for(card.$width-score));
+    }
+  }
+}
+
+.host, .indicator {
+  width: rhythm.rh(2.25);
+  height: rhythm.rh(2.25);
+}
+
+.trump-indicator-wrapper {
   position: absolute;
   bottom: 0;
   right: 0;
@@ -152,25 +172,27 @@ body {
   cursor: default;
 }
 
-.friend-indicator {
+.friend-indicator-wrapper {
   position: absolute;
   top: rhythm.rh(2.375);
   left: -1 * rhythm.rh(2.5);
 
-  @include flex.column;
-  align-items: flex-end;
+  > .friend-indicator {
+    @include flex.column;
+    align-items: flex-end;
 
-  > .friend {
-    color: darkgrey;
-    font-size: rhythm.rh(1);
-    cursor: default;
+    > .friend {
+      color: darkgrey;
+      font-size: rhythm.rh(1);
+      cursor: default;
 
-    &.found {
-      color: lightgrey;
-      text-decoration: line-through;
-
-      > .clubs, > .spades, > .diamonds, > .hearts, > .trump {
+      &.found {
         color: lightgrey;
+        text-decoration: line-through;
+
+        > .clubs, > .spades, > .diamonds, > .hearts, > .trump {
+          color: lightgrey;
+        }
       }
     }
   }
@@ -229,6 +251,15 @@ body {
   }
 }
 
+$-card-height-friend: card.height-for(card.$width-friend);
+
+/*
+ * friend selector UI
+ *
+ * friend selection is the only action which requires a UI space taller than
+ * the height of a card, so rather than pushing everything out of the way, just
+ * position this overtop of the normal action area
+ */
 .friend-selector-container {
   position: absolute;
   @include flex.column;
@@ -241,8 +272,7 @@ body {
   }
 
   @include rhythm.rh-border-full(2);
-  padding-bottom: card.container-padding(
-    2, card.height-for(card.$width-friend)) - rhythm.$px;
+  padding-bottom: card.container-padding(2, $-card-height-friend) - rhythm.$px;
   border-radius: inherit;
   background-color: inherit;
 }
@@ -290,7 +320,6 @@ kbd {
   @include flex.row-center;
 
   height: rhythm.rh(10);
-
   padding: rhythm.rh(1);
 
   &::after {

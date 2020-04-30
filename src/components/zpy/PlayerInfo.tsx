@@ -33,11 +33,14 @@ export class PlayerInfo extends React.Component<PlayerInfo.Props, {}> {
     if (pr.current) div_class.push("current");
 
     const host = !pr.host ? null :
-      <img
-        key="host"
-        className="host"
-        src="/static/png/icons/crown.png"
-      />;
+      <div key="host" className="host-wrapper">
+        <div aria-label="current host" data-balloon-pos="down-left">
+          <img
+            className="host"
+            src="/static/png/icons/crown.png"
+          />
+        </div>
+      </div>;
 
     return <div className={div_class.join(' ')}>
       {host}
