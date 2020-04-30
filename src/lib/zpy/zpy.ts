@@ -322,7 +322,8 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     return [cb];
   }
   add_to_hand(player: PlayerID, cb: null | CardBase): ZPY.Result {
-    if (this.can_see(player) && cb !== null) {
+    if (cb !== null) {
+      assert(this.can_see(player));
       this.draws[player].insert(cb);
     }
     if (--this.deck_sz === 0) {
@@ -535,10 +536,8 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     return [];
   }
   seal_hand(player: PlayerID): ZPY.Result {
-    for (let p of this.players) {
-      if (this.can_see(p)) {
-        this.hands[p] = new Hand(this.draws[p]);
-      }
+    for (let p in this.draws) {
+      this.hands[p] = new Hand(this.draws[p]);
     }
     this.draws = {} as any; // clear this, mostly to prevent bugs
     this.phase = ZPY.Phase.FRIEND;
@@ -657,8 +656,10 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
    * Commit the lead play.
    */
   private commit_lead(player: PlayerID, play: Play): void {
-    for (let count of play.gen_counts(this.tr)) {
-      this.hands[player].remove(...count);
+    if (this.can_see(player)) {
+      for (let count of play.gen_counts(this.tr)) {
+        this.hands[player].remove(...count);
+      }
     }
     this.commit_play(player, play);
   }
@@ -675,7 +676,6 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (this.phase !== ZPY.Phase.LEAD) {
       return ZPY.BadPhaseError.from('lead_play', this.phase);
     }
-    console.log('lead_play', play);
     let play_pile = this.init_play(player, play);
     if (play_pile instanceof ZPY.Error) return play_pile;
 
@@ -792,19 +792,8 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (play.count !== this.lead.count) {
       return new ZPY.InvalidPlayError('incorrectly sized play');
     }
-    this.observe_follow(player, play, play_pile);
-    return [play];
-  }
-  observe_follow(
-    player: PlayerID,
-    play: Play,
-    play_pile?: CardPile,
-  ): ZPY.Result {
-    play_pile = play_pile ?? new CardPile(play.gen_cards(this.tr), this.tr);
 
-    let [correct, undo] = this.hands[player].follow_with(
-      this.lead, play_pile
-    );
+    let [correct, undo] = this.hands[player].follow_with(this.lead, play_pile);
     if (!correct) {
       switch (this.rules.renege) {
         case ZPY.RenegeRule.ACCUSE: {
@@ -823,6 +812,10 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
         }
       }
     }
+    this.observe_follow(player, play);
+    return [play];
+  }
+  observe_follow(player: PlayerID, play: Play): ZPY.Result {
     this.commit_play(player, play);
 
     if (Object.keys(this.plays).length === this.players.length) {
@@ -843,7 +836,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
         }
       }
     }
-    if (this.hands[this.leader].pile.size === 0) {
+    if (this.hands[this.identity ?? this.leader].pile.size === 0) {
       this.phase = ZPY.Phase.FINISH;
       return;
     }
