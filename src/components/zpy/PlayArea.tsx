@@ -678,7 +678,8 @@ export class PlayArea extends React.Component<
       const dst_adx = parseInt(dst.droppableId);
 
       if (dst_adx === state.areas.length) {
-        // user dragged into the "new area" area; instantiate it
+        // user dragged into the "next area" area OR into a bid/kitty area that
+        // we don't have set up in `state`; instantiate it here
         state = {
           ...state,
           areas: [...state.areas, {ordered: [], id_to_pos: {}}],
@@ -810,6 +811,16 @@ export class PlayArea extends React.Component<
 
   /////////////////////////////////////////////////////////////////////////////
 
+  renderSingletonStagingArea() {
+    return <CardArea
+      droppableId="1"
+      cards={this.state.areas[1]?.ordered ?? []}
+      selected={this.state.selected}
+      multidrag={this.state.multidrag}
+      onSelect={this.onSelect}
+    />;
+  }
+
   onClickDeck(ev: React.MouseEvent | React.TouchEvent) {
     if (ev.defaultPrevented) return;
     if ('button' in ev && ev.button !== 0) return;
@@ -826,13 +837,7 @@ export class PlayArea extends React.Component<
         />
       </div>
       <div className="bids">
-        <CardArea
-          droppableId="1"
-          cards={this.state.areas?.[1]?.ordered ?? []}
-          selected={this.state.selected}
-          multidrag={this.state.multidrag}
-          onSelect={this.onSelect}
-        />
+        {this.renderSingletonStagingArea()}
       </div>
     </div>;
   }
@@ -874,15 +879,13 @@ export class PlayArea extends React.Component<
            props.phase === ZPY.Phase.FOLLOW;
   }
 
-  renderNextArea() {
-    if (!PlayArea.isStagingAreaVariadic(this.props)) return null;
-    return <EmptyArea
-      key={this.state.areas.length}
-      droppableId={'' + this.state.areas.length}
-    />;
-  }
-
   renderStagingArea() {
+    if (!PlayArea.isStagingAreaVariadic(this.props)) {
+      return <div className="action staging">
+        {this.renderSingletonStagingArea()}
+      </div>;
+    }
+
     return <div className="action staging">
       {this.state.areas.map((area, adx) => {
         if (adx === 0) return null;
@@ -895,7 +898,10 @@ export class PlayArea extends React.Component<
           onSelect={this.onSelect}
         />
       })}
-      {this.renderNextArea()}
+      <EmptyArea
+        key={this.state.areas.length}
+        droppableId={'' + this.state.areas.length}
+      />
     </div>
   }
 
@@ -1027,6 +1033,18 @@ export class PlayArea extends React.Component<
     return <div className="instructions active">{text}</div>;
   }
 
+  renderHand() {
+    return <div className="hand">
+      <CardArea
+        droppableId="0"
+        cards={this.state.areas[0].ordered}
+        selected={this.state.selected}
+        multidrag={this.state.multidrag}
+        onSelect={this.onSelect}
+      />
+    </div>;
+  }
+
   /////////////////////////////////////////////////////////////////////////////
 
   render() {
@@ -1037,15 +1055,7 @@ export class PlayArea extends React.Component<
       >
         {this.renderActionArea()}
         {this.renderInstructionArea()}
-        <div className="hand">
-          <CardArea
-            droppableId="0"
-            cards={this.state.areas[0].ordered}
-            selected={this.state.selected}
-            multidrag={this.state.multidrag}
-            onSelect={this.onSelect}
-          />
-        </div>
+        {this.renderHand()}
       </DragDropContext>
     );
   }

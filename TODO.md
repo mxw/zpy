@@ -13,12 +13,7 @@
 
 ## game UI
 
-- fix CardArea issues:
-  - when we get an update that isn't a response to a player-initiated action,
-    we sometimes need to rejigger the card areas (e.g., when we are given a
-    kitty due to a no-bid draw, or when we are put into CONTEST_FLY)
-  - currently, two CardArea's are rendered for the host right after a
-    `replace_kitty` is sent
+- fix bug where two CardAreas are shown after submitting `replace_kitty`
 
 - implement a Reveal area for shared publicized information, like a revealed
   kitty or the cards used to contest a fly
