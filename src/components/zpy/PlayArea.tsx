@@ -12,6 +12,7 @@ import {
 import * as P from 'protocol/protocol.ts'
 
 import { TrumpMeta, CardBase, Card } from 'lib/zpy/cards.ts'
+import { Play, Flight } from 'lib/zpy/trick.ts'
 import { ZPY } from 'lib/zpy/zpy.ts'
 import * as ZPYEngine from 'lib/zpy/engine.ts'
 
@@ -310,7 +311,7 @@ export class PlayArea extends React.Component<
         this.setState((state, props) =>
           PlayArea.withCardsAdded(state, [effect.args[1]], 0)
         );
-        this.onEffect();
+        this.onEffect(effect);
       },
       this.onEffect
     );
@@ -346,7 +347,7 @@ export class PlayArea extends React.Component<
 
     this.props.funcs.attempt(
       {kind: 'replace_kitty', args: [this.props.me.id, cards.map(c => c.cb)]},
-      this.onEffect, this.onEffect
+      this.onPlayEffect.bind(this, cards), this.onEffect
     );
     return true;
   }
@@ -359,6 +360,94 @@ export class PlayArea extends React.Component<
       {kind: 'call_friends', args: [this.props.me.id, friends]},
       this.onEffect, this.onEffect
     );
+    return true;
+  }
+
+  submitLeadPlay(): boolean {
+    const fl = this.extractPlay()?.fl();
+    if (!fl) return false;
+
+    const to_rm = this.state.areas.slice(1).flatMap(a => a.ordered);
+
+    this.props.funcs.attempt(
+      {kind: 'lead_play', args: [this.props.me.id, fl]},
+      this.onPlayEffect.bind(this, to_rm), this.onEffect
+    );
+    return true;
+  }
+
+  submitFollowLead(): boolean {
+    const play = this.extractPlay();
+    if (!play) return false;
+
+    const to_rm = this.state.areas.slice(1).flatMap(a => a.ordered);
+
+    this.props.funcs.attempt(
+      {kind: 'follow_lead', args: [this.props.me.id, play]},
+      this.onPlayEffect.bind(this, to_rm), this.onEffect
+    );
+    return true;
+  }
+
+  /*
+   * yoink a play out of the staging area
+   */
+  extractPlay(): null | Play {
+    const piles = this.state.areas.slice(1).map(
+      area => Play.extract(area.ordered.map(c => c.cb), this.props.zpy.tr)
+    );
+    if (piles.length === 0) return null;
+
+    if (piles.length === 1) {
+      // XXX: if this is a guess, assume it's right
+      return piles[0];
+    }
+
+    const components: Flight[] = piles
+      .map(p => p.fl())
+      .filter(fl => fl !== null);
+
+    // no component can be a Toss
+    if (components.length !== piles.length) return null;
+
+    const v_suit = this.props.zpy.lead?.tractors[0].v_suit ??
+                   components[0].v_suit;
+    // all components must be the same suit
+    if (!components.every(fl => fl.v_suit === v_suit)) return null;
+
+    let singletons: null | Flight = null;
+
+    for (let fl of components) {
+      if (fl.tractors.length === 1) continue;
+
+      // at most one component with > 1 tractor allowed
+      if (singletons !== null) return null;
+      singletons = fl;
+
+      // that component must be all singletons
+      if (fl.count !== fl.tractors.length) return null;
+    }
+    // the piles form a valid Flight; flatten them all together
+    return new Flight(components.flatMap(fl => fl.tractors));
+  }
+
+  /*
+   * remove cards from state when a play action (replace_kitty, lead_play, or
+   * follow_lead) commits
+   */
+  onPlayEffect(to_rm: CardID[], effect: ZPYEngine.Effect) {
+    if (effect.kind !== 'replace_kitty' &&
+        effect.kind !== 'lead_play' &&
+        effect.kind !== 'follow_lead') {
+      assert(false);
+      return;
+    }
+    if (effect.args[0] !== this.props.me.id) return;
+
+    this.setState((state, props) =>
+      PlayArea.withCardsRemoved(state, props, to_rm)
+    );
+    this.onEffect(effect);
   }
 
   /*
@@ -381,12 +470,10 @@ export class PlayArea extends React.Component<
       case ZPY.Phase.PREPARE: return this.submitBidOrReady();
       case ZPY.Phase.KITTY: return this.submitReplaceKitty();
       case ZPY.Phase.FRIEND: return this.submitCallFriends();
-      case ZPY.Phase.LEAD:
-        break;
+      case ZPY.Phase.LEAD: return this.submitLeadPlay();
       case ZPY.Phase.FLY:
         break;
-      case ZPY.Phase.FOLLOW:
-        break;
+      case ZPY.Phase.FOLLOW: return this.submitFollowLead();
       case ZPY.Phase.FINISH:
         break;
       case ZPY.Phase.WAIT:
@@ -533,7 +620,7 @@ export class PlayArea extends React.Component<
     }
 
     this.setState((state, props): PlayArea.State => {
-      const multidrag_id = state.multidrag?.id;
+      const multidrag_id = state.multidrag?.id ?? null;
       state = {...state, multidrag: null};
 
       const src_adx = parseInt(src.droppableId);
@@ -682,7 +769,7 @@ export class PlayArea extends React.Component<
           delete result[key];
           return result;
         }
-        return {...fr, [key]: [cb, nth]};
+        return {...fr, [key]: [cb, nth + 1]};
       })
     }));
   }
