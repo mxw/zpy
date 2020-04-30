@@ -786,7 +786,7 @@ export class PlayArea extends React.Component<
     this.submitDrawCard();
   }
 
-  renderDrawArea(state: PlayArea.State) {
+  renderDrawArea() {
     return <div className="action draw">
       <div className="deck">
         <CardImage
@@ -798,9 +798,9 @@ export class PlayArea extends React.Component<
       <div className="bids">
         <CardArea
           droppableId="1"
-          cards={state.areas?.[1]?.ordered ?? []}
-          selected={state.selected}
-          multidrag={state.multidrag}
+          cards={this.state.areas?.[1]?.ordered ?? []}
+          selected={this.state.selected}
+          multidrag={this.state.multidrag}
           onSelect={this.onSelect}
         />
       </div>
@@ -827,7 +827,7 @@ export class PlayArea extends React.Component<
     }));
   }
 
-  renderFriendArea(state: PlayArea.State) {
+  renderFriendArea() {
     if (this.props.me.id !== this.props.zpy.host) return null;
 
     return <div className="action friend">
@@ -844,7 +844,7 @@ export class PlayArea extends React.Component<
            props.phase === ZPY.Phase.FOLLOW;
   }
 
-  renderNextArea(state: PlayArea.State) {
+  renderNextArea() {
     if (!PlayArea.isStagingAreaVariadic(this.props)) return null;
     return <EmptyArea
       key={this.state.areas.length}
@@ -852,36 +852,36 @@ export class PlayArea extends React.Component<
     />;
   }
 
-  renderStagingArea(state: PlayArea.State) {
+  renderStagingArea() {
     return <div className="action staging">
       {this.state.areas.map((area, adx) => {
         if (adx === 0) return null;
         return <CardArea
           key={adx}
           droppableId={'' + adx}
-          cards={state.areas[adx].ordered}
-          selected={state.selected}
-          multidrag={state.multidrag}
+          cards={this.state.areas[adx].ordered}
+          selected={this.state.selected}
+          multidrag={this.state.multidrag}
           onSelect={this.onSelect}
         />
       })}
-      {this.renderNextArea(state)}
+      {this.renderNextArea()}
     </div>
   }
 
-  renderActionArea(state: PlayArea.State) {
+  renderActionArea() {
     const component = (() => {
       switch (this.props.phase) {
         case ZPY.Phase.DRAW:
         case ZPY.Phase.PREPARE:
-          return this.renderDrawArea(state);
+          return this.renderDrawArea();
         case ZPY.Phase.FRIEND:
-          return this.renderFriendArea(state);
+          return this.renderFriendArea();
         case ZPY.Phase.KITTY:
         case ZPY.Phase.LEAD:
         case ZPY.Phase.FLY:
         case ZPY.Phase.FOLLOW:
-          return this.renderStagingArea(state);
+          return this.renderStagingArea();
         default: break;
       }
       return null;
@@ -889,13 +889,15 @@ export class PlayArea extends React.Component<
     return component ?? (<div className="action"></div>);
   }
 
+  /////////////////////////////////////////////////////////////////////////////
+
   render() {
     return (
       <DragDropContext
         onDragStart={this.onDragStart}
         onDragEnd={this.onDragEnd}
       >
-        {this.renderActionArea(this.state)}
+        {this.renderActionArea()}
         <div className="hand">
           <CardArea
             droppableId="0"
