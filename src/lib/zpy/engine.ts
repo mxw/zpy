@@ -368,6 +368,8 @@ export const observe_follow = (tr: TrumpMeta) => C.type({
   args: C.tuple(PlayerID, cd_Play(tr)),
 });
 
+export const collect_trick = trivial('collect_trick');
+
 export const end_round = trivial('end_round');
 export const finish = card_arr('finish');
 
@@ -389,6 +391,7 @@ const Intent_ = (tr: TrumpMeta) => C.sum('kind')({
   'contest_fly': A.contest_fly,
   'pass_contest': A.pass_contest,
   'follow_lead': A.follow_lead(tr),
+  'collect_trick': A.collect_trick,
   'end_round': A.end_round,
   'next_round': A.next_round,
 });
@@ -421,6 +424,7 @@ const Effect_ = (tr: TrumpMeta) => C.sum('kind')({
   'pass_contest': A.pass_contest,
   'follow_lead': A.follow_lead(tr),
   'observe_follow': A.observe_follow(tr),
+  'collect_trick': A.collect_trick,
   'finish': A.finish,
   'next_round': A.next_round,
 });
@@ -482,6 +486,12 @@ export const predict = (
     case 'contest_fly': break;
     case 'pass_contest': break;
     case 'follow_lead': {
+      let result = state[intent.kind](...intent.args);
+      return (result instanceof ZPY.Error)
+        ? Err(result)
+        : OK({effect: intent, state});
+    }
+    case 'collect_trick': {
       let result = state[intent.kind](...intent.args);
       return (result instanceof ZPY.Error)
         ? Err(result)
@@ -603,6 +613,11 @@ export const larp = (
       return OK([state, you_and_them(
         intent, effect('observe_follow', p, ...result))]);
     }
+    case 'collect_trick': {
+      let result = state[intent.kind](...intent.args);
+      if (result instanceof ZPY.Error) return Err(result);
+      return OK([state, everyone(intent)]);
+    }
     case 'end_round': {
       let result = state[intent.kind](...intent.args);
       if (result instanceof ZPY.Error) return Err(result);
@@ -701,6 +716,10 @@ export const apply_client = (
           return (result instanceof ZPY.Error) ? Err(result) : OK(state);
         }
         case 'observe_follow': {
+          let result = state[effect.kind](...effect.args);
+          return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+        }
+        case 'collect_trick': {
           let result = state[effect.kind](...effect.args);
           return (result instanceof ZPY.Error) ? Err(result) : OK(state);
         }

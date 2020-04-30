@@ -221,26 +221,32 @@ describe('ZPY', () => {
 
     follow(c, [Suit.DIAMONDS, 4]);
     follow(d, [Suit.DIAMONDS, 6]);
+    expect_err(zpy.collect_trick(b), ZPY.InvalidPlayError);
     follow(e, [Suit.DIAMONDS, 9]);
     follow(a, [Suit.DIAMONDS, 3]);
+    expect_err(zpy.collect_trick(e), ZPY.WrongPlayerError);
+    expect_ok(zpy.collect_trick(b));
 
     lead(b, [Suit.SPADES, 9]);
     follow(c, [Suit.SPADES, Rank.A]);
     follow(d, [Suit.SPADES, 3]);
     follow(e, [Suit.SPADES, 6]);
     follow(a, [Suit.SPADES, 6]);
+    expect_ok(zpy.collect_trick(c));
 
     lead(c, [Suit.CLUBS, 4]);
     follow(d, [Suit.CLUBS, Rank.A]);
     follow(e, [Suit.CLUBS, 3]);
     follow(a, [Suit.CLUBS, 6]);
     follow(b, [Suit.CLUBS, 10]);
+    expect_ok(zpy.collect_trick(d));
 
     lead(d, [Suit.DIAMONDS, Rank.J]);
     follow(e, [Suit.DIAMONDS, Rank.A]);
     follow(a, [Suit.DIAMONDS, 4]);
     follow(b, [Suit.SPADES, 10]);
     follow(c, [Suit.DIAMONDS, 6]);
+    expect_ok(zpy.collect_trick(e));
 
     /////////////////////////////////////////////////////////////////
 
@@ -300,6 +306,7 @@ describe('ZPY', () => {
     follow(b, [Suit.HEARTS, 2], [Suit.HEARTS, 2]);
     follow(c, [Suit.CLUBS, 9], [Suit.CLUBS, 10]);
     follow(d, [Suit.CLUBS, 3], [Suit.CLUBS, 4]);
+    expect_ok(zpy.collect_trick(b));
 
     /////////////////////////////////////////////////////////////////
 
@@ -308,6 +315,7 @@ describe('ZPY', () => {
     follow(d, [Suit.SPADES, Rank.Q]);
     follow(e, [Suit.SPADES, Rank.A]);
     follow(a, [Suit.SPADES, Rank.J]);
+    expect_ok(zpy.collect_trick(e));
 
     lead(e, [Suit.CLUBS, Rank.A], [Suit.CLUBS, Rank.K]);
 
@@ -318,42 +326,49 @@ describe('ZPY', () => {
     follow(b, [Suit.SPADES, Rank.J], [Suit.HEARTS, 10]);
     follow(c, [Suit.DIAMONDS, 7], [Suit.DIAMONDS, Rank.J]);
     follow(d, [Suit.CLUBS, 9], [Suit.CLUBS, Rank.J]);
+    expect_ok(zpy.collect_trick(e));
 
     lead(e, [Suit.DIAMONDS, 10]);
     follow(a, [Suit.DIAMONDS, Rank.A]);
     follow(b, [Suit.HEARTS, Rank.A]);
     follow(c, [Suit.DIAMONDS, Rank.Q]);
     follow(d, [Suit.DIAMONDS, 5]);
+    expect_ok(zpy.collect_trick(b));
 
     lead(b, [Suit.HEARTS, 6]);
     follow(c, [Suit.CLUBS, 2]);
     follow(d, [Suit.HEARTS, 5]);
     follow(e, [Suit.HEARTS, 3]);
     follow(a, [Suit.HEARTS, 3]);
+    expect_ok(zpy.collect_trick(c));
 
     lead(c, [Suit.HEARTS, 5]);
     follow(d, [Suit.SPADES, 2]);
     follow(e, [Suit.HEARTS, 4]);
     follow(a, [Suit.HEARTS, 7]);
     follow(b, [Suit.HEARTS, 7]);
+    expect_ok(zpy.collect_trick(d));
 
     lead(d, [Suit.SPADES, 7]);
     follow(e, [Suit.SPADES, Rank.Q]);
     follow(a, [Suit.SPADES, 5]);
     follow(b, [Suit.HEARTS, Rank.K]);
     follow(c, [Suit.SPADES, 3]);
+    expect_ok(zpy.collect_trick(b));
 
     lead(b, [Suit.HEARTS, 9]);
     follow(c, [Suit.DIAMONDS, 2]);
     follow(d, [Suit.HEARTS, 4]);
     follow(e, [Suit.HEARTS, 8]);
     follow(a, [Suit.HEARTS, 8]);
+    expect_ok(zpy.collect_trick(c));
 
     lead(c, [Suit.SPADES, 4]);
     follow(d, [Suit.SPADES, 8]);
     follow(e, [Suit.SPADES, 7]);
     follow(a, [Suit.SPADES, 10]);
     follow(b, [Suit.HEARTS, Rank.J]);
+    expect_ok(zpy.collect_trick(b));
 
     lead(b, [Suit.TRUMP, Rank.S], [Suit.TRUMP, Rank.B], [Suit.TRUMP, Rank.B]);
 
@@ -364,6 +379,7 @@ describe('ZPY', () => {
     follow(d, [Suit.HEARTS, 9], [Suit.HEARTS, Rank.A], [Suit.DIAMONDS, 10]);
     follow(e, [Suit.HEARTS, Rank.K], [Suit.CLUBS, 2], [Suit.SPADES, 2]);
     follow(a, [Suit.HEARTS, Rank.J], [Suit.HEARTS, Rank.Q], [Suit.DIAMONDS, 9]);
+    expect_ok(zpy.collect_trick(b));
 
     lead(b, [Suit.HEARTS, Rank.Q], [Suit.DIAMONDS, 2]);
 
@@ -374,6 +390,7 @@ describe('ZPY', () => {
     follow(d, [Suit.CLUBS, Rank.K], [Suit.SPADES, Rank.K]);
     follow(e, [Suit.DIAMONDS, 5], [Suit.DIAMONDS, 8]);
     follow(a, [Suit.CLUBS, 5], [Suit.DIAMONDS, Rank.K]);
+    expect_ok(zpy.collect_trick(b));
 
     expect_err(zpy.end_round(e), ZPY.WrongPlayerError);
     expect_ok(zpy.end_round(b));

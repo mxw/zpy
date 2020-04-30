@@ -817,16 +817,24 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   }
   observe_follow(player: PlayerID, play: Play): ZPY.Result {
     this.commit_play(player, play);
-
-    if (Object.keys(this.plays).length === this.players.length) {
-      this.collect_trick();
-    }
   }
 
   /*
+   * Phase.FOLLOW : {Action,Effect}.collect_trick
+   *
    * Collect points at the end of a trick.
    */
-  private collect_trick(): void {
+  collect_trick(player: PlayerID): ZPY.Result {
+    if (this.phase !== ZPY.Phase.FOLLOW) {
+      return ZPY.BadPhaseError.from('collect_trick', this.phase);
+    }
+		if (Object.keys(this.plays).length !== this.players.length) {
+      return new ZPY.InvalidPlayError('trick not finished');
+    }
+    if (player !== this.winning) {
+      return new ZPY.WrongPlayerError('trick winner only');
+    }
+
     for (let player of this.players) {
       for (let [card, n] of this.plays[player].gen_counts(this.tr)) {
         if (card.point_value() > 0) {

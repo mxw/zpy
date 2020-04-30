@@ -376,7 +376,16 @@ export class PlayArea extends React.Component<
     return true;
   }
 
-  submitFollowLead(): boolean {
+  submitFollowOrCollect(): boolean {
+    if (Object.keys(this.props.zpy.plays).length ===
+        this.props.zpy.players.length) {
+      this.props.funcs.attempt(
+        {kind: 'collect_trick', args: [this.props.me.id]},
+        this.onEffect, this.onEffect
+      );
+      return true;
+    }
+
     const play = this.extractPlay();
     if (!play) return false;
 
@@ -473,7 +482,7 @@ export class PlayArea extends React.Component<
       case ZPY.Phase.LEAD: return this.submitLeadPlay();
       case ZPY.Phase.FLY:
         break;
-      case ZPY.Phase.FOLLOW: return this.submitFollowLead();
+      case ZPY.Phase.FOLLOW: return this.submitFollowOrCollect();
       case ZPY.Phase.FINISH:
         break;
       case ZPY.Phase.WAIT:
