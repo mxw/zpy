@@ -44,9 +44,12 @@ export class ScoreInfo extends React.Component<ScoreInfo.Props, {}> {
     }
 
     return <div className="points">
-      {[5, 10, Rank.K].map(rank =>
-        <div className="point-column">
-          {this.props.points.filter(cb => cb.rank === rank).map(
+      {[5, 10, Rank.K].map(rank => {
+        const points = this.props.points.filter(cb => cb.rank === rank);
+        if (points.length === 0) return null;
+
+        return <div className="point-column">
+          {points.map(
             cb => <Card
               card={cb}
               width={card_width}
@@ -54,7 +57,7 @@ export class ScoreInfo extends React.Component<ScoreInfo.Props, {}> {
             />
           )}
         </div>
-      )}
+      })}
     </div>;
   }
 
