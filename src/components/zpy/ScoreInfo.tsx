@@ -42,8 +42,16 @@ export class ScoreInfo extends React.Component<ScoreInfo.Props, {}> {
         this.props.points === null) {
       return null;
     }
+    const total = this.props.points.reduce(
+      (total, cb) => total + cb.point_value(),
+      0
+    );
 
-    return <div className="points">
+    return <div
+      className="points"
+      aria-label={`${total} points`}
+      data-balloon-pos="up"
+    >
       {[5, 10, Rank.K].map(rank => {
         const points = this.props.points.filter(cb => cb.rank === rank);
         if (points.length === 0) return null;
