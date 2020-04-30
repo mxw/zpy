@@ -13,7 +13,7 @@ import { GameClient } from 'protocol/client.ts'
 import { ZPY } from 'lib/zpy/zpy.ts'
 import * as ZPYEngine from 'lib/zpy/engine.ts'
 
-import { Client, EngineCallbacks } from 'components/zpy/common.ts'
+import { Client, EngineCallbacks, debug } from 'components/zpy/common.ts'
 import { Board } from 'components/zpy/Board.tsx'
 
 import { strict as assert} from 'assert'
@@ -103,7 +103,8 @@ export class Game extends React.Component<Game.Props, Game.State> {
     ue: ZPYEngine.UpdateError,
     ctx?: T,
   ) {
-    console.error(ue);
+    if (debug) console.error(ue);
+
     cb?.(ue, ctx);
     this.setState({client});
   }
