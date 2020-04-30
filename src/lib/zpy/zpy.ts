@@ -675,6 +675,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (this.phase !== ZPY.Phase.LEAD) {
       return ZPY.BadPhaseError.from('lead_play', this.phase);
     }
+    console.log('lead_play', play);
     let play_pile = this.init_play(player, play);
     if (play_pile instanceof ZPY.Error) return play_pile;
 

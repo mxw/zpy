@@ -11,7 +11,7 @@ import {
 
 import * as P from 'protocol/protocol.ts'
 
-import { CardBase, TrumpMeta } from 'lib/zpy/cards.ts'
+import { TrumpMeta, CardBase, Card } from 'lib/zpy/cards.ts'
 import { ZPY } from 'lib/zpy/zpy.ts'
 import * as ZPYEngine from 'lib/zpy/engine.ts'
 
@@ -25,13 +25,6 @@ import { array_fill } from 'utils/array.ts'
 
 import { strict as assert} from 'assert'
 
-
-function reorder<T>(arr: T[], src: number, dst: number): T[] {
-  const result = [...arr];
-  const [removed] = result.splice(src, 1);
-  result.splice(dst, 0, removed);
-  return result;
-}
 
 export class PlayArea extends React.Component<
   PlayArea.Props,
@@ -413,9 +406,14 @@ export class PlayArea extends React.Component<
   onKeyDown(ev: React.KeyboardEvent | KeyboardEvent) {
     const metaKey = isWindows() ? ev.ctrlKey : ev.metaKey;
 
-    if (ev.key === 'a') {
+    if (ev.key === 'a' && metaKey) {
       ev.preventDefault();
       this.selectAll();
+      return;
+    }
+    if (ev.key === 'S') {
+      ev.preventDefault();
+      this.sortHand();
       return;
     }
     if (ev.key === 'Enter') {
@@ -613,9 +611,9 @@ export class PlayArea extends React.Component<
   };
 
   selectAll() {
-    this.setState((state, props) => {
-      return {selected: new Set(state.id_set)};
-    });
+    this.setState((state, props) => ({
+      selected: new Set(state.id_set),
+    }));
   }
 
   deselectAll() {
@@ -623,6 +621,26 @@ export class PlayArea extends React.Component<
       selected: new Set(),
       prev_start: null,
       prev_stop: null,
+    });
+  }
+
+  sortHand() {
+    const tr = this.props.zpy.tr;
+    if (tr === null) return;
+
+    this.setState((state, props) => {
+      const sorted = [...state.areas[0].ordered].sort((l, r) => {
+        const ll = Card.from(l.cb, tr);
+        const rr = Card.from(r.cb, tr);
+        return Card.compare(ll, rr) ?? Math.sign(ll.v_suit - rr.v_suit);
+      });
+      return {areas: [
+        {
+          ordered: sorted,
+          id_to_pos: id_to_pos(sorted),
+        },
+        ...state.areas.slice(1)
+      ]};
     });
   }
 
