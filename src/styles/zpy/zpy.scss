@@ -28,6 +28,7 @@ body {
   position: relative;
   @include flex.column;
 
+  min-width: rhythm.rh(10);
   padding: rhythm.rh(1);
 
   > div {
@@ -102,7 +103,9 @@ body {
 
   > .score-info {
     width: 100%;
-    min-height: rhythm.rh(8);
+    min-height: rhythm.rh(9);
+
+    @include flex.column;
 
     &::before {
       content: "";
@@ -111,6 +114,31 @@ body {
       height: 1px;
       left: 0;
       background-image: linear-gradient(to right, transparent, #666, transparent);
+    }
+
+    > .rank {
+      display: flex;
+      justify-content: space-around;
+      align-items: baseline;
+
+      width: 100%;
+      padding: rhythm.rh(0.5);
+
+      font-size: rhythm.rh(0.75);
+    }
+
+    > .points {
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-start;
+
+      width: 100%;
+      padding: rhythm.rh(0.5);
+
+      > .point-column {
+        @include flex.column;
+        padding-bottom: card.container-padding(0.5, card.height-for(card.$width-score));
+      }
     }
   }
 }
