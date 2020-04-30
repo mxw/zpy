@@ -1,5 +1,8 @@
 /*
+ * special action area for choosing friends
  *
+ * renders as zpy.ndecks instances of a full deck's worth of cards (minus
+ * illegal friend calls) piled on top of each other
  */
 import * as React from 'react'
 

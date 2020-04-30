@@ -1,5 +1,5 @@
 /*
- * display for players' game actions: bids, plays, and readys
+ * all score metadata, including ranks and points
  */
 import * as React from 'react'
 
@@ -12,10 +12,7 @@ import { State as Z } from 'lib/zpy/engine.ts'
 import { strict as assert} from 'assert'
 
 
-export class ScoreInfo extends React.Component<
-  ScoreInfo.Props,
-  ScoreInfo.State
-> {
+export class ScoreInfo extends React.Component<ScoreInfo.Props, {}> {
   constructor(props: ScoreInfo.Props) {
     super(props);
   }
@@ -34,9 +31,6 @@ export type Props = {
 
   rank_meta: Z['ranks'][P.UserID];
   points: Z['points'][P.UserID];
-};
-
-export type State = {
 };
 
 }

@@ -1,5 +1,5 @@
 /*
- * interactive play portion of the ZPY board
+ * non-interactive informational portion of the ZPY board
  */
 import * as React from 'react'
 
@@ -69,10 +69,7 @@ export type Props = PlayerInfo.Props & ActionInfo.Props & ScoreInfo.Props;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-export class RoundInfo extends React.Component<
-  RoundInfo.Props,
-  RoundInfo.State
-> {
+export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
   constructor(props: RoundInfo.Props) {
     super(props);
   }
@@ -122,9 +119,6 @@ export type Props = {
   me: P.User;
   zpy: Z;
   users: P.User[];
-};
-
-export type State = {
 };
 
 }

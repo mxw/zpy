@@ -1,5 +1,6 @@
 /*
- * ZPY homepage: set username and create games
+ * wrapper around all routeable components which ensures that a session has
+ * been established
  */
 import * as React from "react"
 import axios from "axios"

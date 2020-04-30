@@ -20,10 +20,7 @@ import { hash_code } from 'utils/string.ts'
 import { strict as assert} from 'assert'
 
 
-export class PlayerInfo extends React.Component<
-  PlayerInfo.Props,
-  PlayerInfo.State
-> {
+export class PlayerInfo extends React.Component<PlayerInfo.Props, {}> {
   constructor(props: PlayerInfo.Props) {
     super(props);
   }
@@ -65,9 +62,6 @@ export type Props = {
   current: boolean;
   host: boolean;
   team: null | 'host' | 'atk';
-};
-
-export type State = {
 };
 
 }
