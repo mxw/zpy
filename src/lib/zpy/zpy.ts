@@ -67,7 +67,7 @@ export class Data<PlayerID extends keyof any> {
   // each player's point cards; valid if phase > FRIEND
   points: Record<PlayerID, CardBase[]> = {} as any;
   // friends declarations; valid iff phase > FRIEND
-  friends: {card: CardBase, nth: number}[] = [];
+  friends: {card: CardBase, nth: number, tally: number}[] = [];
   // number of times a friend has joined; valid iff phase > FRIEND
   joins: number = 0;
   // attacking and host teams; valid if phase > FRIEND
@@ -581,7 +581,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
         this.friends.length = 0;
         return new ZPY.InvalidPlayError('no natural trump friend calls allowed');
       }
-      this.friends.push({card, nth});
+      this.friends.push({card, nth, tally: nth});
     }
 
     this.host_team.add(this.host);
@@ -632,9 +632,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     for (let [card, n] of play.gen_counts(this.tr)) {
       for (let friend of this.friends) {
         if (CardBase.same(card, friend.card) &&
-            friend.nth > 0 &&
-            (friend.nth -= n) <= 0) {
-          friend.nth = 0;
+            friend.tally > 0 &&
+            (friend.tally -= n) <= 0) {
+          friend.tally = 0;
           this.host_team.add(player);
 
           if (++this.joins === this.nfriends) {

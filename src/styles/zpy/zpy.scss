@@ -127,16 +127,40 @@ body {
 
   font-size: rhythm.rh(2);
   cursor: default;
+}
 
-  &.clubs, &.spades {
-    color: black;
+.friend-indicator {
+  position: absolute;
+  top: rhythm.rh(2.375);
+  left: -1 * rhythm.rh(2.5);
+
+  @include flex.column;
+  align-items: flex-end;
+
+  > .friend {
+    color: darkgrey;
+    font-size: rhythm.rh(1);
+    cursor: default;
+
+    &.found {
+      color: lightgrey;
+      text-decoration: line-through;
+
+      > .clubs, > .spades, > .diamonds, > .hearts, > .trump {
+        color: lightgrey;
+      }
+    }
   }
-  &.diamonds, &.hearts {
-    color: red;
-  }
-  &.trump {
-    color: goldenrod;
-  }
+}
+
+.clubs, .spades {
+  color: black;
+}
+.diamonds, .hearts {
+  color: red;
+}
+.trump {
+  color: goldenrod;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

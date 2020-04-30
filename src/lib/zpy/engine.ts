@@ -259,6 +259,7 @@ const cd_ZPYData = (
   friends: C.array(C.type({
     card: cd_CardBase,
     nth: C.number,
+    tally: C.number,
   })),
   joins: C.number,
   host_team: P.set(PlayerID),

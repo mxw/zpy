@@ -74,6 +74,46 @@ export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
     super(props);
   }
 
+  renderTrumpIndicator() {
+    const zpy = this.props.zpy;
+    if (zpy.tr === null) return null;
+
+    const suitname = Suit[zpy.tr.suit].toLowerCase();
+
+    return <div
+      key="trump-indicator"
+      className={`trump-indicator ${suitname}`}
+    >
+      {zpy.tr.toString()}
+    </div>;
+  }
+
+  renderFriendIndicator() {
+    const zpy = this.props.zpy;
+    if (zpy.friends.length === 0) return null;
+
+    const friends = zpy.friends.map(({card, nth, tally}) => {
+      const ord_str = `${nth}º`;
+      const card_str = card.toString();
+      const key = `${ord_str} ${card_str}`;
+      const suitname = Suit[card.suit].toLowerCase();
+
+      let classes = ["friend"];
+      if (tally === 0) classes.push("found");
+
+      return <div key={key} className={classes.join(' ')}>
+        {ord_str} <span className={suitname}>{card_str}</span>
+      </div>;
+    });
+
+    return <div
+      key="friend-indicator"
+      className="friend-indicator"
+    >
+      {friends}
+    </div>;
+  }
+
   render() {
     const zpy = this.props.zpy;
 
@@ -84,19 +124,6 @@ export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
         ...zpy.players.slice(0, zpy.order[zpy.host]),
       ]
       : zpy.players;
-
-    const trump_indicator = (() => {
-      if (zpy.tr === null) return null;
-
-      const suitname = Suit[zpy.tr.suit].toLowerCase();
-
-      return <div
-        key="trump-indicator"
-        className={`trump-indicator ${suitname}`}
-      >
-        {zpy.tr.toString()}
-      </div>
-    })();
 
     return <div className="round">
       {ordered.map(uid =>
@@ -122,7 +149,8 @@ export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
           play={zpy.plays[uid] ?? null}
         />
       )}
-      {trump_indicator}
+      {this.renderTrumpIndicator()}
+      {this.renderFriendIndicator()}
     </div>;
   }
 }
