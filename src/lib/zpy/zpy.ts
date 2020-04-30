@@ -817,6 +817,10 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   }
   observe_follow(player: PlayerID, play: Play): ZPY.Result {
     this.commit_play(player, play);
+
+    if (Object.keys(this.plays).length === this.players.length) {
+      this.current = null;
+    }
   }
 
   /*
@@ -828,7 +832,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (this.phase !== ZPY.Phase.FOLLOW) {
       return ZPY.BadPhaseError.from('collect_trick', this.phase);
     }
-		if (Object.keys(this.plays).length !== this.players.length) {
+    if (Object.keys(this.plays).length !== this.players.length) {
       return new ZPY.InvalidPlayError('trick not finished');
     }
     if (player !== this.winning) {
