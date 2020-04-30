@@ -5,7 +5,7 @@ import * as React from 'react'
 
 import * as P from 'protocol/protocol.ts'
 
-import { CardBase } from 'lib/zpy/cards.ts'
+import { CardBase, Suit } from 'lib/zpy/cards.ts'
 import { ZPY } from 'lib/zpy/zpy.ts'
 import { State as Z } from 'lib/zpy/engine.ts'
 
@@ -85,6 +85,19 @@ export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
       ]
       : zpy.players;
 
+    const trump_indicator = (() => {
+      if (zpy.tr === null) return null;
+
+      const suitname = Suit[zpy.tr.suit].toLowerCase();
+
+      return <div
+        key="trump-indicator"
+        className={`trump-indicator ${suitname}`}
+      >
+        {zpy.tr.toString()}
+      </div>
+    })();
+
     return <div className="round">
       {ordered.map(uid =>
         <Column
@@ -109,6 +122,7 @@ export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
           play={zpy.plays[uid] ?? null}
         />
       )}
+      {trump_indicator}
     </div>;
   }
 }

@@ -24,6 +24,7 @@ body {
 ///////////////////////////////////////////////////////////////////////////////
 
 .round {
+  position: relative;
   @include flex.row-center;
   align-items: flex-start;
 }
@@ -116,6 +117,25 @@ body {
       left: 0;
       background-image: linear-gradient(to right, transparent, #666, transparent);
     }
+  }
+}
+
+.trump-indicator {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+
+  font-size: rhythm.rh(2);
+  cursor: default;
+
+  &.clubs, &.spades {
+    color: black;
+  }
+  &.diamonds, &.hearts {
+    color: red;
+  }
+  &.trump {
+    color: goldenrod;
   }
 }
 
