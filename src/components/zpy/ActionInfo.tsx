@@ -65,7 +65,9 @@ export class ActionInfo extends React.Component<ActionInfo.Props> {
     let play = this.props.play;
 
     if (play === null) {
-      play = this.props.lead;
+      if (this.props.leader) {
+        play = this.props.lead;
+      }
       if (play === null) return null;
 
       // lead without play means this is a fly attempt
