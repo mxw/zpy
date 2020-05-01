@@ -111,6 +111,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
    * Property getters.
    */
   get nplayers(): number { return this.players.length; }
+  static get min_players(): number { return 4; }
 
   /*
    * Size of the host team given the number of players.
@@ -321,8 +322,10 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (player !== this.owner) {
       return new ZPY.WrongPlayerError('game owner only');
     }
-    if (this.nplayers < 4) {
-      return new ZPY.InvalidArgError('must have at least 4 players');
+    if (this.nplayers < ZPY.min_players) {
+      return new ZPY.InvalidArgError(
+        `must have at least ${ZPY.min_players} players`
+      );
     }
 
     let players = !this.debug
@@ -1022,8 +1025,10 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (player !== this.host) {
       return new ZPY.WrongPlayerError('host only');
     }
-    if (this.nplayers < 4) {
-      return new ZPY.InvalidArgError('must have at least 4 players');
+    if (this.nplayers < ZPY.min_players) {
+      return new ZPY.InvalidArgError(
+        `must have at least ${ZPY.min_players} players`
+      );
     }
     this.reset_round(this.host, true);
     this.phase = ZPY.Phase.DRAW;

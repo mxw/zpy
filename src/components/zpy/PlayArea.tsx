@@ -1034,7 +1034,10 @@ export class PlayArea extends React.Component<
 
     const is_active = (() => {
       switch (this.props.phase) {
-        case ZPY.Phase.INIT: return me === zpy.owner;
+        case ZPY.Phase.INIT: return (
+          me === zpy.owner &&
+          zpy.players.length >= ZPY.min_players
+        );
         case ZPY.Phase.DRAW: return true;
         case ZPY.Phase.PREPARE: return !zpy.consensus.has(me);
         case ZPY.Phase.KITTY: return me === zpy.host;
@@ -1054,8 +1057,9 @@ export class PlayArea extends React.Component<
     if (!is_active) {
       const text = (() => {
         switch (this.props.phase) {
-          case ZPY.Phase.INIT:
-            return <>waiting for the game to start</>;
+          case ZPY.Phase.INIT: return me === zpy.owner
+            ? <>gather at least {ZPY.min_players} players</>
+            : <>waiting for the game to start</>;
           case ZPY.Phase.DRAW:
             return null;
           case ZPY.Phase.PREPARE:
