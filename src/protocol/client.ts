@@ -186,6 +186,9 @@ export class GameClient<
         case 'user:join':
           this.users.push(pa.who);
           break;
+        case 'user:rejoin':
+          // this does nothing because currently parts never occur
+          break;
         case 'user:part':
           this.users = this.users.filter(u => u.id !== pa.id);
           break;

@@ -49,11 +49,25 @@ class Game<
   config: Config;
   owner: Principal;
   state: State;
-  clients: Client[] = [];
-  next_id: number = 0;
 
-  // start a new game w/ no players; the principal identifies the player who
-  // will be marked as a host once they join
+  // currently connected clients
+  clients: Client[] = [];
+
+  // user object corresponding to every client we've seen
+  known_users: Record<Principal, {
+    user: P.User;
+    part_ts: null | number;
+  }> = {};
+
+  // next uid to allocate
+  next_uid: number = 0;
+
+  /*
+   * start a new game w/ no players
+   *
+   * the principal identifies the player who will be marked as the game owner
+   * once they join
+   */
   constructor(engine: Eng, owner: Principal, config: Config) {
     this.engine = engine;
     this.config = config;
@@ -61,13 +75,28 @@ class Game<
     this.state = this.engine.init(config);
   }
 
-  // process a hello message from a client. this marks them as present but not
-  // yet synchronized; they won't receive updates until they ask for a reset
+  /*
+   * process a hello message from a client
+   *
+   * this marks them as present but not yet synchronized; they won't receive
+   * updates until they ask for a reset
+   */
   hello(source: Client, nick: string): void {
-    let user = {
-      id: this.next_id++,
-      nick: nick,
-    };
+    const known = this.known_users[source.principal] ?? null;
+
+    const user = (() => {
+      if (known !== null) {
+        known.part_ts = null;
+        return known.user;
+      }
+      const user = {
+        id: this.next_uid++,
+        nick: nick,
+      };
+      this.known_users[source.principal] = {user, part_ts: null};
+
+      return user;
+    })();
 
     source.user = user;
     source.socket.send(JSON.stringify(
@@ -89,7 +118,7 @@ class Game<
           command: {
             kind: "protocol",
             effect: {
-              verb: "user:join",
+              verb: known === null ? "user:join" : "user:rejoin",
               who: user,
             },
           },

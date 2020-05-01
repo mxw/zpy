@@ -67,6 +67,12 @@ export const Join = C.type({
 });
 export type Join = TypeOf<typeof Join>
 
+export const Rejoin = C.type({
+  verb: C.literal("user:rejoin"),
+  who: User,
+});
+export type Rejoin = TypeOf<typeof Rejoin>
+
 export const Part = C.type({
   verb: C.literal("user:part"),
   id: C.number,
@@ -75,9 +81,10 @@ export type Part = TypeOf<typeof Part>
 
 export const ProtocolAction = C.sum('verb')({
   'user:join': Join,
+  'user:rejoin': Rejoin,
   'user:part': Part,
 });
-export type ProtocolAction = Join | Part;
+export type ProtocolAction = Join | Rejoin | Part;
 
 ///////////////////////////////////////////////////////////////////////////////
 

@@ -1,18 +1,20 @@
 # TODO
 
-## protocol & nav
-
-- implement reconnects
+## public release
 
 - implement a homepage
 
-## game engine
-
-## game UI
+- implement a round-end Reveal
 
 - show "team point total" somewhere
 
-## game style
+- support rename protocol actions
+
+- support parts and nontrivial reconnects
+
+- reap dead games
+
+- support adding/removing players between rounds
 
 ## wishlist
 
@@ -24,3 +26,6 @@
   to use the one on the component, since it could be stale when the callback
   triggers (even though in practice it's necessarily the same state unless a
   reset occurred---which is definitely possible)
+
+- support game persistence across server disruptions (serialize state to some
+  database)
