@@ -545,6 +545,8 @@ export class PlayArea extends React.Component<
     intent: ZPYEngine.Intent,
     onUpdate?: (effect: ZPYEngine.Effect) => void,
   ): true {
+    this.setState({action_pending: true});
+
     this.props.funcs.attempt(
       intent,
       onUpdate ?? this.onEffect,
