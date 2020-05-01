@@ -194,7 +194,7 @@ export class PlayerInfo extends React.Component<
 
   renderTeamIcon() {
     const icon = (() => {
-      if (this.props.team === 'host') return 'top-hat';
+      if (this.props.team === 'host') return 'castle';
       if (this.props.team === 'attacking') return 'kitchen-knife';
       return null;
     })();
