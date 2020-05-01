@@ -24,7 +24,7 @@ import { strict as assert} from 'assert'
 import 'styles/zpy/zpy.scss'
 
 
-ReactModal.setAppElement('#example');
+ReactModal.setAppElement('#zpy');
 
 export class Game extends React.Component<Game.Props, Game.State> {
   constructor(props: Game.Props) {
