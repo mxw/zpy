@@ -11,7 +11,7 @@ import {
 
 import * as P from 'protocol/protocol.ts'
 
-import { TrumpMeta, CardBase, Card } from 'lib/zpy/cards.ts'
+import { TrumpMeta, CardBase, Card, CardPile } from 'lib/zpy/cards.ts'
 import { Play, Flight } from 'lib/zpy/trick.ts'
 import { ZPY } from 'lib/zpy/zpy.ts'
 import * as ZPYEngine from 'lib/zpy/engine.ts'
@@ -74,12 +74,15 @@ export class PlayArea extends React.Component<
 
       fr_select: array_fill(zpy.ndecks, () => ({})),
 
-      action: {
-        pending: false,
-      },
+      action_pending: false,
+      pending_cards: [],
     }, hand, 0);
 
-    if (id === zpy.host && zpy.kitty.length > 0) {
+    if (id === zpy.host &&
+        zpy.kitty.length > 0 &&
+        zpy.phase === ZPY.Phase.KITTY
+    ) {
+      // a host's kitty phase is the only time we add the kitty to our hand
       state.areas.push({ordered: [], id_to_pos: {}});
       state = PlayArea.withCardsAdded(state, zpy.kitty, 1);
     }
@@ -154,7 +157,8 @@ export class PlayArea extends React.Component<
 
       fr_select: state.fr_select.map(fr => ({...fr})),
 
-      action: {...state.action},
+      action_pending: state.action_pending,
+      pending_cards: [...state.pending_cards],
     }
   }
 
@@ -168,19 +172,49 @@ export class PlayArea extends React.Component<
    * account for new/removed cards from a server update
    */
   onUpdate(effect: ZPYEngine.Effect) {
+    const me = this.props.me.id;
+    const zpy = this.props.zpy;
+
     switch (effect.kind) {
       case 'set_decks': {
         this.setState({
-          fr_select: array_fill(this.props.zpy.ndecks, () => ({}))
+          fr_select: array_fill(zpy.ndecks, () => ({}))
         });
         break;
       }
       case 'install_host': {
         const kitty = effect.args[1];
-        if (this.props.me.id === this.props.zpy.host && kitty.length > 0) {
+        if (me === zpy.host && kitty.length > 0) {
           this.setState((state, props) =>
             PlayArea.withCardsAdded(state, kitty, 1)
           );
+        }
+        break;
+      }
+      case 'reject_fly': {
+        if (me === zpy.leader) {
+          // our fly was rejected, so remove our forced play from our hand
+          this.setState((state, props) => {
+            const to_rm = card_delta(
+              effect.args[2].gen_cards(zpy.tr),
+              state.pending_cards,
+              zpy.tr
+            ).both;
+            return {
+              ...PlayArea.withCardsRemoved(state, props, to_rm),
+              pending_cards: [],
+            };
+          });
+        }
+        break;
+      }
+      case 'pass_contest': {
+        if (me === zpy.leader && zpy.phase === ZPY.Phase.FOLLOW) {
+          // our fly passed, so remove the cards from our hand
+          this.setState((state, props) => ({
+            ...PlayArea.withCardsRemoved(state, props, state.pending_cards),
+            pending_cards: [],
+          }));
         }
         break;
       }
@@ -485,17 +519,22 @@ export class PlayArea extends React.Component<
    * follow_lead) commits
    */
   onPlayEffect(to_rm: CardID[], effect: ZPYEngine.Effect) {
-    if (effect.kind !== 'replace_kitty' &&
-        effect.kind !== 'lead_play' &&
-        effect.kind !== 'follow_lead') {
-      assert(false);
-      return;
-    }
+    assert(effect.kind === 'replace_kitty' ||
+           effect.kind === 'lead_play' ||
+           effect.kind === 'follow_lead');
+
     if (effect.args[0] !== this.props.me.id) return;
 
-    this.setState((state, props) =>
-      PlayArea.withCardsRemoved(state, props, to_rm)
-    );
+    this.setState((state, props) => {
+      if (effect.kind === 'lead_play' &&
+          effect.args[1].tractors.length > 1) {
+        // we're trying to fly something, so we need to defer the removal of
+        // cards from our hand until the fly either passes or fails
+        assert(state.pending_cards.length === 0);
+        return {...state, pending_cards: to_rm};
+      }
+      return PlayArea.withCardsRemoved(state, props, to_rm)
+    });
     this.onEffect(effect);
   }
 
@@ -518,7 +557,7 @@ export class PlayArea extends React.Component<
    * shared logic around an attempt completing
    */
   onEffect(_?: any) {
-    this.setState({action: {pending: false}});
+    this.setState({action_pending: false});
   }
 
   /*
@@ -526,7 +565,7 @@ export class PlayArea extends React.Component<
    * anything at all (even if we failed)
    */
   onSubmit(): boolean {
-    if (this.state.action.pending) return false;
+    if (this.state.action_pending) return false;
 
     switch (this.props.phase) {
       case ZPY.Phase.INIT: return this.submitStartGame();
@@ -1086,6 +1125,8 @@ export class PlayArea extends React.Component<
   }
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
 /*
  * make a record mapping card id to a constant `val`
  */
@@ -1099,6 +1140,46 @@ function id_to_cns<T>(cards: CardID[], val: T): Record<string, T> {
 function id_to_pos(cards: CardID[]): Record<string, number> {
   return Object.fromEntries(cards.map((card, i) => [card.id, i]));
 }
+
+/*
+ * make a venn diagram of `left` and `right`
+ *
+ * for duplicate cards, we choose arbitrary ids for that card from `right`
+ */
+function card_delta(
+  left: Iterable<CardBase>,
+  right: Iterable<CardID>,
+  tr?: TrumpMeta,
+): {
+  both: CardID[],
+  left: CardBase[],
+  right: CardID[],
+} {
+  const left_pile = new CardPile(left, tr ?? TrumpMeta.def());
+
+  const result = {
+    both: [] as CardID[],
+    left: [] as CardBase[],
+    right: [] as CardID[]
+  };
+
+  for (const c of right) {
+    if (left_pile.count(c.cb) > 0) {
+      // c is in the intersection
+      result.both.push(c);
+      left_pile.remove(c.cb);
+    } else {
+      // c is only in `right`
+      result.right.push(c);
+    }
+  }
+  for (const cb of left_pile.gen_cards()) {
+    result.left.push(cb);
+  }
+  return result;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 
 export namespace PlayArea {
 
@@ -1154,11 +1235,10 @@ export type State = {
 
   fr_select: Record<string, [CardBase, number]>[];
 
-  // player action-related metadata
-  action: {
-    // is there an action pending?
-    pending: boolean;
-  };
+  // is there an action pending?
+  action_pending: boolean;
+  // pending cards for removal; see onPlayEffect()
+  pending_cards: CardID[];
 };
 
 }

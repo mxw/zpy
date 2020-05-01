@@ -4,17 +4,11 @@
 
 - implement reconnects
 
-- implement PlayArea onReset logic
-
-- implement a homepage: specifically, a way to set your nickname and explicitly
-  create games
+- implement a homepage
 
 ## game engine
 
 ## game UI
-
-- be smarter about when to remove cards from our hand following a `lead_play`.
-  it's not safe to do so unconditionally, since it might be a failed flight.
 
 - show "team point total" somewhere
 
