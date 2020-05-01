@@ -85,6 +85,21 @@ export function rank_to_string(rank: Rank) {
 }
 
 /*
+ * Stringify and [Suit, Rank] pair.
+ */
+export function card_to_string(
+  suit: Suit,
+  rank: Rank,
+  color: boolean = false,
+) {
+  let out = '';
+  if (color) out += suit_to_color(suit);
+  out += rank_to_string(rank) + suit_to_symbol(suit);
+  if (color) out += ansi.RESET;
+  return out;
+}
+
+/*
  * Trump selection for a round.
  *
  * Examples:
@@ -144,7 +159,7 @@ export class TrumpMeta {
   }
 
   toString(color: boolean = false): string {
-    return (new CardBase(this.suit, this.rank)).toString(color);
+    return card_to_string(this.suit, this.rank, color);
   }
 }
 
@@ -184,11 +199,7 @@ export class CardBase {
   }
 
   toString(color: boolean = false): string {
-    let out = '';
-    if (color) out += suit_to_color(this.suit);
-    out += rank_to_string(this.rank) + suit_to_symbol(this.suit);
-    if (color) out += ansi.RESET;
-    return out;
+    return card_to_string(this.suit, this.rank, color);
   }
 
   /*
