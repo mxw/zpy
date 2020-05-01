@@ -53,12 +53,10 @@ export class PlayArea extends React.Component<
     this.onDragStart = this.onDragStart.bind(this);
     this.onDragEnd = this.onDragEnd.bind(this);
 
-    const zpy = this.props.zpy;
-    const id = this.props.me.id;
-
-    const hand: Iterable<CardBase> =
-      id in zpy.hands ? zpy.hands[id].pile.gen_cards() :
-      id in zpy.draws ? zpy.draws[id].gen_cards() : [];
+    const {hand, kitty} = PlayArea.cardsForInit(
+      this.props.me.id,
+      this.props.zpy,
+    );
 
     let state = PlayArea.withCardsAdded({
       seen: [],
@@ -72,19 +70,16 @@ export class PlayArea extends React.Component<
       prev_stop: null,
       multidrag: null,
 
-      fr_select: array_fill(zpy.ndecks, () => ({})),
+      fr_select: array_fill(this.props.zpy.ndecks, () => ({})),
 
       action_pending: false,
       pending_cards: [],
     }, hand, 0);
 
-    if (id === zpy.host &&
-        zpy.kitty.length > 0 &&
-        zpy.phase === ZPY.Phase.KITTY
-    ) {
+    if (kitty.length > 0) {
       // a host's kitty phase is the only time we add the kitty to our hand
       state.areas.push({ordered: [], id_to_pos: {}});
-      state = PlayArea.withCardsAdded(state, zpy.kitty, 1);
+      state = PlayArea.withCardsAdded(state, kitty, 1);
     }
     this.state = PlayArea.validate(state);
 
@@ -165,7 +160,26 @@ export class PlayArea extends React.Component<
   /*
    * account for new/removed cards from a server reset
    */
-  onReset(state: ZPYEngine.ClientState) {
+  onReset(zpy: ZPYEngine.ClientState) {
+    const {hand, kitty} = PlayArea.cardsForInit(this.props.me.id, zpy);
+
+    this.setState((state, props) => {
+      const all_cards = PlayArea.filter(state);
+
+      const ingest = (input: Iterable<CardBase>, adx: number) => {
+        const delta = card_delta(input, all_cards);
+        if (delta.left.length > 0) {
+          state = PlayArea.withCardsAdded(state, delta.left, adx);
+        }
+        if (delta.right.length > 0) {
+          state = PlayArea.withCardsRemoved(state, props, delta.right);
+        }
+      };
+      ingest(hand, 0);
+      ingest(hand, 1);
+      return state;
+    });
+
   }
 
   /*
@@ -220,6 +234,26 @@ export class PlayArea extends React.Component<
       }
       default: break;
     }
+  }
+
+  /*
+   * pull the cards from `this.props.zpy` that we use for initialization
+   */
+  static cardsForInit(me: P.UserID, zpy: ZPYEngine.ClientState): {
+    hand: Iterable<CardBase>,
+    kitty: CardBase[],
+  } {
+    const hand: Iterable<CardBase> =
+      me in zpy.hands ? zpy.hands[me].pile.gen_cards() :
+      me in zpy.draws ? zpy.draws[me].gen_cards() : [];
+
+    const kitty = (
+      me === zpy.host &&
+      zpy.kitty.length > 0 &&
+      zpy.phase === ZPY.Phase.KITTY
+    ) ? zpy.kitty : [];
+
+    return {hand, kitty};
   }
 
   /*
