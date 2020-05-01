@@ -15,9 +15,6 @@
 
 - fix bug where two CardAreas are shown after submitting `replace_kitty`
 
-- implement a Reveal area for shared publicized information, like a revealed
-  kitty or the cards used to contest a fly
-
 - show "team point total" somewhere
 
 - display errors... somewhere

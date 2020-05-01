@@ -344,3 +344,44 @@ kbd {
     transition: all 0s;
   }
 }
+
+///////////////////////////////////////////////////////////////////////////////
+
+.reveal-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  @include flex.row-center;
+
+  background-color: rgba(255, 255, 255, 0.75);
+}
+
+.reveal-modal-content {
+  overflow: auto;
+  padding: rhythm.rh(1);
+
+  background: rgb(255, 255, 255);
+  border: 1px solid rgb(204, 204, 204);
+  border-radius: rhythm.rh(0.25);
+  outline: none;
+}
+
+.reveal {
+  @include flex.column;
+  padding: rhythm.rh(1);
+
+  > .reveal-desc {
+    padding-bottom: rhythm.rh(1);
+    font-size: rhythm.rh(2);
+  }
+  > .reveal-multi {
+    @include flex.row-center;
+  }
+}
+.reveal-cards {
+  @include flex.row-center;
+  @include card.container-h(1, card.$width-hand, card.$clip * 1.5);
+}

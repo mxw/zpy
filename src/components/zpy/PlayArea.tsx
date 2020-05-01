@@ -177,7 +177,7 @@ export class PlayArea extends React.Component<
       }
       case 'install_host': {
         const kitty = effect.args[1];
-        if (kitty.length > 0) {
+        if (this.props.me.id === this.props.zpy.host && kitty.length > 0) {
           this.setState((state, props) =>
             PlayArea.withCardsAdded(state, kitty, 1)
           );
@@ -659,6 +659,7 @@ export class PlayArea extends React.Component<
     ev: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent
   ) {
     if (ev.defaultPrevented) return;
+    if ('button' in ev && ev.button !== 0) return;
     this.deselectAll();
   }
 

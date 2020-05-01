@@ -139,6 +139,27 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   }
 
   /*
+   * Perform the logic of revealed kitty trump selection.
+   *
+   * This is basically a max() over virtual ranks where the index in the kitty
+   * is used as a tiebreaker.
+   */
+  reveal_highest(kitty: CardBase[]): [Card, Rank] {
+    const rank = this.ranks[this.host].rank;
+
+    // the natural-trump-only TrumpMeta works for comparisons here
+    const ctx_tr = new TrumpMeta(Suit.TRUMP, rank);
+
+    const card = kitty.reduce<Card>((highest: Card, cb: CardBase) => {
+      const card = new Card(cb.suit, cb.rank, ctx_tr);
+      if (highest === null) return card;
+      return card.v_rank > highest.v_rank ? card : highest;
+    }, null);
+
+    return [card, rank];
+  }
+
+  /*
    * Whether everyone has played for a trick.
    */
   trick_over(): boolean {
@@ -512,16 +533,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   }
 
   private reveal_kitty(player: PlayerID, kitty: CardBase[]): ZPY.Result {
-    let rank = this.ranks[this.host].rank;
-
-    // the natural-trump-only TrumpMeta works for comparisons here
-    let ctx_tr = new TrumpMeta(Suit.TRUMP, rank);
-
-    let card = kitty.reduce((highest: Card, c: CardBase) => {
-      let card = new Card(c.suit, c.rank, ctx_tr);
-      if (!highest) return card;
-      return card.v_rank > highest.v_rank ? card : highest;
-    }, null);
+    const [card, rank] = this.reveal_highest(kitty);
 
     this.tr = new TrumpMeta(card.suit, rank);
     for (let p in this.draws) this.draws[p].rehash(this.tr);
@@ -529,7 +541,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
 
   private receive_kitty(player: PlayerID, kitty: CardBase[]): ZPY.Result {
     for (let c of kitty) {
-      this.draws[player].insert(new Card(c.suit, c.rank, this.tr));
+      this.draws[player]?.insert(new Card(c.suit, c.rank, this.tr));
     }
   }
 

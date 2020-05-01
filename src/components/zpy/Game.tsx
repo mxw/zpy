@@ -5,6 +5,7 @@
  * then delegates the rest to Board
  */
 import * as React from 'react'
+import ReactModal = require('react-modal');
 
 import * as P from 'protocol/protocol.ts'
 import { GameId } from 'server/server.ts'
@@ -15,11 +16,14 @@ import * as ZPYEngine from 'lib/zpy/engine.ts'
 
 import { Client, EngineCallbacks, debug } from 'components/zpy/common.ts'
 import { Board } from 'components/zpy/Board.tsx'
+import { Reveal } from 'components/zpy/Reveal.tsx'
 
 import { strict as assert} from 'assert'
 
 import 'styles/zpy/zpy.scss'
 
+
+ReactModal.setAppElement('#example');
 
 export class Game extends React.Component<Game.Props, Game.State> {
   constructor(props: Game.Props) {
@@ -32,8 +36,11 @@ export class Game extends React.Component<Game.Props, Game.State> {
     this.subscribeReset = this.subscribeReset.bind(this);
     this.subscribeUpdate = this.subscribeUpdate.bind(this);
 
+    this.closeReveal = this.closeReveal.bind(this);
+
     this.state = {
       client: null,
+      reveal_effects: [],
       reset_subs: [],
       update_subs: [],
     };
@@ -63,6 +70,51 @@ export class Game extends React.Component<Game.Props, Game.State> {
     return client;
   }
 
+  /////////////////////////////////////////////////////////////////////////////
+
+  /*
+   * queue up effects that require a reveal of information
+   *
+   * surely one slot is enough, you cry!  as it turns out, it's possible that
+   * someone just hangs out on the "reveal kitty" view until the host replaces
+   * the kitty, calls friends, attempts a fly, and it's rejected---in which
+   * case we want to show the reject_fly reveal afterwards.
+   */
+  enqueueReveal(effect: ZPYEngine.Effect, state: ZPYEngine.ClientState) {
+    switch (effect.kind) {
+      case 'install_host':
+        if (state.winning_bid() !== null) return;
+      case 'reject_fly':
+        break;
+      default: return;
+    }
+    this.setState((state, props) => ({
+      reveal_effects: [...state.reveal_effects, effect]
+    }));
+  }
+
+  closeReveal() {
+    this.setState((state, props) => ({
+      reveal_effects: state.reveal_effects.slice(1)
+    }));
+  }
+
+  renderReveal() {
+    const effect = this.state.reveal_effects[0] ?? null;
+
+    return <ReactModal
+      isOpen={this.state.reveal_effects.length > 0}
+      onRequestClose={this.closeReveal}
+      contentLabel="revealed"
+      className="reveal-modal-content"
+      overlayClassName="reveal-modal-overlay"
+    >
+      <Reveal effect={effect} client={this.state.client} />
+    </ReactModal>;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+
   onClose(client: Client) {
     this.setState({client: null});
   }
@@ -88,13 +140,16 @@ export class Game extends React.Component<Game.Props, Game.State> {
     command: P.Command<ZPYEngine.Effect>,
     ctx?: T,
   ) {
+    this.setState({client});
+
     if (command.kind === 'engine') {
       for (let callback of this.state.update_subs) {
         callback(command.effect);
       }
       cb?.(command.effect, ctx);
+
+      this.enqueueReveal(command.effect, client.state);
     }
-    this.setState({client});
   }
 
   onReject<T>(
@@ -105,8 +160,8 @@ export class Game extends React.Component<Game.Props, Game.State> {
   ) {
     if (debug) console.error(ue);
 
-    cb?.(ue, ctx);
     this.setState({client});
+    cb?.(ue, ctx);
   }
 
   attempt(
@@ -134,6 +189,8 @@ export class Game extends React.Component<Game.Props, Game.State> {
     }));
   }
 
+  /////////////////////////////////////////////////////////////////////////////
+
   render() {
     const client = this.state.client;
 
@@ -144,16 +201,19 @@ export class Game extends React.Component<Game.Props, Game.State> {
     }
     if (client.state === null) return null;
 
-    return <Board
-      me={client.me}
-      zpy={client.state}
-      users={client.users}
-      funcs={{
-        attempt: this.attempt,
-        subscribeReset: this.subscribeReset,
-        subscribeUpdate: this.subscribeUpdate,
-      }}
-    />;
+    return <>
+      <Board
+        me={client.me}
+        zpy={client.state}
+        users={client.users}
+        funcs={{
+          attempt: this.attempt,
+          subscribeReset: this.subscribeReset,
+          subscribeUpdate: this.subscribeUpdate,
+        }}
+      />
+      {this.renderReveal()}
+    </>;
   }
 }
 
@@ -167,6 +227,8 @@ export type Props = {
 
 export type State = {
   client: null | Client;
+
+  reveal_effects: ZPYEngine.Effect[];
   reset_subs: ((state: ZPYEngine.ClientState) => void)[];
   update_subs: ((effect: ZPYEngine.Effect) => void)[];
 };

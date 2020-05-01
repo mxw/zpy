@@ -16,11 +16,13 @@
   "license": "MIT",
   "dependencies": {
     "@types/react-beautiful-dnd": "^12.1.2",
+    "@types/react-modal": "^3.10.5",
     "cookie-parser": "*",
     "express": "*",
     "fp-ts": "*",
     "io-ts": ">=2.2",
     "react-beautiful-dnd": "^13.0.0",
+    "react-modal": "^3.11.2",
     "styled-components": "^5.1.0",
     "uuid": "*",
     "ws": "*"
