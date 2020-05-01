@@ -303,6 +303,7 @@ kbd {
   padding: rhythm.rh(0.25);
 
   max-width: card.$width-hand * 6; // smaller than .action
+  min-height: rhythm.rh(1.25);
 
   font-size: rhythm.rh(0.875);
   text-align: center;

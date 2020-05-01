@@ -9,8 +9,6 @@
 
 ## game engine
 
-- un-ready everybody if somebody bids trump during the PREPARE phase
-
 ## game UI
 
 - fix bug where two CardAreas are shown after submitting `replace_kitty`
@@ -23,9 +21,6 @@
 - display errors... somewhere
 
 ## game style
-
-- fix the host crown offset bug that happens when the host infobox has the
-  current player border
 
 ## wishlist
 

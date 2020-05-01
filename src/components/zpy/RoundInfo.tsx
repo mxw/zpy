@@ -44,6 +44,7 @@ class Column extends React.Component<Column.Props, {}> {
         user={pr.user}
         tr={pr.tr}
         bids={pr.bids}
+        bidder={pr.bidder}
         play={pr.play}
         ready={pr.ready}
         leader={pr.leader}
@@ -154,6 +155,7 @@ export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
           }
           rank_meta={zpy.ranks[uid]}
           bids={zpy.bids.filter(({player}) => uid === player)}
+          bidder={uid === zpy.winning_bid()?.player}
           points={zpy.points[uid] ?? null}
           leader={uid === zpy.leader}
           winning={uid === zpy.winning}

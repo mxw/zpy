@@ -130,6 +130,15 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   }
 
   /*
+   * Currently winning trump bidder.
+   */
+  winning_bid(): ZPY<PlayerID>['bids'][number] {
+    return this.bids.length > 0
+      ? this.bids[this.bids.length - 1]
+      : null;
+  }
+
+  /*
    * Whether everyone has played for a trick.
    */
   trick_over(): boolean {
@@ -338,6 +347,11 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       this.draws[player].insert(cb);
     }
     if (--this.deck_sz === 0) {
+      const bid = this.winning_bid();
+      if (bid !== null) {
+        // the winning bidder is ready by default
+        this.consensus = (new Set<PlayerID>()).add(bid.player);
+      }
       this.phase = ZPY.Phase.PREPARE;
     }
     this.current = this.next_player_idx(this.current);
@@ -403,6 +417,10 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     return new ZPY.InvalidPlayError('bid too low');
   }
   secure_bid(player: PlayerID, card: CardBase, n: number): ZPY.Result {
+    if (this.phase === ZPY.Phase.PREPARE) {
+      // un-ready everyone else
+      this.consensus = (new Set<PlayerID>()).add(player);
+    }
     this.bids.push({player, card, n});
     this.tr = new TrumpMeta(card.suit, card.rank);
     for (let p in this.draws) this.draws[p].rehash(this.tr);

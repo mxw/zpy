@@ -935,7 +935,7 @@ export class PlayArea extends React.Component<
       switch (this.props.phase) {
         case ZPY.Phase.INIT: return me === zpy.owner;
         case ZPY.Phase.DRAW: return true;
-        case ZPY.Phase.PREPARE: return true;
+        case ZPY.Phase.PREPARE: return !zpy.consensus.has(me);
         case ZPY.Phase.KITTY: return me === zpy.host;
         case ZPY.Phase.FRIEND: return me === zpy.host;
         case ZPY.Phase.LEAD: return me === zpy.leader;
@@ -958,7 +958,7 @@ export class PlayArea extends React.Component<
           case ZPY.Phase.DRAW:
             return null;
           case ZPY.Phase.PREPARE:
-            return null;
+            return <>waiting for everyone to be ready</>;
           case ZPY.Phase.KITTY:
             return <>waiting for the host to discard a kitty</>;
           case ZPY.Phase.FRIEND:

@@ -160,7 +160,7 @@ export class ActionInfo extends React.Component<ActionInfo.Props> {
       return this.renderBid();
     }
     if (this.props.phase === ZPY.Phase.PREPARE) {
-      return this.renderReady() ?? this.renderBid();
+      return this.props.bidder ? this.renderBid() : this.renderReady();
     }
     if (this.props.phase === ZPY.Phase.KITTY) {
       return this.renderReady();
@@ -190,6 +190,7 @@ export type Props = {
   lead: null | Flight;
 
   ready: boolean;
+  bidder: boolean;
   leader: boolean;
   winning: boolean;
 };
