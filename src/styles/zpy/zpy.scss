@@ -54,7 +54,7 @@ body {
     // parent, which changes depending on whether it has the "current" border
     > .host-wrapper {
       top: rhythm.rh(-0.875);
-      left: rhythm.rh(0.625);
+      left: rhythm.rh(0.875);
     }
   }
 
@@ -72,13 +72,13 @@ body {
   > .host-wrapper {
     position: absolute;
     top: rhythm.rh(-0.75);
-    left: rhythm.rh(0.75);
+    left: rhythm.rh(1);
   }
 
   > .avatar {
     width: rhythm.rh(2.25);
     height: rhythm.rh(2.25);
-    @include rhythm.rh-padding-x(0.25);
+    @include rhythm.rh-padding-x(0.5);
   }
 
   > .nick {
@@ -178,8 +178,8 @@ body {
   height: rhythm.rh(2.25);
 }
 .team {
-  width: rhythm.rh(1);
-  height: rhythm.rh(1);
+  width: rhythm.rh(1.125);
+  height: rhythm.rh(1.125);
 
   // https://stackoverflow.com/questions/5804256/image-inside-div-has-extra-space-below-the-image
   vertical-align: middle;
