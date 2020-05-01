@@ -12,8 +12,6 @@
 
 - show "team point total" somewhere
 
-- display errors... somewhere
-
 ## game style
 
 ## wishlist

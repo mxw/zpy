@@ -17,6 +17,7 @@ import * as ZPYEngine from 'lib/zpy/engine.ts'
 import { Client, EngineCallbacks, debug } from 'components/zpy/common.ts'
 import { Board } from 'components/zpy/Board.tsx'
 import { Reveal } from 'components/zpy/Reveal.tsx'
+import { ErrorMessage } from 'components/zpy/ErrorMessage.tsx'
 
 import { strict as assert} from 'assert'
 
@@ -40,6 +41,8 @@ export class Game extends React.Component<Game.Props, Game.State> {
 
     this.state = {
       client: null,
+      next_err_id: 0,
+      pending_error: null,
       reveal_effects: [],
       reset_subs: [],
       update_subs: [],
@@ -113,6 +116,21 @@ export class Game extends React.Component<Game.Props, Game.State> {
     </ReactModal>;
   }
 
+  renderError() {
+    const error = this.state.pending_error;
+    if (error === null) return;
+
+    setTimeout(() => {
+      this.setState((state, props) => {
+        if (error.id === state.pending_error?.id) {
+          return {pending_error: null};
+        }
+      });
+    }, 5000);
+
+    return <ErrorMessage key={error.id} error={error.ue} timeout={5000} />;
+  }
+
   /////////////////////////////////////////////////////////////////////////////
 
   onClose(client: Client) {
@@ -160,7 +178,20 @@ export class Game extends React.Component<Game.Props, Game.State> {
   ) {
     if (debug) console.error(ue);
 
-    this.setState({client});
+    if (ue instanceof ZPY.InvalidArgError) {
+      // the UI should prevent these, so don't surface them to the user
+      console.error(ue.toString());
+    } else if (ue instanceof ZPY.OutOfTurnError) {
+      // do nothing
+    } else {
+      // set this as the error to display to the user
+      this.setState((state, props) => ({
+        client,
+        next_err_id: state.next_err_id + 1,
+        pending_error: {id: state.next_err_id, ue},
+      }));
+    }
+
     cb?.(ue, ctx);
   }
 
@@ -213,6 +244,7 @@ export class Game extends React.Component<Game.Props, Game.State> {
         }}
       />
       {this.renderReveal()}
+      {this.renderError()}
     </>;
   }
 }
@@ -228,7 +260,13 @@ export type Props = {
 export type State = {
   client: null | Client;
 
+  next_err_id: number; // for tracking error message timeouts
+  pending_error: null | {
+    id: number;
+    ue: ZPYEngine.UpdateError;
+  };
   reveal_effects: ZPYEngine.Effect[];
+
   reset_subs: ((state: ZPYEngine.ClientState) => void)[];
   update_subs: ((effect: ZPYEngine.Effect) => void)[];
 };

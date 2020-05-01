@@ -380,7 +380,7 @@ kbd {
   padding: rhythm.rh(1);
 
   background: rgb(255, 255, 255);
-  border: 1px solid rgb(204, 204, 204);
+  border: rhythm.$px solid rgb(204, 204, 204);
   border-radius: rhythm.rh(0.25);
   outline: none;
 }
@@ -400,4 +400,31 @@ kbd {
 .reveal-cards {
   @include flex.row-center;
   @include card.container-h(1, card.$width-hand, card.$clip * 1.5);
+}
+
+.error-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  @include flex.row-center;
+}
+
+.error{
+  padding: rhythm.rh(1);
+
+  background-color: rgba(193, 66, 66, 0.9);
+  border: rhythm.$px solid rgba(193, 66, 66, 1);
+  border-radius: rhythm.rh(0.5);
+
+  font-size: rhythm.rh(1.5);
+}
+
+@keyframes fadeinout {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
 }
