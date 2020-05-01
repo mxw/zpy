@@ -271,8 +271,6 @@ export class PlayArea extends React.Component<
     state: PlayArea.State,
     props: PlayArea.Props,
   ): PlayArea.State {
-    if (!PlayArea.isStagingAreaVariadic(props)) return state;
-
     const areas = [...state.areas].filter(
       (area, adx) => adx === 0 || area.ordered.length > 0
     );
