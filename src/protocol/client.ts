@@ -93,8 +93,9 @@ export class GameClient<
     nick: string,
   ) {
     this.engine = engine;
+    const protocol = document.location.protocol === 'https:' ? 'wss:' : 'ws:';
     this.socket = new WebSocket(
-      `ws://${document.location.host}/${url_pref}/${game_id}/`
+      `${protocol}//${document.location.host}/${url_pref}/${game_id}/`
     );
     this.status = "pending-reset";
 
