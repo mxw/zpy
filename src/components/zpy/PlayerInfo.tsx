@@ -58,7 +58,8 @@ export class PlayerInfo extends React.Component<PlayerInfo.Props, {}> {
 
   render() {
     const pr = this.props;
-    const avatar_id = hash_code(`${pr.user.id}:${pr.user.nick}`) % 78 + 1;
+    const avatar_id =
+      Math.abs(hash_code(`${pr.user.id}:${this.state.nick}`)) % 78 + 1;
 
     let div_class = ["player-info"];
     if (pr.current) div_class.push("current");
