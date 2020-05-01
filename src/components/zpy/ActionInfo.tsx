@@ -56,7 +56,7 @@ export class ActionInfo extends React.Component<ActionInfo.Props> {
     }
 
     return <div className="ready">
-      <img src="/static/png/icons/check-mark.png"/>
+      <img src="/static/png/icons/check-mark.png" />
     </div>;
   }
 

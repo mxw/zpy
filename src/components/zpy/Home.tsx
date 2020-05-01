@@ -26,7 +26,7 @@ export class Home extends React.Component<{}, Home.State> {
       return <div>waiting</div>;
     }
 
-    return <Redirect push to={`/zpy/${this.state.game_id}`}/>;
+    return <Redirect push to={`/zpy/${this.state.game_id}`} />;
   }
 }
 
