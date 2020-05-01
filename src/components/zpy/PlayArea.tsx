@@ -198,7 +198,24 @@ export class PlayArea extends React.Component<
     to_add: Iterable<CardBase>,
     adx: number,
   ): PlayArea.State {
+    assert(adx === 0 || adx === 1);
+
     state = PlayArea.copyState(state);
+
+    if (adx === 1) {
+      if (state.areas[1]?.ordered.length > 0) {
+        // shunt any staged cards back into the hand
+        state.areas[0].ordered =
+          state.areas[0].ordered.concat(state.areas[1].ordered);
+        state.areas[0].id_to_pos = id_to_pos(state.areas[0].ordered);
+        state.id_to_area = {
+          ...state.id_to_area,
+          ...id_to_cns(state.areas[1].ordered, 0),
+        };
+      }
+      // reset kitty area
+      state.areas[1] = {ordered: [], id_to_pos: {}};
+    }
 
     for (let cb of to_add) {
       const c = {cb, id: ('' + state.seen.length)};
