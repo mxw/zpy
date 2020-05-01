@@ -957,7 +957,7 @@ export class PlayArea extends React.Component<
         case ZPY.Phase.KITTY: return me === zpy.host;
         case ZPY.Phase.FRIEND: return me === zpy.host;
         case ZPY.Phase.LEAD: return me === zpy.leader;
-        case ZPY.Phase.FLY: return me !== zpy.leader;
+        case ZPY.Phase.FLY: return !zpy.consensus.has(me);
         case ZPY.Phase.FOLLOW: return zpy.current !== null
           ? me === zpy.players[zpy.current]
           : me === zpy.winning;
@@ -1024,7 +1024,7 @@ export class PlayArea extends React.Component<
           </>;
         case ZPY.Phase.LEAD:
           return <>
-            drag cards above and press {enter} to submit your play.
+            drag cards above and press {enter} to submit your lead.
             make separate piles to have full control of an ambiguous fly.
           </>;
         case ZPY.Phase.FLY:
