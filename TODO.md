@@ -4,6 +4,8 @@
 
 - implement reconnects
 
+- implement PlayArea onReset logic
+
 - implement a homepage: specifically, a way to set your nickname and explicitly
   create games
 
@@ -16,7 +18,7 @@
 - implement a Reveal area for shared publicized information, like a revealed
   kitty or the cards used to contest a fly
 
-- add team indicators (with tooltips) and show "team point total" somewhere
+- show "team point total" somewhere
 
 - display errors... somewhere
 

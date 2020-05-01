@@ -84,6 +84,10 @@ body {
   > .nick {
     @include rhythm.rh-padding-x(0.25);
   }
+
+  > .team-wrapper {
+    @include rhythm.rh-padding-x(0.25);
+  }
 }
 
 .action-info {
@@ -161,6 +165,10 @@ body {
 .host, .indicator {
   width: rhythm.rh(2.25);
   height: rhythm.rh(2.25);
+}
+.team {
+  width: rhythm.rh(1);
+  height: rhythm.rh(1);
 }
 
 .trump-indicator-wrapper {

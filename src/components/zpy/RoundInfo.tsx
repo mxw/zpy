@@ -151,7 +151,7 @@ export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
           host={uid === zpy.host}
           team={
             zpy.host_team.has(uid) ? 'host' :
-            zpy.atk_team.has(uid) ? 'atk' : null
+            zpy.atk_team.has(uid) ? 'attacking' : null
           }
           rank_meta={zpy.ranks[uid]}
           bids={zpy.bids.filter(({player}) => uid === player)}
