@@ -169,6 +169,9 @@ body {
 .team {
   width: rhythm.rh(1);
   height: rhythm.rh(1);
+
+  // https://stackoverflow.com/questions/5804256/image-inside-div-has-extra-space-below-the-image
+  vertical-align: middle;
 }
 
 .trump-indicator-wrapper {
@@ -347,6 +350,9 @@ kbd {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+/*
+ * modal styles adapted from react-modal default styles
+ */
 .reveal-modal-overlay {
   position: fixed;
   top: 0;
@@ -358,7 +364,6 @@ kbd {
 
   background-color: rgba(255, 255, 255, 0.75);
 }
-
 .reveal-modal-content {
   overflow: auto;
   padding: rhythm.rh(1);
