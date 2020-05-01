@@ -842,6 +842,8 @@ export class PlayArea extends React.Component<
   onClickDeck(ev: React.MouseEvent | React.TouchEvent) {
     if (ev.defaultPrevented) return;
     if ('button' in ev && ev.button !== 0) return;
+
+    ev.preventDefault();
     this.submitDrawCard();
   }
 
@@ -865,6 +867,8 @@ export class PlayArea extends React.Component<
     nth: number,
     ev: React.MouseEvent | React.TouchEvent
   ) {
+    ev.preventDefault();
+
     this.setState((state, props) => ({
       fr_select: state.fr_select.map((fr, i) => {
         if (i !== nth) return fr;
