@@ -552,9 +552,14 @@ export class PlayArea extends React.Component<
    *  enter: perform an action (typically submitting staged cards)
    */
   onKeyDown(ev: React.KeyboardEvent | KeyboardEvent) {
+    if (ev.defaultPrevented) return;
+
     const metaKey = isWindows() ? ev.ctrlKey : ev.metaKey;
 
     if (ev.key === 'a' && metaKey) {
+      const ev_ = ev as (typeof ev & {preventPlayArea: boolean});
+      if (ev_.preventPlayArea) return;
+
       ev.preventDefault();
       this.selectAll();
       return;

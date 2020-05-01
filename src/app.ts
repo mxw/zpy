@@ -25,13 +25,31 @@ app.use('/static/png', express.static("assets/png"));
 
 app.use(CookieParser());
 app.use(Session.middleware);
+app.use(express.json());
 
 const server = HTTP.createServer(app);
 const gs = new GameServer(ZPYEngine, server, "zpy");
 
+/*
+ * return the client's session id
+ *
+ * the existence of a session is ensured by Session.middleware
+ */
 app.get('/api/session', (req, res) => {
   const r = req as (typeof req & {session: Session.T});
   res.send(r.session.id);
+});
+
+/*
+ * set the client's nickname
+ *
+ * currently, we do this just by setting a cookie, which is used by the client
+ * whenever they join a game
+ */
+app.post('/api/set_nick', (req, res) => {
+  const nick = req.body.nick;
+  if (nick) res.cookie("nick", nick);
+  res.send(true);
 });
 
 app.post('/api/new_game', (req, res) => {

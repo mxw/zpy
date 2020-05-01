@@ -30,6 +30,7 @@ class Column extends React.Component<Column.Props, {}> {
     return <div className={classes.join(' ')}>
       <PlayerInfo
         key="player"
+        me={pr.me}
         phase={pr.phase}
         user={pr.user}
         owner={pr.owner}
@@ -142,6 +143,7 @@ export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
       {ordered.map(uid =>
         <Column
           key={uid}
+          me={this.props.me}
           phase={zpy.phase}
           user={users[uid]}
           owner={uid === zpy.owner}

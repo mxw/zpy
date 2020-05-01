@@ -8,6 +8,8 @@ import { WithSession } from 'components/zpy/WithSession.tsx';
 import { Home } from 'components/zpy/Home.tsx';
 import { Game } from 'components/zpy/Game.tsx';
 
+import * as cookie from 'utils/cookie.ts'
+
 import { escape_backslashes } from 'utils/string.ts';
 
 
@@ -38,7 +40,10 @@ ReactDOM.render(
             <Game
               path="zpy"
               id={match.params.game_id}
-              nick="strong sad"
+              nick={
+                cookie.parse(document.cookie).nick ??
+                "unnamed friend"
+              }
             />
           </WithSession>
         }
