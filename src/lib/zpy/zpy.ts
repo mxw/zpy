@@ -520,7 +520,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     let card = kitty.reduce((highest: Card, c: CardBase) => {
       let card = new Card(c.suit, c.rank, ctx_tr);
       if (!highest) return card;
-      return card.rank > highest.rank ? card : highest;
+      return card.v_rank > highest.v_rank ? card : highest;
     }, null);
 
     this.tr = new TrumpMeta(card.suit, rank);
