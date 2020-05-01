@@ -523,7 +523,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       return card.rank > highest.rank ? card : highest;
     }, null);
 
-    this.tr = new TrumpMeta(card.suit, card.rank);
+    this.tr = new TrumpMeta(card.suit, rank);
     for (let p in this.draws) this.draws[p].rehash(this.tr);
   }
 
