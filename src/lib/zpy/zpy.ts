@@ -11,6 +11,7 @@ import {
 import {
   array_fill, array_shuffle, o_map
 } from 'utils/array.ts';
+import { plural } from 'utils/string.ts';
 
 import { UserID } from 'protocol/protocol.ts'
 
@@ -321,7 +322,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       return new ZPY.WrongPlayerError('game owner only');
     }
     if (this.nplayers < 4) {
-      return new ZPY.InvalidPlayError('must have at least 4 players');
+      return new ZPY.InvalidArgError('must have at least 4 players');
     }
 
     let players = !this.debug
@@ -401,14 +402,15 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (!this.draws[player].contains(
       [[new Card(card.suit, card.rank, this.tr), n]]
     )) {
-      return new ZPY.InvalidPlayError('bid not part of hand');;
+      return new ZPY.InvalidArgError('bid not part of hand');;
     }
 
-    if (card.rank <= Rank.A &&
-        card.rank !== this.ranks[this.host ?? player].rank) {
+    const tr_rank = this.ranks[this.host ?? player].rank;
+
+    if (card.rank <= Rank.A && card.rank !== tr_rank) {
       // we bid either the host's rank or our own (in a bid-to-host draw), so
       // valid bids against the appropriate value.
-      return new ZPY.InvalidPlayError('invalid trump bid');
+      return new ZPY.InvalidPlayError(`invalid trump bid for rank ${tr_rank}`);
     }
 
     let commit_bid = () => {
@@ -560,12 +562,14 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       return new ZPY.WrongPlayerError('host only');
     }
     if (kitty.length !== this.kitty.length) {
-      return new ZPY.InvalidPlayError('kitty has incorrect size');
+      return new ZPY.InvalidPlayError(
+        `must discard exactly ${this.kitty.length} cards for kitty`
+      );
     }
     let kitty_pile = new CardPile(kitty, this.tr);
 
     if (!this.draws[player].contains(kitty_pile)) {
-      return new ZPY.InvalidPlayError('kitty not part of hand');
+      return new ZPY.InvalidArgError('kitty not part of hand');
     }
 
     for (let count of kitty_pile) {
@@ -607,14 +611,14 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
 
     if (friends.length !== allowed) {
       return new ZPY.InvalidPlayError(
-        `must call exactly ${allowed} friend${allowed > 1 ? 's' : ''}`
+        `must call exactly ${allowed} friend${plural(allowed)}`
       );
     }
 
     for (let [c, nth] of friends) {
       if (nth < 1 || nth > this.ndecks) {
         this.friends.length = 0;
-        return new ZPY.InvalidArgError('friend index out of bounds');
+        return new ZPY.InvalidArgError(`friend index ${nth} out of bounds`);
       }
       let card = new Card(c.suit, c.rank, this.tr);
 
@@ -649,7 +653,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     let play_pile = new CardPile(play.gen_cards(this.tr), this.tr);
 
     if (!this.hands[player].pile.contains(play_pile)) {
-      return new ZPY.InvalidPlayError('play not part of hand');
+      return new ZPY.InvalidArgError('play not part of hand');
     }
     return play_pile;
   }
@@ -757,7 +761,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     let play = Play.extract(reveal, this.tr);
 
     if (!this.hands[player].pile.contains(play.gen_counts(this.tr))) {
-      return new ZPY.InvalidPlayError('reveal not part of hand');
+      return new ZPY.InvalidArgError('reveal not part of hand');
     }
     let flight = play.fl();
 
@@ -768,7 +772,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       return new ZPY.InvalidPlayError('reveal is the wrong suit');
     }
     if (flight.tractors.length !== 1) {
-      return new ZPY.InvalidPlayError('reveal is structurally incoherent');
+      return new ZPY.InvalidPlayError(
+        'reveal must be a singleton, tuple, or tractor'
+      );
     }
     let the_tractor = flight.tractors[0];
 
@@ -780,7 +786,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       this.reject_fly(player, reveal, component);
       return [reveal, component];
     }
-    return new ZPY.InvalidPlayError('reveal does not contest flight');
+    return new ZPY.InvalidPlayError('reveal fails to counter fly');
   }
   reject_fly(
     player: PlayerID,
@@ -831,7 +837,10 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (play_pile instanceof ZPY.Error) return play_pile;
 
     if (play.count !== this.lead.count) {
-      return new ZPY.InvalidPlayError('incorrectly sized play');
+      return new ZPY.InvalidPlayError(
+        'must follow with exactly ' +
+        `${this.lead.count} card${plural(this.lead.count)}`
+      );
     }
 
     let [correct, undo] = this.hands[player].follow_with(this.lead, play_pile);
@@ -871,7 +880,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       return ZPY.BadPhaseError.from('collect_trick', this.phase);
     }
     if (!this.trick_over()) {
-      return new ZPY.InvalidPlayError('trick not finished');
+      return new ZPY.OutOfTurnError('trick not finished');
     }
     if (player !== this.winning) {
       return new ZPY.WrongPlayerError('trick winner only');
@@ -1014,7 +1023,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       return new ZPY.WrongPlayerError('host only');
     }
     if (this.nplayers < 4) {
-      return new ZPY.InvalidPlayError('must have at least 4 players');
+      return new ZPY.InvalidArgError('must have at least 4 players');
     }
     this.reset_round(this.host, true);
     this.phase = ZPY.Phase.DRAW;
@@ -1211,7 +1220,7 @@ export namespace ZPY {
     constructor(msg?: string) { super(msg); }
   }
   export class OutOfTurnError extends Error {
-    constructor(msg?: string) { super(msg); }
+    constructor(msg?: string) { super(msg ?? "not your turn"); }
   }
   export class InvalidPlayError extends Error {
     constructor(msg?: string) { super(msg); }

@@ -73,11 +73,11 @@ describe('ZPY', () => {
     );
     expect_err(
       zpy.bid_trump(a, new CardBase(Suit.CLUBS, 2), 1),
-      ZPY.InvalidPlayError, 'bid not part of hand'
+      ZPY.InvalidArgError, 'bid not part of hand'
     );
     expect_err(
       zpy.bid_trump(a, new CardBase(Suit.DIAMONDS, 4), 1),
-      ZPY.InvalidPlayError, 'invalid trump bid'
+      ZPY.InvalidPlayError, 'invalid trump bid for rank 2'
     );
     expect_ok(
       zpy.bid_trump(c, new CardBase(Suit.CLUBS, 2), 1)
@@ -120,7 +120,7 @@ describe('ZPY', () => {
       zpy.replace_kitty(b, [
         new CardBase(Suit.CLUBS, 5),
       ]),
-      ZPY.InvalidPlayError, 'kitty has incorrect size'
+      ZPY.InvalidPlayError, 'must discard exactly 8 cards for kitty'
     );
 
     expect_err(
@@ -134,7 +134,7 @@ describe('ZPY', () => {
         new CardBase(Suit.CLUBS, Rank.Q),
         new CardBase(Suit.SPADES, 4),
       ]),
-      ZPY.InvalidPlayError, 'kitty not part of hand'
+      ZPY.InvalidArgError, 'kitty not part of hand'
     );
 
     expect_ok(zpy.replace_kitty(b, [
@@ -165,7 +165,7 @@ describe('ZPY', () => {
       zpy.call_friends(b, [
         [new CardBase(Suit.DIAMONDS, Rank.A), 3]
       ]),
-      ZPY.InvalidArgError, 'friend index out of bounds'
+      ZPY.InvalidArgError, 'friend index 3 out of bounds'
     );
     expect_err(
       zpy.call_friends(b, [
@@ -212,16 +212,16 @@ describe('ZPY', () => {
     );
     expect_err(
       follow_impl(c, [Suit.DIAMONDS, 5]),
-      ZPY.InvalidPlayError, 'play not part of hand'
+      ZPY.InvalidArgError, 'play not part of hand'
     );
     expect_err(
       follow_impl(c, [Suit.DIAMONDS, 6], [Suit.DIAMONDS, 7]),
-      ZPY.InvalidPlayError, 'incorrectly sized play'
+      ZPY.InvalidPlayError, 'must follow with exactly 1 card'
     );
 
     follow(c, [Suit.DIAMONDS, 4]);
     follow(d, [Suit.DIAMONDS, 6]);
-    expect_err(zpy.collect_trick(b), ZPY.InvalidPlayError);
+    expect_err(zpy.collect_trick(b), ZPY.OutOfTurnError);
     follow(e, [Suit.DIAMONDS, 9]);
     follow(a, [Suit.DIAMONDS, 3]);
     expect_err(zpy.collect_trick(e), ZPY.WrongPlayerError);
@@ -261,7 +261,7 @@ describe('ZPY', () => {
         new CardBase(Suit.CLUBS, Rank.J),
         new CardBase(Suit.CLUBS, Rank.J),
       ]),
-      ZPY.InvalidPlayError, 'reveal not part of hand'
+      ZPY.InvalidArgError, 'reveal not part of hand'
     );
     expect_err(
       zpy.contest_fly(a, [
@@ -281,20 +281,20 @@ describe('ZPY', () => {
         new CardBase(Suit.CLUBS, Rank.Q),
         new CardBase(Suit.CLUBS, 7),
       ]),
-      ZPY.InvalidPlayError, 'reveal is structurally incoherent'
+      ZPY.InvalidPlayError, 'reveal must be a singleton, tuple, or tractor'
     );
     expect_err(
       zpy.contest_fly(a, [
         new CardBase(Suit.CLUBS, Rank.Q),
       ]),
-      ZPY.InvalidPlayError, 'reveal does not contest flight'
+      ZPY.InvalidPlayError, 'reveal fails to counter fly'
     );
     expect_err(
       zpy.contest_fly(a, [
         new CardBase(Suit.CLUBS, 7),
         new CardBase(Suit.CLUBS, 7),
       ]),
-      ZPY.InvalidPlayError, 'reveal does not contest flight'
+      ZPY.InvalidPlayError, 'reveal fails to counter fly'
     );
 
     expect_ok(zpy.contest_fly(a, [

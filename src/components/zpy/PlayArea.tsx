@@ -23,6 +23,7 @@ import { FriendSelector } from 'components/zpy/FriendSelector.tsx'
 import { isWindows } from 'components/utils/platform.ts'
 
 import { array_fill } from 'utils/array.ts'
+import { plural } from 'utils/string.ts'
 
 import { strict as assert} from 'assert'
 
@@ -1101,7 +1102,7 @@ export class PlayArea extends React.Component<
           </>;
         case ZPY.Phase.FRIEND:
           return <>
-            select {zpy.nfriends} {zpy.nfriends === 1 ? "friend" : "friends"} and
+            select {zpy.nfriends} friend{plural(zpy.nfriends)} and
             press {enter} to submit
           </>;
         case ZPY.Phase.LEAD:

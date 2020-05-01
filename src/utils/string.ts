@@ -34,3 +34,14 @@ export function hash_code(s: string): number {
   }
   return h;
 }
+
+/*
+ * return a plural suffix based on `count`
+ */
+export function plural(
+  count: number,
+  if_plural: string = 's',
+  if_singular: string = '',
+): string {
+  return count === 1 ? if_singular : if_plural;
+}
