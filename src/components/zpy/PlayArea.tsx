@@ -1001,8 +1001,8 @@ export class PlayArea extends React.Component<
           </>;
         case ZPY.Phase.FRIEND:
           return <>
-            select {zpy.nfriends} {zpy.nfriends === 1 ? "friend" : "friends"}
-            and press {enter} to submit
+            select {zpy.nfriends} {zpy.nfriends === 1 ? "friend" : "friends"} and
+            press {enter} to submit
           </>;
         case ZPY.Phase.LEAD:
           return <>
