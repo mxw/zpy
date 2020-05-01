@@ -114,16 +114,18 @@ export class PlayerInfo extends React.Component<
     if (ev.key !== 'Enter') return;
     ev.preventDefault();
 
+    const nick = this.state.nick.trim();
+
     (async () => {
       const response = await axios.post(
         '/api/set_nick',
-        JSON.stringify({nick: this.state.nick}),
+        JSON.stringify({nick}),
         {headers: {'Content-Type': 'application/json'}}
       );
       if (!response.data) console.error('failed to set nickname');
     })();
 
-    this.setState({editing: false});
+    this.setState({nick, editing: false});
   }
 
   /*
