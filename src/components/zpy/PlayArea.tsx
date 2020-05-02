@@ -933,6 +933,9 @@ export class PlayArea extends React.Component<
     if (ev.defaultPrevented) return;
     if ('button' in ev && ev.button !== 0) return;
 
+    // XXX: ideally just don't even render the deck
+    if (this.props.phase !== ZPY.Phase.DRAW) return;
+
     ev.preventDefault();
     this.submitDrawCard();
   }
