@@ -31,7 +31,7 @@ export class FriendSelector extends React.Component<FriendSelector.Props, {}> {
     ));
 
     let classes = ["friend-selector-container"];
-    if (this.props.tr.suit === Suit.TRUMP) classes.push("fsc-trump");
+    if (this.props.tr.rank === Rank.B) classes.push("fsc-trump");
 
     return <div className={classes.join(' ')}>
       {this.props.selected.map((fr, i) =>
