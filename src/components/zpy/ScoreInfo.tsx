@@ -56,9 +56,13 @@ export class ScoreInfo extends React.Component<ScoreInfo.Props, {}> {
         const points = this.props.points.filter(cb => cb.rank === rank);
         if (points.length === 0) return null;
 
-        return <div className="point-column">
+        return <div
+          className="point-column"
+          key={'' + rank}
+        >
           {points.map(
-            cb => <Card
+            (cb, i) => <Card
+              key={'' + i}
               card={cb}
               width={card_width}
               yclip={clip_pct}
