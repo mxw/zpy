@@ -5,9 +5,9 @@ region = "us-east-1";
 
 in
 {
-  webserver = 
+  webserver =
   { resources, config, pkgs, lib, ...}:
-  let 
+  let
     zpy = pkgs.callPackage ../default.nix {};
   in
   {
