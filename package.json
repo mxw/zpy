@@ -6,7 +6,8 @@
   "scripts": {
     "build": "webpack",
     "test": "mocha -r ts-node/register -r tsconfig-paths/register test/**/*.ts",
-    "server": "node --enable-source-maps ./dist/app/main.js"
+    "dev": "node --enable-source-maps ./dist/app/main.js",
+    "server": "node ./dist/app/main.js"
   },
   "files": [
     "dist/*",
