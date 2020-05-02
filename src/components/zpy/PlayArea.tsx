@@ -167,17 +167,19 @@ export class PlayArea extends React.Component<
     this.setState((state, props) => {
       const all_cards = PlayArea.filter(state);
 
-      const ingest = (input: Iterable<CardBase>, adx: number) => {
-        const delta = card_delta(input, all_cards);
-        if (delta.left.length > 0) {
-          state = PlayArea.withCardsAdded(state, delta.left, adx);
-        }
-        if (delta.right.length > 0) {
-          state = PlayArea.withCardsRemoved(state, props, delta.right);
+      const add_new = (input: Iterable<CardBase>, adx: number) => {
+        const delta = card_delta(input, all_cards, zpy.tr).left;
+        if (delta.length > 0) {
+          state = PlayArea.withCardsAdded(state, delta, adx);
         }
       };
-      ingest(hand, 0);
-      ingest(hand, 1);
+      add_new(hand, 0);
+      add_new(kitty, 1);
+
+      const to_rm = card_delta([...hand, ...kitty], all_cards, zpy.tr).right;
+      if (to_rm.length > 0) {
+        state = PlayArea.withCardsRemoved(state, props, to_rm);
+      }
       return state;
     });
 
@@ -241,18 +243,18 @@ export class PlayArea extends React.Component<
    * pull the cards from `this.props.zpy` that we use for initialization
    */
   static cardsForInit(me: P.UserID, zpy: ZPYEngine.ClientState): {
-    hand: Iterable<CardBase>,
+    hand: CardBase[],
     kitty: CardBase[],
   } {
-    const hand: Iterable<CardBase> =
-      me in zpy.hands ? zpy.hands[me].pile.gen_cards() :
-      me in zpy.draws ? zpy.draws[me].gen_cards() : [];
+    const hand =
+      me in zpy.hands ? [...zpy.hands[me].pile.gen_cards()] :
+      me in zpy.draws ? [...zpy.draws[me].gen_cards()] : [];
 
     const kitty = (
       me === zpy.host &&
       zpy.kitty.length > 0 &&
       zpy.phase === ZPY.Phase.KITTY
-    ) ? zpy.kitty : [];
+    ) ? [...zpy.kitty] : [];
 
     return {hand, kitty};
   }
@@ -1208,13 +1210,13 @@ function id_to_pos(cards: CardID[]): Record<string, number> {
 function card_delta(
   left: Iterable<CardBase>,
   right: Iterable<CardID>,
-  tr?: TrumpMeta,
+  tr: TrumpMeta,
 ): {
   both: CardID[],
   left: CardBase[],
   right: CardID[],
 } {
-  const left_pile = new CardPile(left, tr ?? TrumpMeta.def());
+  const left_pile = new CardPile(left, tr);
 
   const result = {
     both: [] as CardID[],
