@@ -60,6 +60,13 @@ export class PlayerInfo extends React.Component<
     prevProps: PlayerInfo.Props,
     prevState: PlayerInfo.State
   ) {
+    if (this.props.me.id !== this.props.user.id &&
+        this.state.nick !== this.props.user.nick) {
+      // server-initiated nick update.  note that by ignoring `me` here, if the
+      // player has multiple games going, a nick update from one won't affect
+      // the UI of the other.  who cares, maybe?
+      this.setState({nick: this.props.user.nick});
+    }
     this.updateWidth();
   }
 

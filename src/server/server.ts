@@ -45,6 +45,7 @@ class Game<
     UpdateError
   >
 > {
+  id: GameId;
   engine: Eng;
   config: Config;
   owner: Principal;
@@ -62,16 +63,27 @@ class Game<
   // next uid to allocate
   next_uid: number = 0;
 
+  // shared with GameServer
+  participation: Record<Principal, GameId[]>;
+
   /*
    * start a new game w/ no players
    *
    * the principal identifies the player who will be marked as the game owner
    * once they join
    */
-  constructor(engine: Eng, owner: Principal, config: Config) {
+  constructor(
+    id: GameId,
+    engine: Eng,
+    config: Config,
+    owner: Principal,
+    participation: Record<Principal, GameId[]>,
+  ) {
+    this.id = id;
     this.engine = engine;
     this.config = config;
     this.owner = owner;
+    this.participation = participation;
     this.state = this.engine.init(config);
   }
 
@@ -94,6 +106,10 @@ class Game<
         nick: nick,
       };
       this.known_users[source.principal] = {user, part_ts: null};
+
+      this.participation[source.principal] =
+        this.participation[source.principal] ?? [];
+      this.participation[source.principal].push(this.id);
 
       return user;
     })();
@@ -218,6 +234,33 @@ class Game<
     this.bye(client)
   }
 
+  rename(principal: Principal, nick: string) {
+    const source = this.clients.find(cl => cl.principal === principal);
+    if (!source) return;
+
+    source.user.nick = nick;
+
+    for (let client of this.clients) {
+      if (!client.sync) continue;
+
+      const Update = P.Update(this.engine.Effect(this.state));
+
+      client.socket.send(JSON.stringify(
+        Update.encode({
+          verb: "update",
+          tx: null,
+          command: {
+            kind: "protocol",
+            effect: {
+              verb: "user:nick",
+              who: source.user,
+            },
+          },
+        })
+      ));
+    }
+  }
+
   // handle a new connection for the given session and websocket; the game
   // takes ownership of the websocket at this point
   connect(session: Session.T, sock: WebSocket) {
@@ -249,7 +292,9 @@ class Game<
   }
 }
 
-// a websocket server that can handle multiple games for a given engine
+/*
+ * a websocket server that can handle multiple games for a given engine
+ */
 export class GameServer<
   Config,
   Intent,
@@ -270,12 +315,18 @@ export class GameServer<
 > {
   engine: Eng;
   ws: WebSocket.Server;
+
   games: Record<
     GameId,
     Game<Config, Intent, State, Action, ClientState, Effect, UpdateError, Eng>
   > = {};
 
-  // attach to the provided http server to handle upgrade requests.
+  // all the games a given principal is a part of
+  participation: Record<Principal, GameId[]> = {};
+
+  /*
+   * attach to the provided http server to handle upgrade requests
+   */
   constructor(engine: Eng, server: Http.Server, url_pref: string) {
     this.engine = engine;
     this.ws = new WebSocket.Server({noServer: true});
@@ -347,13 +398,31 @@ export class GameServer<
     });
   }
 
-  // make a new room for a game with the given owner. returns the game id.
-  public begin_game(
-    cfg: Config,
-    owner: Principal,
-  ): GameId {
-    let id = Uuid.v4();
-    this.games[id] = new Game(this.engine, owner, cfg);
+  /*
+   * make a new room for a game with the given owner
+   *
+   * returns the game id
+   */
+  public begin_game(cfg: Config, owner: Principal): GameId {
+    const id = Uuid.v4();
+    this.games[id] = new Game(
+      id,
+      this.engine,
+      cfg,
+      owner,
+      this.participation
+    );
     return id;
+  }
+
+  /*
+   * propagate a nick change to all live games
+   */
+  public rename(principal: Principal, nick: string) {
+    const gids = this.participation[principal] ?? [];
+
+    for (const gid of gids) {
+      this.games[gid]?.rename(principal, nick);
+    }
   }
 };

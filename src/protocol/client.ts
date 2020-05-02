@@ -192,6 +192,10 @@ export class GameClient<
         case 'user:part':
           this.users = this.users.filter(u => u.id !== pa.id);
           break;
+        case 'user:nick':
+          const user = this.users.find(u => u.id === pa.who.id);
+          if (user) user.nick = pa.who.nick;
+          break;
       }
     }
 

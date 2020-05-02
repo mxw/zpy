@@ -47,11 +47,20 @@ app.get('/api/session', (req, res) => {
  * whenever they join a game
  */
 app.post('/api/set_nick', (req, res) => {
-  const nick = req.body.nick;
+  const r = req as (typeof req & {session: Session.T});
+
+  const nick = r.body.nick;
   if (nick) res.cookie("nick", nick);
+  gs.rename(r.session.id, nick);
+
   res.send(true);
 });
 
+/*
+ * start a new game
+ *
+ * XXX: take settings that aren't the default ones
+ */
 app.post('/api/new_game', (req, res) => {
   const r = req as (typeof req & {session: Session.T});
   const game_id = gs.begin_game({
