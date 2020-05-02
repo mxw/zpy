@@ -26,8 +26,11 @@ export class GameClient<
   engine: Eng;
   socket: WebSocket;
 
-  // the client engine state; null iff status is "pending-reset"
-  state: null | ClientState = null;
+  // websocket url
+  readonly sock_url: string;
+
+  // exponential backoff delay for reconnecting the websocket; in milliseconds
+  reconnect_delay: number = 125;
 
   // whether we are synchronized w/ the server.
   //
@@ -46,11 +49,17 @@ export class GameClient<
   //
   status: "pending-reset" | "sync" | "pending-update" | "disconnect";
 
+  // the client engine state; null iff status is "pending-reset"
+  state: null | ClientState = null;
+
   // all users on the server; empty iff status is "pending-reset"
   users: P.User[] = [];
 
   // this client's user; null iff status is "pending-reset"
   me: null | P.User = null;
+
+  // our user's last known nick
+  nick: string;
 
   // the next unused transaction id
   next_tx: P.TxID = 0;
@@ -93,10 +102,16 @@ export class GameClient<
     nick: string,
   ) {
     this.engine = engine;
-    const protocol = document.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    this.socket = new WebSocket(
-      `${protocol}//${document.location.host}/${url_pref}/${game_id}/`
-    );
+
+    const ws = document.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    this.sock_url = `${ws}//${document.location.host}/${url_pref}/${game_id}/`;
+    this.nick = nick;
+
+    this.connect();
+  }
+
+  connect() {
+    this.socket = new WebSocket(this.sock_url);
     this.status = "pending-reset";
 
     this.socket.onopen = () => {
@@ -104,9 +119,22 @@ export class GameClient<
       this.socket.send(JSON.stringify(
         P.RequestHello.encode({
           verb: "req:hello",
-          nick: nick,
+          nick: this.nick,
         })
       ));
+    };
+
+    this.socket.onclose = () => {
+      this.status = "pending-reset";
+      this.state = null;
+      this.users = null;
+      this.me = null;
+
+      setTimeout(() => {
+        // exponential backoff
+        this.reconnect_delay *= 2;
+        this.connect();
+      }, this.reconnect_delay);
     };
 
     this.socket.onmessage = (ev: MessageEvent) => {
@@ -137,6 +165,7 @@ export class GameClient<
             break
 
           case "reset":
+            this.reconnect_delay = 125;
             this.state = msg.state;
             this.users = msg.who;
             this.status = "sync";
@@ -194,7 +223,7 @@ export class GameClient<
           break;
         case 'user:nick':
           const user = this.users.find(u => u.id === pa.who.id);
-          if (user) user.nick = pa.who.nick;
+          if (user) this.nick = user.nick = pa.who.nick;
           break;
       }
     }
