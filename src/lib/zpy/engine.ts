@@ -652,6 +652,7 @@ export const apply_client = (
 
       switch (pa.verb) {
         case 'user:join': return OK(state);
+        case 'user:rejoin': return OK(state);
         case 'user:part': return OK(state);
       }
       return Err(new ZPY.Error('protocol actions not implemented'));
