@@ -76,7 +76,7 @@ let frontend = Object.assign({
 let backend = Object.assign({
   entry: "./src/app.ts",
   target: "node",
-  externals: [externals()],
+  externals: [],
   output: {
     path: path.resolve(__dirname, "./dist/app")
   }

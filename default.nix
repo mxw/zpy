@@ -2,9 +2,10 @@
 
 {pkgs ? import <nixpkgs> {
     inherit system;
-  }, system ? builtins.currentSystem, nodejs ? pkgs."nodejs-12_x"}:
+  }, system ? builtins.currentSystem, nodejs_latest ? pkgs."nodejs_latest"}:
 
 let
+  nodejs = nodejs_latest;
   nodeEnv = import ./node-env.nix {
     inherit (pkgs) stdenv python2 utillinux runCommand writeTextFile;
     inherit nodejs;
