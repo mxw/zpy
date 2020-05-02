@@ -143,9 +143,12 @@ class Game<
     }
   }
 
-  // process an update request from a client. the response will be marked w/ the
-  // transaction id provided here; either as an update messsage after we handle
-  // the update or as an update-reject message
+  /*
+   * process an update request from a client
+   *
+   * the response will be marked w/ the transaction id provided here; either as
+   * an update messsage after we handle the update or as a reject message
+   */
   update(source: Client, tx: P.TxID, intent: Intent) {
     let result = this.engine.larp(
       this.state,
@@ -191,11 +194,12 @@ class Game<
     }
   }
 
-  // process a reset request from a client; we simply need to forward that
-  // client's state
+  /*
+   * process a reset request from a client; we simply need to forward that
+   * client's state
+   */
   reset(client: Client) {
     let cs = this.engine.redact(this.state, client.user);
-    client.sync = true;
 
     const Reset = P.Reset(this.engine.ClientState(this.state));
 
@@ -206,19 +210,24 @@ class Game<
         who: this.clients.map(cli => cli.user),
       })
     ));
+    client.sync = true;
   }
 
-  // after we are finished w/ a client session, close their socket and remove
-  // them from the list of clients
-  //
-  // TODO this should also be responsible for processing leaves if necessary
+  /*
+   * after we are finished w/ a client session, close their socket and remove
+   * them from the list of clients
+   *
+   * TODO: this should also be responsible for processing leaves if necessary
+   */
   dispose(client: Client) {
     client.sync = false;
     client.socket.close();
     this.clients.splice(this.clients.indexOf(client));
   }
 
-  // process a bye request from a client. simply reply 'bye' and disconnect
+  /*
+   * process a bye request from a client. simply reply 'bye' and disconnect
+   */
   bye(client: Client) {
     client.socket.send(JSON.stringify(
       P.Bye.encode({
@@ -228,12 +237,17 @@ class Game<
     this.dispose(client);
   }
 
-  // kick a naughty client by sending them 'bye' and disconnecting
+  /*
+   * kick a naughty client by sending them 'bye' and disconnecting
+   */
   kick(client: Client, reason: string) {
     console.log("kick: " + reason);
     this.bye(client)
   }
 
+  /*
+   * register and broadcast a nickname change for the user of `principal`
+   */
   rename(principal: Principal, nick: string) {
     const source = this.clients.find(cl => cl.principal === principal);
     if (!source) return;
@@ -261,10 +275,13 @@ class Game<
     }
   }
 
-  // handle a new connection for the given session and websocket; the game
-  // takes ownership of the websocket at this point
+  /*
+   * handle a new connection for the given session and websocket
+   *
+   * the game takes ownership of the websocket at this point
+   */
   connect(session: Session.T, sock: WebSocket) {
-    let client: Client = {
+    const client: Client = {
       principal: session.id,
       user: null,
       sync: false,
