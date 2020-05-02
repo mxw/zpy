@@ -6,11 +6,11 @@
 
 - show "team point total" somewhere
 
-- support parts and nontrivial reconnects
+- support parts
 
 - support adding/removing players between rounds
 
-- reap dead games
+- reap dead games and clients
 
 ## wishlist
 
