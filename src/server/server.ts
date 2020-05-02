@@ -51,16 +51,14 @@ class Game<
   owner: Principal;
   state: State;
 
-  // currently connected clients
+  // currently connected clients; possibly more than 1 per principal
   clients: Client[] = [];
 
-  // user object corresponding to every client we've seen
-  known_users: Record<Principal, {
-    user: P.User;
-    part_ts: null | number;
-  }> = {};
+  // user corresponding to each principal we've seen; guaranteed to alias the
+  // `user` field of each Client of said principal
+  users: Record<Principal, P.User> = {};
 
-  // next uid to allocate
+  // next user id to allocate
   next_uid: number = 0;
 
   // shared with GameServer
@@ -94,31 +92,28 @@ class Game<
    * updates until they ask for a reset
    */
   hello(source: Client, nick: string): void {
-    const known = this.known_users[source.principal] ?? null;
+    const known = source.principal in this.users;
 
-    const user = (() => {
-      if (known !== null) {
-        known.part_ts = null;
-        return known.user;
-      }
-      const user = {
+    let user = this.users[source.principal] ?? null;
+
+    if (!known) {
+      // new principal; conjure a user object for them
+      this.users[source.principal] = {
         id: this.next_uid++,
         nick: nick,
       };
-      this.known_users[source.principal] = {user, part_ts: null};
 
+      // help the game server track the games each principal belongs to
       this.participation[source.principal] =
         this.participation[source.principal] ?? [];
       this.participation[source.principal].push(this.id);
+    }
+    source.user = this.users[source.principal];
 
-      return user;
-    })();
-
-    source.user = user;
     source.socket.send(JSON.stringify(
       P.Hello.encode({
         verb: "hello",
-        you: user,
+        you: source.user,
       })
     ));
 
@@ -134,8 +129,8 @@ class Game<
           command: {
             kind: "protocol",
             effect: {
-              verb: known === null ? "user:join" : "user:rejoin",
-              who: user,
+              verb: known ? "user:rejoin" : "user:join",
+              who: source.user,
             },
           },
         })
@@ -154,7 +149,7 @@ class Game<
       this.state,
       intent,
       source.user,
-      this.clients.map(c => c.user),
+      Object.values(this.users),
     );
 
     if (isErr(result)) {
@@ -207,7 +202,7 @@ class Game<
       Reset.encode({
         verb: "reset",
         state: cs,
-        who: this.clients.map(cli => cli.user),
+        who: Object.values(this.users),
       })
     ));
     client.sync = true;
@@ -249,10 +244,10 @@ class Game<
    * register and broadcast a nickname change for the user of `principal`
    */
   rename(principal: Principal, nick: string) {
-    const source = this.clients.find(cl => cl.principal === principal);
-    if (!source) return;
+    const user = this.users[principal] ?? null;
+    if (user === null) return;
 
-    source.user.nick = nick;
+    user.nick = nick;
 
     for (let client of this.clients) {
       if (!client.sync) continue;
@@ -267,7 +262,7 @@ class Game<
             kind: "protocol",
             effect: {
               verb: "user:nick",
-              who: source.user,
+              who: user,
             },
           },
         })
