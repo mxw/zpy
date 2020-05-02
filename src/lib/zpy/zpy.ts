@@ -100,15 +100,15 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   // debugging determinism flag
   debug: boolean = false;
 
-  /////////////////////////////////////////////////////////////////////////////
-
   constructor(rules: ZPY.RuleModifiers) {
     super();
     this.rules = rules;
   }
 
+  /////////////////////////////////////////////////////////////////////////////
+
   /*
-   * Property getters.
+   * Player counts.
    */
   get nplayers(): number { return this.players.length; }
   static get min_players(): number { return 4; }
@@ -143,8 +143,8 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   /*
    * Perform the logic of revealed kitty trump selection.
    *
-   * This is basically a max() over virtual ranks where the index in the kitty
-   * is used as a tiebreaker.
+   * This is basically a max() over virtual ranks where the index in the
+   * ordered kitty is used as a tiebreaker.
    */
   reveal_highest(kitty: CardBase[]): [Card, Rank] {
     const rank = this.ranks[this.host].rank;
@@ -159,6 +159,24 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     }, null);
 
     return [card, rank];
+  }
+
+  /*
+   * Team from string literal.
+   */
+  team(which: 'host' | 'attacking') {
+    return which === 'host' ? this.host_team : this.atk_team;
+  }
+
+  /*
+   * How many points does the given team have?
+   */
+  team_point_total(which: 'host' | 'attacking') {
+    const team = this.team(which);
+
+    return this.players.reduce((total, p) => total + (
+      team.has(p) ? this.points[p].reduce((n, c) => n + c.point_value(), 0) : 0
+    ), 0);
   }
 
   /*
@@ -977,35 +995,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   finish(player: PlayerID, kitty: CardBase[]): ZPY.Result {
     this.kitty = kitty;
 
-    let atk_points = this.players.reduce(
-      (total, p) => total + (
-        this.atk_team.has(p)
-          ? this.points[p].reduce((tot, c) => tot + c.point_value(), 0)
-          : 0
-      ),
-      0
-    );
-    if (this.atk_team.has(this.winning)) {
-      // score the kitty to the attacking team
-      let kitty_points = this.kitty.reduce((n, c) => n + c.point_value(), 0);
-      let multiplier = Math.max(
-        ...this.plays[this.winning].fl()!.tractors.map(t => t.count)
-      );
-      atk_points += kitty_points * (() => {
-        switch (this.rules.kitty) {
-          case ZPY.KittyMultiplierRule.EXP: return 2 ** multiplier;
-          case ZPY.KittyMultiplierRule.MULT: return 2 * multiplier;
-        }
-        assert(false);
-      })();
-    }
+    const {delta, winner} = this.compute_round_outcome(this.kitty);
 
-    // number of ranks the attacking team ascends
-    let delta = Math.ceil(atk_points / (this.ndecks * 20)) - 2;
-    if (atk_points === 0) --delta;
-
-    let winning_team = delta >= 0 ? this.atk_team : this.host_team;
-    for (let player of winning_team.values()) {
+    for (let player of this.team(winner).values()) {
       this.rank_up(player, Math.abs(delta));
     }
 
@@ -1021,6 +1013,46 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     }
     this.consensus = (new Set<PlayerID>()).add(this.host);
     this.phase = ZPY.Phase.WAIT;
+  }
+
+  /*
+   * Determine the winner at the end of the game.
+   *
+   * This can be safely called anytime during Phase.FINISH or Phase.WAIT
+   * because we don't reset the last-trick state until the next round starts.
+   */
+  compute_round_outcome(kitty: CardBase[]): {
+    kitty_points: null | number;
+    atk_points: number;
+    delta: number;
+    winner: 'attacking' | 'host';
+  } {
+    const kitty_points = (() => {
+      if (!this.atk_team.has(this.winning)) return null;
+
+      // score the kitty to the attacking team
+      const kitty_points = kitty.reduce((n, c) => n + c.point_value(), 0);
+      const multiplier = Math.max(
+        ...this.plays[this.winning].fl()!.tractors.map(t => t.count)
+      );
+      return kitty_points * (() => {
+        switch (this.rules.kitty) {
+          case ZPY.KittyMultiplierRule.EXP: return 2 ** multiplier;
+          case ZPY.KittyMultiplierRule.MULT: return 2 * multiplier;
+        }
+        assert(false);
+      })();
+    })();
+
+    const atk_points = this.team_point_total('attacking') + kitty_points;
+
+    // number of ranks the attacking team ascends
+    let delta = Math.ceil(atk_points / (this.ndecks * 20)) - 2;
+    if (atk_points === 0) --delta;
+
+    const winner = delta >= 0 ? 'attacking' : 'host';
+
+    return {kitty_points, atk_points, delta, winner};
   }
 
   next_ready(player: PlayerID): ZPY.Result {

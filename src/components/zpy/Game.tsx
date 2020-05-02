@@ -87,8 +87,8 @@ export class Game extends React.Component<Game.Props, Game.State> {
     switch (effect.kind) {
       case 'install_host':
         if (state.winning_bid() !== null) return;
-      case 'reject_fly':
-        break;
+      case 'reject_fly': break;
+      case 'finish': break;
       default: return;
     }
     this.setState((state, props) => ({
