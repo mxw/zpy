@@ -36,6 +36,26 @@ export function hash_code(s: string): number {
 }
 
 /*
+ * stringify a number with an nth suffix
+ */
+export function nth_suffixed(n: number): string {
+  const two_digits = n % 100;
+
+  if (two_digits === 11 ||
+      two_digits === 12 ||
+      two_digits === 13) {
+    return `${n}th`;
+  }
+
+  const one_digit = n % 10;
+
+  if (one_digit === 1) return `${n}st`;
+  if (one_digit === 2) return `${n}nd`;
+  if (one_digit === 3) return `${n}rd`;
+  return `${n}th`;
+}
+
+/*
  * return a plural suffix based on `count`
  */
 export function plural(

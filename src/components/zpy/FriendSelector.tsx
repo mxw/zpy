@@ -12,6 +12,8 @@ import * as ZPYEngine from 'lib/zpy/engine.ts'
 
 import { Card } from 'components/zpy/Card.tsx'
 
+import { nth_suffixed } from 'utils/string.ts'
+
 import { strict as assert} from 'assert'
 
 
@@ -36,24 +38,29 @@ export class FriendSelector extends React.Component<FriendSelector.Props, {}> {
     return <div className={classes.join(' ')}>
       {this.props.selected.map((fr, i) =>
         <div
-          key={'' + i}
-          className="friend-selector-unit"
+          aria-label={`${nth_suffixed(i + 1)} played`}
+          data-balloon-pos="left"
         >
-          {deck.map(cb => {
-            const key = cb.toString();
-            return <div
-              key={key}
-              onClick={ev => this.props.onSelect(cb, i, ev)}
-            >
-              <Card
-                card={cb}
-                width={card_width}
-                xclip={clip_pct}
-                yclip={clip_pct}
-                selected={key in fr}
-              />
-            </div>;
-          })}
+          <div
+            key={'' + i}
+            className="friend-selector-unit"
+          >
+            {deck.map(cb => {
+              const key = cb.toString();
+              return <div
+                key={key}
+                onClick={ev => this.props.onSelect(cb, i, ev)}
+              >
+                <Card
+                  card={cb}
+                  width={card_width}
+                  xclip={clip_pct}
+                  yclip={clip_pct}
+                  selected={key in fr}
+                />
+              </div>;
+            })}
+          </div>
         </div>
       )}
     </div>;
