@@ -4,17 +4,13 @@
 
 - implement a homepage
 
-- implement a round-end Reveal
-
 - show "team point total" somewhere
-
-- support rename protocol actions
 
 - support parts and nontrivial reconnects
 
-- reap dead games
-
 - support adding/removing players between rounds
+
+- reap dead games
 
 ## wishlist
 
