@@ -502,9 +502,20 @@ export class PlayArea extends React.Component<
     return this.attempt({kind: 'end_round', args: [this.props.me.id]});
   }
 
+  submitNextReady(): boolean {
+    if (this.props.me.id === this.props.zpy.host) return false;
+    return this.attempt({kind: 'next_ready', args: [this.props.me.id]});
+  }
+
   submitNextRound(): boolean {
     if (this.props.me.id !== this.props.zpy.host) return false;
     return this.attempt({kind: 'next_round', args: [this.props.me.id]});
+  }
+
+  submitReadyOrNext(): boolean {
+    return this.props.zpy.has_consensus()
+      ? this.submitNextRound()
+      : this.submitNextReady();
   }
 
   /*
@@ -614,7 +625,7 @@ export class PlayArea extends React.Component<
       case ZPY.Phase.FLY: return this.submitContestOrPass();
       case ZPY.Phase.FOLLOW: return this.submitFollowOrCollect();
       case ZPY.Phase.FINISH: return this.submitEndRound();
-      case ZPY.Phase.WAIT: return this.submitNextRound();
+      case ZPY.Phase.WAIT: return this.submitReadyOrNext();
     }
     return false;
   }
@@ -1048,7 +1059,9 @@ export class PlayArea extends React.Component<
           ? me === zpy.players[zpy.current]
           : me === zpy.winning;
         case ZPY.Phase.FINISH: return me === zpy.host;
-        case ZPY.Phase.WAIT: return me === zpy.host;
+        case ZPY.Phase.WAIT: return me === zpy.host
+          ? zpy.has_consensus()
+          : !zpy.consensus.has(me) ;
       }
       assert(false);
       return false;
@@ -1077,8 +1090,9 @@ export class PlayArea extends React.Component<
             : <>waiting for the winner to collect the trick</>;
           case ZPY.Phase.FINISH:
             return <>waiting for the host to reveal the kitty</>;
-          case ZPY.Phase.WAIT:
-            return <>waiting for the host to start the round</>;
+          case ZPY.Phase.WAIT: return me === zpy.host
+            ? <>waiting for everyone else to be ready</>
+            : <>waiting for the host to start the round</>;
         }
         return null;
       })();
@@ -1127,9 +1141,10 @@ export class PlayArea extends React.Component<
             </>
           : <>you won the trick; press {enter} to collect it</>;
         case ZPY.Phase.FINISH:
-          return <>press {enter} to reveal the kitty and end the round.</>;
-        case ZPY.Phase.WAIT:
-          return <>press {enter} to start the next round.</>;
+          return <>press {enter} to reveal the kitty and end the round</>;
+        case ZPY.Phase.WAIT: return me === zpy.host
+          ? <>press {enter} to start the next round</>
+          : <>press {enter} to indicate you are ready for the next round</>;
       }
       return null;
     })();

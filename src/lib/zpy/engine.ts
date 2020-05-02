@@ -374,6 +374,7 @@ export const collect_trick = trivial('collect_trick');
 export const end_round = trivial('end_round');
 export const finish = card_arr('finish');
 
+export const next_ready = trivial('next_ready');
 export const next_round = trivial('next_round');
 
 }
@@ -394,6 +395,7 @@ const Intent_ = (tr: TrumpMeta) => C.sum('kind')({
   'follow_lead': A.follow_lead(tr),
   'collect_trick': A.collect_trick,
   'end_round': A.end_round,
+  'next_ready': A.next_ready,
   'next_round': A.next_round,
 });
 
@@ -427,6 +429,7 @@ const Effect_ = (tr: TrumpMeta) => C.sum('kind')({
   'observe_follow': A.observe_follow(tr),
   'collect_trick': A.collect_trick,
   'finish': A.finish,
+  'next_ready': A.next_ready,
   'next_round': A.next_round,
 });
 
@@ -499,6 +502,7 @@ export const predict = (
         : OK({effect: intent, state});
     }
     case 'end_round': break;
+    case 'next_ready': break;
     case 'next_round': break;
   }
   return null;
@@ -624,6 +628,11 @@ export const larp = (
       if (result instanceof ZPY.Error) return Err(result);
       return OK([state, everyone(effect('finish', p, ...result))]);
     }
+    case 'next_ready': {
+      let result = state[intent.kind](...intent.args);
+      if (result instanceof ZPY.Error) return Err(result);
+      return OK([state, everyone(intent)]);
+    }
     case 'next_round': {
       let result = state[intent.kind](...intent.args);
       if (result instanceof ZPY.Error) return Err(result);
@@ -725,6 +734,10 @@ export const apply_client = (
           return (result instanceof ZPY.Error) ? Err(result) : OK(state);
         }
         case 'finish': {
+          let result = state[effect.kind](...effect.args);
+          return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+        }
+        case 'next_ready': {
           let result = state[effect.kind](...effect.args);
           return (result instanceof ZPY.Error) ? Err(result) : OK(state);
         }

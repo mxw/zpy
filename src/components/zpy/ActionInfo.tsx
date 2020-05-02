@@ -169,6 +169,9 @@ export class ActionInfo extends React.Component<ActionInfo.Props> {
         this.props.phase <= ZPY.Phase.FINISH) {
       return this.renderPlay() ?? this.renderReady();
     }
+    if (this.props.phase === ZPY.Phase.WAIT) {
+      return this.renderReady();
+    }
   }
 
   render() {

@@ -169,6 +169,15 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   }
 
   /*
+   * Whether every player is in this.consensus.
+   */
+  has_consensus(): boolean {
+    return this.consensus.size === this.players.length;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+
+  /*
    * Debugging helpers.
    */
   set_debug() { this.debug = true; }
@@ -495,7 +504,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       return ZPY.BadPhaseError.from('ready', this.phase);
     }
     this.consensus.add(player);
-    if (this.consensus.size !== this.players.length) return null;
+    if (!this.has_consensus()) return null;
 
     let nbids = this.bids.length;
 
@@ -816,7 +825,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       return ZPY.BadPhaseError.from('pass_contest', this.phase);
     }
     this.consensus.add(player);
-    if (this.consensus.size !== this.players.length) return;
+    if (!this.has_consensus()) return;
 
     this.consensus.clear();
     this.commit_lead(this.leader, this.lead);
@@ -1010,7 +1019,15 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       }
       next_idx = this.next_player_idx(next_idx);
     }
+    this.consensus = (new Set<PlayerID>()).add(this.host);
     this.phase = ZPY.Phase.WAIT;
+  }
+
+  next_ready(player: PlayerID): ZPY.Result {
+    if (this.phase !== ZPY.Phase.WAIT) {
+      return ZPY.BadPhaseError.from('next_ready', this.phase);
+    }
+    this.consensus.add(player);
   }
 
   /*
@@ -1030,6 +1047,11 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
         `must have at least ${ZPY.min_players} players`
       );
     }
+    if (!this.has_consensus()) {
+      return new ZPY.InvalidPlayError('not everyone is ready');
+    }
+    this.consensus.clear();
+
     this.reset_round(this.host, true);
     this.phase = ZPY.Phase.DRAW;
   }
