@@ -411,6 +411,8 @@ kbd {
   bottom: 0;
 
   @include flex.row-center;
+
+  pointer-events: none;
 }
 
 .error{
