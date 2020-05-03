@@ -371,8 +371,9 @@ $-card-height-friend: card.height-for(card.$width-friend);
 
   @include rhythm.rh-border-full(2);
   padding-bottom: card.container-padding(2, $-card-height-friend) - rhythm.$px;
-  border-radius: inherit;
-  background-color: inherit;
+  // same values as .action-container
+  border-radius: rhythm.rh(0.5);
+  background-color: rgb(169, 191, 212);
 }
 
 .friend-selector-unit {
