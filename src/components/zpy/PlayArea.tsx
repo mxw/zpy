@@ -869,7 +869,7 @@ export class PlayArea extends React.Component<
       const hand_ordered = state.areas[0].ordered.concat(
         ...play_areas.map(area => area.ordered)
       );
-      return PlayArea.reapAreas({
+      state = PlayArea.reapAreas({
         ...state,
         areas: [
           {
@@ -880,6 +880,10 @@ export class PlayArea extends React.Component<
         ],
         id_to_area: id_to_cns(hand_ordered, 0),
       }, props);
+
+      return state.keep_hand_sorted
+        ? PlayArea.withHandSorted(state, props)
+        : state;
     });
   }
 
