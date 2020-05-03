@@ -1150,6 +1150,10 @@ export class PlayArea extends React.Component<
   }
 
   renderHand() {
+    if (this.props.phase <= ZPY.Phase.INIT ||
+        this.props.phase >= ZPY.Phase.FINISH) {
+      return null;
+    }
     return <div className="hand">
       <CardArea
         droppableId="0"
