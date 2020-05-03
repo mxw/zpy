@@ -40,3 +40,9 @@
 
 - fix bug where cards just suddenly reorder?  putting natural trumps before
   other trumps?
+
+- highlight background for current player
+
+- make it more obvious when it's your turn to draw?
+
+- make it more clear when instruction test changes

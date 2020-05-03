@@ -78,10 +78,7 @@ export class PlayerInfo extends React.Component<
 
     if (this.node?.contains(ev.target as Node)) return;
 
-    this.setState((state, props) => ({
-      nick: state.nick.trim(),
-      editing: false,
-    }));
+    this.updateNick();
   }
 
   /*
@@ -121,18 +118,7 @@ export class PlayerInfo extends React.Component<
     if (ev.key !== 'Enter') return;
     ev.preventDefault();
 
-    const nick = this.state.nick.trim();
-
-    (async () => {
-      const response = await axios.post(
-        '/api/set_nick',
-        JSON.stringify({nick}),
-        {headers: {'Content-Type': 'application/json'}}
-      );
-      if (!response.data) console.error('failed to set nickname');
-    })();
-
-    this.setState({nick, editing: false});
+    this.updateNick();
   }
 
   /*
@@ -150,6 +136,26 @@ export class PlayerInfo extends React.Component<
     if (width !== prevState.nick_width) {
       this.setState({nick_width: width});
     }
+  }
+
+  /*
+   * commit a nickname update
+   */
+  updateNick() {
+    this.setState((state, props) => {
+      const nick = state.nick.trim();
+
+      (async () => {
+        const response = await axios.post(
+          '/api/set_nick',
+          JSON.stringify({nick}),
+          {headers: {'Content-Type': 'application/json'}}
+        );
+        if (!response.data) console.error('failed to set nickname');
+      })();
+
+      return {nick, editing: false};
+    });
   }
 
   /////////////////////////////////////////////////////////////////////////////
