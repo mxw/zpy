@@ -301,7 +301,7 @@ $-card-height-friend: card.height-for(card.$width-friend);
   display: flex;
   flex-wrap: wrap;
 
-  @include card.container-h(0, card.$width-friend);
+  @include card.container-h(0.5, card.$width-friend);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
