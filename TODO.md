@@ -52,3 +52,7 @@
 - if you submit a wrong kitty, you can't re-submit a correct one
 
 - refresh gives you two copies of the kitty
+
+- don't submit draw when it's not your turn
+
+- people are looking at board above; move text above?
