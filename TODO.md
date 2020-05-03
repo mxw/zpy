@@ -30,18 +30,11 @@
 
 - undo state for "readying"?  or make it more obvious you need to bid?
 
-- sort hand alternating colors
-
-- fix bug where cards just suddenly reorder?  putting natural trumps before
-  other trumps?  due to Card.from() reuse of stale Cards; make sure to
-  instantiate CardIDs as CardBases explicitly
+- make sure to instantiate CardIDs as CardBases explicitly
 
 - make it more clear when instruction test changes
 
 - if you submit a wrong kitty, you can't re-submit a correct one
-
-- add row of phase-dependent buttons atop of the play area for things like
-  auto-draw, auto-submit-play, auto return-bid-to-hand, keep hand sorted, etc.
 
 - various reported assertion failures
 

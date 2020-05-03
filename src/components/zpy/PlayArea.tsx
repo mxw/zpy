@@ -11,7 +11,7 @@ import {
 
 import * as P from 'protocol/protocol.ts'
 
-import { TrumpMeta, CardBase, Card, CardPile } from 'lib/zpy/cards.ts'
+import { TrumpMeta, Suit, CardBase, Card, CardPile } from 'lib/zpy/cards.ts'
 import { Play, Flight } from 'lib/zpy/trick.ts'
 import { ZPY } from 'lib/zpy/zpy.ts'
 import * as ZPYEngine from 'lib/zpy/engine.ts'
@@ -76,7 +76,7 @@ export class PlayArea extends React.Component<
 
       action_pending: false,
       pending_cards: [],
-    }, hand, 0);
+    }, props, hand, 0);
 
     this.state = PlayArea.validate(state);
 
@@ -175,7 +175,7 @@ export class PlayArea extends React.Component<
       } = card_delta(hand, all_cards, zpy.tr);
 
       if (to_add.length > 0) {
-        state = PlayArea.withCardsAdded(state, to_add, 0);
+        state = PlayArea.withCardsAdded(state, props, to_add, 0);
       }
       if (to_rm.length > 0) {
         state = PlayArea.withCardsRemoved(state, props, to_rm);
@@ -186,7 +186,7 @@ export class PlayArea extends React.Component<
   }
 
   /*
-   * account for new/removed cards from a server update
+   * account for state changes from a server update
    */
   onUpdate(effect: ZPYEngine.Effect) {
     const me = this.props.me.id;
@@ -208,11 +208,17 @@ export class PlayArea extends React.Component<
         }
         break;
       }
+      case 'secure_bid': {
+        if (this.state.keep_hand_sorted) {
+          this.setState((state, props) => PlayArea.withHandSorted(state, props));
+        }
+        break;
+      }
       case 'install_host': {
         const kitty = effect.args[1];
         if (me === zpy.host && kitty.length > 0) {
           this.setState((state, props) =>
-            PlayArea.withCardsAdded(state, kitty, 1)
+            PlayArea.withCardsAdded(state, props, kitty, 1)
           );
         }
         break;
@@ -255,6 +261,7 @@ export class PlayArea extends React.Component<
    */
   static withCardsAdded(
     state: PlayArea.State,
+    props: PlayArea.Props,
     to_add: Iterable<CardBase>,
     adx: number,
   ): PlayArea.State {
@@ -286,7 +293,9 @@ export class PlayArea extends React.Component<
       state.areas[adx].ordered.push(c);
       state.id_to_area[c.id] = adx;
     }
-    return state;
+    return state.keep_hand_sorted
+      ? PlayArea.withHandSorted(state, props)
+      : state;
   }
 
   /*
@@ -382,7 +391,7 @@ export class PlayArea extends React.Component<
         if (effect.args[0] !== this.props.me.id) return;
 
         this.setState((state, props) =>
-          PlayArea.withCardsAdded(state, [effect.args[1]], 0)
+          PlayArea.withCardsAdded(state, props, [effect.args[1]], 0)
         );
         this.onEffect(effect);
       }
@@ -812,23 +821,42 @@ export class PlayArea extends React.Component<
   }
 
   sortHand() {
-    const tr = this.props.zpy.tr;
+    if (this.props.zpy.tr === null) return;
+
+    this.setState((state, props) => PlayArea.withHandSorted(state, props));
+  }
+
+  static withHandSorted(
+    state: PlayArea.State,
+    props: PlayArea.Props,
+  ): PlayArea.State {
+    const tr = props.zpy.tr;
     if (tr === null) return;
 
-    this.setState((state, props) => {
-      const sorted = [...state.areas[0].ordered].sort((l, r) => {
-        const ll = Card.from(l.cb, tr);
-        const rr = Card.from(r.cb, tr);
-        return Card.compare(ll, rr) ?? Math.sign(ll.v_suit - rr.v_suit);
-      });
-      return {areas: [
+    const suit_order: number[] = [...CardBase.SUITS];
+    if (tr.suit !== Suit.TRUMP) {
+      for (let i = 0; i < 4; ++i) {
+        suit_order[(tr.suit + 1 + i) % 4] = i;
+      }
+    }
+    suit_order.push(Suit.TRUMP);
+
+    const sorted = [...state.areas[0].ordered].sort((l, r) => {
+      const ll = Card.from(l.cb, tr);
+      const rr = Card.from(r.cb, tr);
+      return Math.sign(suit_order[ll.v_suit] - suit_order[rr.v_suit]) ||
+             Math.sign(ll.v_rank - rr.v_rank);
+    });
+    return {
+      ...state,
+      areas: [
         {
           ordered: sorted,
           id_to_pos: id_to_pos(sorted),
         },
         ...state.areas.slice(1)
-      ]};
-    });
+      ]
+    };
   }
 
   resetPlays() {
@@ -981,7 +1009,9 @@ export class PlayArea extends React.Component<
     const keep_hand_sorted = this.renderToggleButton(
       'keep hand sorted',
       'keep_hand_sorted',
-      'sort by alternating suit, trumps last, rank order',
+      'sort by alternating suit, rank order, with trumps last, ' +
+      'whenever you receive cards',
+      checked => { if (checked) this.sortHand(); }
     );
     const auto_draw = this.renderToggleButton(
       'auto-draw',
