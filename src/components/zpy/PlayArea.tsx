@@ -1030,7 +1030,7 @@ export class PlayArea extends React.Component<
     const full_control = this.renderToggleButton(
       'full play control',
       'full_control',
-      'lets you place cards in multiple piles for complex fly patterns',
+      'enable playing cards in separate piles for complex fly patterns',
     );
 
     const opts = [keep_hand_sorted];
