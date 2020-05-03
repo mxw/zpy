@@ -77,7 +77,7 @@ export class PlayerInfo extends React.Component<
     if ('button' in ev && ev.button !== 0) return;
 
     if (this.node?.contains(ev.target as Node)) return;
-    if (this.editing) return;
+    if (!this.editing) return;
 
     this.updateNick();
   }
