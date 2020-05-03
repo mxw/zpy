@@ -493,7 +493,7 @@ export class Hand {
         register(node);
       }
 
-      for (let src of I_p || []) {
+      for (let src of I_p ?? []) {
         if (src.n > n) continue;
         let node = Hand.Node.chain_from(src, card.osnt_suit);
         register(node);
@@ -899,7 +899,11 @@ export class Hand {
   private I(v_suit: Suit, v_rank: Rank, suit?: Suit): Hand.Node[] {
     if (suit === null || suit === undefined) {
       return v_rank === Rank.N_off
-        ? [].concat.apply([], this.#I_osnt[v_suit])
+        // NB: I_osnt[v_suit] may not be fully populated, so we need to filter
+        // out the undefined entries that show up in our flattened array (this is
+        // just the behavior of Array.prototype.concat; any undefined arguments
+        // show up as undefined entries in the concatenation)
+        ? [].concat.apply([], this.#I_osnt[v_suit]).filter((n: any) => !!n)
         : (this.#I[v_suit]?.[v_rank] ?? []);
     }
     if (v_rank === Rank.N_off) {

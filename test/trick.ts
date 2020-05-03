@@ -7,6 +7,42 @@ import {
 
 import {expect} from 'chai';
 
+describe('new Hand', () => {
+  it('doesn\'t crash or whatever', () => {
+    let tr = new TrumpMeta(Suit.CLUBS, 2);
+
+    let pile = new CardPile([
+      new CardBase(Suit.DIAMONDS, 4),
+      new CardBase(Suit.DIAMONDS, 7),
+      new CardBase(Suit.DIAMONDS, 7),
+      new CardBase(Suit.DIAMONDS, 10),
+      new CardBase(Suit.DIAMONDS, Rank.J),
+      new CardBase(Suit.DIAMONDS, Rank.K),
+      new CardBase(Suit.DIAMONDS, Rank.A),
+      new CardBase(Suit.SPADES, 3),
+      new CardBase(Suit.SPADES, 4),
+      new CardBase(Suit.SPADES, 4),
+      new CardBase(Suit.SPADES, 6),
+      new CardBase(Suit.SPADES, 7),
+      new CardBase(Suit.SPADES, 9),
+      new CardBase(Suit.HEARTS, 5),
+      new CardBase(Suit.HEARTS, Rank.K),
+      new CardBase(Suit.CLUBS, 10),
+      new CardBase(Suit.CLUBS, Rank.J),
+      new CardBase(Suit.SPADES, 2),
+      new CardBase(Suit.SPADES, 2),
+      new CardBase(Suit.HEARTS, 2),
+      new CardBase(Suit.CLUBS, 2),
+      new CardBase(Suit.CLUBS, 2),
+      new CardBase(Suit.TRUMP, Rank.S),
+      new CardBase(Suit.TRUMP, Rank.B),
+    ], tr);
+    let hand = new Hand(pile);
+
+    console.log(hand.toString());
+  });
+});
+
 describe('Play#extract', () => {
   it('extracts structure from a tiny pile of cards', () => {
     let tr = new TrumpMeta(Suit.CLUBS, Rank.Q);
