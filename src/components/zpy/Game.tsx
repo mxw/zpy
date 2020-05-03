@@ -15,6 +15,7 @@ import { ZPY } from 'lib/zpy/zpy.ts'
 import * as ZPYEngine from 'lib/zpy/engine.ts'
 
 import { Client, EngineCallbacks } from 'components/zpy/common.ts'
+import { Help } from 'components/zpy/Help.tsx'
 import { Board } from 'components/zpy/Board.tsx'
 import { Reveal } from 'components/zpy/Reveal.tsx'
 import { ErrorMessage } from 'components/zpy/ErrorMessage.tsx'
@@ -238,6 +239,7 @@ export class Game extends React.Component<Game.Props, Game.State> {
     if (client.state === null) return null;
 
     return <>
+      <Help />
       <Board
         me={client.me}
         zpy={client.state}

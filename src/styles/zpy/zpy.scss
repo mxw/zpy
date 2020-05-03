@@ -497,3 +497,71 @@ kbd {
   90% { opacity: 1; }
   100% { opacity: 0; }
 }
+
+///////////////////////////////////////////////////////////////////////////////
+
+.help-wrapper {
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  margin: rhythm.rh(0.5);
+
+  > .help-info {
+    display: none;
+    opacity: 0;
+
+    transition: opacity 0.5s linear;
+  }
+  &:hover > .help-info,
+  &:focus > .help-info {
+    display: block;
+    opacity: 1;
+  }
+}
+
+.help-icon {
+  width: rhythm.rh(1.5);
+  height: rhythm.rh(1.5);
+  vertical-align: middle;
+}
+
+.help-info {
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translate(-40%, -50%);
+  z-index: 42;
+
+  @include rhythm.rh-border-full(2.5);
+  border-style: solid;
+  border-color: black;
+  border-radius: rhythm.rh(1);
+
+  background-color: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(rhythm.rh(0.25));
+
+  user-select: none;
+
+  overflow: auto;
+
+  > h2 {
+    margin-top: 0;
+  }
+}
+
+.help-shortcuts {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-column-gap: 2rem;
+}
+
+.help-key > kbd {
+  font-size: 1rem;
+}
+
+.help-pointer-icon {
+  width: rhythm.rh(1.125);
+  height: rhythm.rh(1.125);
+  vertical-align: middle;
+}
