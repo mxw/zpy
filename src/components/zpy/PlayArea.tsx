@@ -70,6 +70,10 @@ export class PlayArea extends React.Component<
 
       fr_select: array_fill(this.props.zpy.ndecks, () => ({})),
 
+      keep_hand_sorted: false,
+      auto_draw: false,
+      full_control: false,
+
       action_pending: false,
       pending_cards: [],
     }, hand, 0);
@@ -148,6 +152,10 @@ export class PlayArea extends React.Component<
 
       fr_select: state.fr_select.map(fr => ({...fr})),
 
+      keep_hand_sorted: state.keep_hand_sorted,
+      auto_draw: state.auto_draw,
+      full_control: state.full_control,
+
       action_pending: state.action_pending,
       pending_cards: [...state.pending_cards],
     }
@@ -189,6 +197,15 @@ export class PlayArea extends React.Component<
         this.setState({
           fr_select: array_fill(zpy.ndecks, () => ({}))
         });
+        break;
+      }
+      case 'add_to_hand': {
+        // if it's our turn and auto-draw is on, draw a card
+        if (this.state.auto_draw &&
+            this.props.phase === ZPY.Phase.DRAW &&
+            zpy.is_current(me)) {
+          setTimeout(() => this.submitDrawCard(), 250);
+        }
         break;
       }
       case 'install_host': {
@@ -917,6 +934,95 @@ export class PlayArea extends React.Component<
 
   /////////////////////////////////////////////////////////////////////////////
   /*
+   * user options buttons
+   */
+
+  renderToggleButton(
+    label: string,
+    option: keyof PlayArea.UserOptions,
+    tooltip?: string,
+    on_toggle?: (checked: boolean) => void,
+  ) {
+    const checked = this.state[option];
+
+    const toggle = <label
+      key={option}
+      className={`toggle ${option} ${checked ? 'on' : 'off'}`}
+    >
+      <input
+        className={`toggle-input ${option}`}
+        name={option}
+        type="checkbox"
+        checked={checked}
+        onChange={ev => {
+          this.setState({[option]: ev.target.checked} as any);
+          on_toggle?.(ev.target.checked);
+        }}
+      />
+      <div
+        className={`toggle-text ${option}`}
+      >
+        {label}
+      </div>
+    </label>;
+
+    if (!tooltip) return toggle;
+
+    return <div
+      key={option}
+      aria-label={tooltip}
+      data-balloon-pos="up-right"
+    >
+      {toggle}
+    </div>;
+  }
+
+  renderUserOptions() {
+    const keep_hand_sorted = this.renderToggleButton(
+      'keep hand sorted',
+      'keep_hand_sorted',
+      'sort by alternating suit, trumps last, rank order',
+    );
+    const auto_draw = this.renderToggleButton(
+      'auto-draw',
+      'auto_draw',
+      'automatically draw cards on your turn',
+      checked => {
+        if (checked &&
+            this.props.phase === ZPY.Phase.DRAW &&
+            this.props.zpy.is_current(this.props.me.id)) {
+          this.submitDrawCard();
+        }
+      }
+    );
+    const full_control = this.renderToggleButton(
+      'full play control',
+      'full_control',
+      'lets you place cards in multiple piles for complex fly patterns',
+    );
+
+    const opts = [keep_hand_sorted];
+
+    switch (this.props.phase) {
+      case ZPY.Phase.INIT: break;
+      case ZPY.Phase.DRAW: opts.push(auto_draw); break;
+      case ZPY.Phase.PREPARE: break;
+      case ZPY.Phase.KITTY: break;
+      case ZPY.Phase.FRIEND: break;
+      case ZPY.Phase.LEAD: opts.push(full_control); break;
+      case ZPY.Phase.FLY: break;
+      case ZPY.Phase.FOLLOW: opts.push(full_control); break;
+      case ZPY.Phase.FINISH: break;
+      case ZPY.Phase.WAIT: break;
+    }
+
+    return <div className="user-options">
+      {opts.reverse()}
+    </div>;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  /*
    * toplevel render functions
    */
 
@@ -1120,7 +1226,7 @@ export class PlayArea extends React.Component<
         case ZPY.Phase.KITTY:
           return <>
             take the kitty above, then put back that many cards
-            ({zpy.kitty.length} total). press {enter} to submit.
+            ({zpy.kitty.length} total) and press {enter} to submit
           </>;
         case ZPY.Phase.FRIEND:
           return <>
@@ -1129,8 +1235,7 @@ export class PlayArea extends React.Component<
           </>;
         case ZPY.Phase.LEAD:
           return <>
-            drag cards above and press {enter} to submit your lead.
-            make separate piles to have full control of an ambiguous fly.
+            drag cards above and press {enter} to submit your lead
           </>;
         case ZPY.Phase.FLY:
           return <>
@@ -1140,8 +1245,7 @@ export class PlayArea extends React.Component<
           </>;
         case ZPY.Phase.FOLLOW: return zpy.cur_idx !== null
           ? <>
-              drag cards above and press {enter} to submit your play.
-              place cards in separate piles for full control of your play.
+              drag cards above and press {enter} to submit your play
             </>
           : <>you won the trick; press {enter} to collect it</>;
         case ZPY.Phase.FINISH:
@@ -1181,7 +1285,10 @@ export class PlayArea extends React.Component<
         onDragStart={this.onDragStart}
         onDragEnd={this.onDragEnd}
       >
-        {this.renderActionArea()}
+        <div className="action-container">
+          {this.renderUserOptions()}
+          {this.renderActionArea()}
+        </div>
         {this.renderInstructionArea()}
         {this.renderHand()}
       </DragDropContext>
@@ -1254,6 +1361,12 @@ type Area = {
   id_to_pos: Record<string, number>;
 };
 
+export type UserOptions = {
+  keep_hand_sorted: boolean;
+  auto_draw: boolean;
+  full_control: boolean;
+};
+
 export type Props = {
   me: P.User;
   phase: ZPY.Phase;
@@ -1264,11 +1377,11 @@ export type Props = {
 
 export type State = {
   // all cards that have ever been a part of our hand.  we update this whenever
-  // new cards are passed in through Props#hand or Props#kitty.  correctness
+  // new cards are passed in through Props#hand or via an update.  correctness
   // relies on two facts:
   //
-  //    1/ within a ZPY round, [...hand, ...kitty] strictly grows, then we
-  //       update state at least once, then it strictly decreases
+  //    1/ within a ZPY round, [...hand] strictly grows, then we update state
+  //       at least once, then it strictly decreases
   //    2/ the lifetime of the PlayArea component does not outlast a round
   //
   // (1) holds by the rules of the game and the requirement that the player
@@ -1304,6 +1417,6 @@ export type State = {
   action_pending: boolean;
   // pending cards for removal; see onPlayEffect()
   pending_cards: CardID[];
-};
+} & UserOptions;
 
 }

@@ -271,19 +271,19 @@ $balloon-arrow-offset: 1rem;  // arrow offset for un-centered positions
 
 [aria-label][data-balloon-pos][data-balloon-length="small"]:after {
   white-space: normal;
-  width: 80px;
+  width: 5rem;
 }
 [aria-label][data-balloon-pos][data-balloon-length="medium"]:after {
   white-space: normal;
-  width: 150px;
+  width: 9rem;
 }
 [aria-label][data-balloon-pos][data-balloon-length="large"]:after {
   white-space: normal;
-  width: 260px;
+  width: 16rem;
 }
 [aria-label][data-balloon-pos][data-balloon-length="xlarge"]:after {
   white-space: normal;
-  width: 380px;
+  width: 24rem;
 }
 @media screen and (max-width: 768px) {
   [aria-label][data-balloon-pos][data-balloon-length="xlarge"]:after {

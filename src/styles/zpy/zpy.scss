@@ -250,24 +250,71 @@ body {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-.action {
+.action-container {
   position: relative;
-  @include flex.row-center;
+
+  @include flex.column;
 
   min-width: card.$width-hand * 6;
-  height: rhythm.rh(10);
+  min-height: rhythm.rh(13);
 
-  @include rhythm.rh-border-full();
+  @include rhythm.rh-border-full(0.25);
   border-radius: rhythm.rh(0.5);
   border-style: solid;
   border-color: lightgrey;
 
   background-color: rgb(169, 191, 212);
+}
+
+.user-options {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+
+  align-self: flex-end;
+
+  padding: rhythm.rh(0.25);
+}
+
+.toggle {
+  @include flex.row-center;
+
+  @include rhythm.rh-border-full(0.25);
+  @include rhythm.rh-margin-x(0.25);
+  border-style: solid;
+  border-radius: rhythm.rh(0.25);
+
+  font-size: rhythm.rh(0.875);
+
+  > .toggle-input {
+    padding: rhythm.rh(0.25);
+  }
+  > .toggle-text {
+    padding: rhythm.rh(0.25);
+    user-select: none;
+  }
+
+  &.off {
+    color: darkgrey;
+    border-color: darkgrey;
+    background-color: lightgrey;
+  }
+  &.on {
+    border-color: rgba(67, 166, 226);
+    background-color: skyblue;
+  }
+}
+
+.action {
+  @include flex.row-center;
+
+  width: 100%;
+  padding: rhythm.rh(0.25);
 
   &.draw {
     > .deck {
       @include flex.row-center;
-      flex-basis: 40%;
+      flex-basis: 45%;
 
       > .card:hover {
         cursor: pointer;
@@ -276,7 +323,7 @@ body {
 
     > .bids {
       @include flex.row-center;
-      flex-basis: 60%;
+      flex-basis: 55%;
     }
   }
 }
@@ -284,7 +331,7 @@ body {
 .cardarea {
   display: flex;
   overflow: auto;
-  @include card.container-h(1, card.$width-hand);
+  @include card.container-h(0.5, card.$width-hand);
 
   &.empty {
     padding-right: rhythm.rh(1);
@@ -374,7 +421,7 @@ kbd {
   @include flex.row-center;
 
   height: rhythm.rh(10);
-  padding: rhythm.rh(1);
+  padding: rhythm.rh(1.5);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
