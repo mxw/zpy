@@ -30,13 +30,7 @@
 
 - undo state for "readying"?  or make it more obvious you need to bid?
 
-- make sure to instantiate CardIDs as CardBases explicitly
-
 - make it more clear when instruction test changes
-
-- if you submit a wrong kitty, you can't re-submit a correct one
-
-- various reported assertion failures
 
 - use `identity` instead of `me` for all checks in UI
 

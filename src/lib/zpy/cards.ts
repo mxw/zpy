@@ -10,6 +10,7 @@ import { array_fill } from 'utils/array.ts';
 import { ansi } from 'utils/string.ts';
 
 import assert from 'utils/assert.ts'
+import * as options from 'options.ts'
 
 /*
  * Card suit enum.
@@ -171,7 +172,11 @@ export class CardBase {
     readonly suit: Suit,
     readonly rank: Rank,
   ) {
-    assert(CardBase.validate(suit, rank), 'CardBase: validation', suit, rank);
+    assert(
+      CardBase.validate(suit, rank),
+      'CardBase: validation',
+      suit, rank
+    );
   }
 
   static readonly SUITS = [
@@ -198,8 +203,11 @@ export class CardBase {
     return l.suit === r.suit && l.rank === r.rank;
   }
 
-  toString(color: boolean = false): string {
-    return card_to_string(this.suit, this.rank, color);
+  /*
+   * Get rid of all extraneous junk on `cb` and return a copy.
+   */
+  static strip(cb: CardBase): CardBase {
+    return new CardBase(cb.suit, cb.rank);
   }
 
   /*
@@ -213,6 +221,10 @@ export class CardBase {
       default: break;
     }
     return 0;
+  }
+
+  toString(color: boolean = false): string {
+    return card_to_string(this.suit, this.rank, color);
   }
 }
 
@@ -241,17 +253,18 @@ export class Card extends CardBase {
   }
 
   static from(cb: CardBase, tr: TrumpMeta): Card {
-    // XXX: debugging
-    const card = new Card(cb.suit, cb.rank, tr);
-    if (cb instanceof Card) {
-      if (cb.suit !== card.suit ||
-          cb.rank !== card.rank ||
-          cb.v_suit !== card.v_suit ||
-          cb.v_rank !== card.v_rank) {
-        console.trace('Card.from', cb, card);
+    if (options.debug) {
+      const card = new Card(cb.suit, cb.rank, tr);
+      if (cb instanceof Card) {
+        if (cb.suit !== card.suit ||
+            cb.rank !== card.rank ||
+            cb.v_suit !== card.v_suit ||
+            cb.v_rank !== card.v_rank) {
+          console.trace('Card.from', cb, card);
+        }
       }
     }
-    return card;
+    return (cb instanceof Card) ? cb : new Card(cb.suit, cb.rank, tr);
   }
 
   /*

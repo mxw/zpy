@@ -285,8 +285,10 @@ export class PlayArea extends React.Component<
     }
 
     for (let cb of to_add) {
-      const c = {cb, id: ('' + state.seen.length)};
-
+      const c = {
+        cb: CardBase.strip(cb),
+        id: ('' + state.seen.length)
+      };
       state.seen.push(c);
       state.id_set.add(c.id);
       state.areas[adx].id_to_pos[c.id] = state.areas[adx].ordered.length;
