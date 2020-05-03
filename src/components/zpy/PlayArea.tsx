@@ -1275,6 +1275,7 @@ export type State = {
     pile: CardBase[];
   };
 
+  // selected card is in the friend selector
   fr_select: Record<string, [CardBase, number]>[];
 
   // is there an action pending?
