@@ -1031,6 +1031,7 @@ export class PlayArea extends React.Component<
       'full play control',
       'full_control',
       'enable playing cards in separate piles for complex fly patterns',
+      checked => { if (!checked) this.resetPlays(); }
     );
 
     const opts = [keep_hand_sorted];
