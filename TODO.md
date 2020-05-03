@@ -38,5 +38,3 @@
 - make it more clear when instruction test changes
 
 - if you submit a wrong kitty, you can't re-submit a correct one
-
-- people are looking at board above; move text above?
