@@ -40,8 +40,3 @@ export type CardID = {
   cb: CardBase,
   id: string
 };
-
-/*
- * debug level; 0 to disable
- */
-export const debug: number = 1;

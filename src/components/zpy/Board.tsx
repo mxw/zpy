@@ -9,9 +9,11 @@ import { CardBase, Suit, Rank } from 'lib/zpy/cards.ts'
 import { ZPY } from 'lib/zpy/zpy.ts'
 import * as ZPYEngine from 'lib/zpy/engine.ts'
 
-import { EngineCallbacks, debug } from 'components/zpy/common.ts'
+import { EngineCallbacks } from 'components/zpy/common.ts'
 import { RoundInfo } from 'components/zpy/RoundInfo.tsx'
 import { PlayArea } from 'components/zpy/PlayArea.tsx'
+
+import * as options from 'options.ts'
 
 import { strict as assert} from 'assert'
 
@@ -23,7 +25,10 @@ export class Board extends React.Component<Board.Props, Board.State> {
 
   render() {
     const zpy = this.props.zpy;
-    if (debug) console.log(ZPY.Phase[zpy.phase]);
+
+    if (options.debug) {
+      console.log(ZPY.Phase[zpy.phase]);
+    }
 
     return (
       <div className="board">
