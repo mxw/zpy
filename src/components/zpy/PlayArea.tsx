@@ -793,12 +793,8 @@ export class PlayArea extends React.Component<
       this.setState({multidrag: null});
       return;
     }
-
-    const src_adx = parseInt(src.droppableId);
     const dst_adx = parseInt(dst.droppableId);
-
-    const src_area = this.state.areas[src_adx];
-    const src_id = src_area.ordered[src.index].id;
+    const src_id = result.draggableId;
 
     this.moveCards(dst_adx, dst.index, src_id);
   };
