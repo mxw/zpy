@@ -56,6 +56,10 @@ export class Game extends React.Component<Game.Props, Game.State> {
     this.ensureClient();
   }
 
+  componentWillUnmount() {
+    this.state.client.close();
+  }
+
   ensureClient(): Client {
     if (this.state.client !== null) return this.state.client;
 

@@ -124,11 +124,13 @@ export class GameClient<
       ));
     };
 
-    this.socket.onclose = () => {
+    this.socket.onclose = (e: CloseEvent) => {
       this.status = "pending-reset";
       this.state = null;
       this.users = null;
       this.me = null;
+
+      if (e.code === 1000) return;
 
       setTimeout(() => {
         // exponential backoff
@@ -194,6 +196,10 @@ export class GameClient<
       },
       (e: any) => console.error(P.draw_error(e), payload));
     }
+  }
+
+  close() {
+    this.socket.close(1000);
   }
 
   /*
