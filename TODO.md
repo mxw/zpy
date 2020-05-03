@@ -32,8 +32,6 @@
 
 - sort hand alternating colors
 
-- indicate how many cards are in the kitty in instruction test
-
 - fix bug where cards just suddenly reorder?  putting natural trumps before
   other trumps?
 
@@ -43,11 +41,7 @@
 
 - make it more clear when instruction test changes
 
-- don't capture S and R in name editing...
-
 - if you submit a wrong kitty, you can't re-submit a correct one
-
-- refresh gives you two copies of the kitty
 
 - don't submit draw when it's not your turn
 

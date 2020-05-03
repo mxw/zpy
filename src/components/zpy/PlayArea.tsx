@@ -1109,8 +1109,8 @@ export class PlayArea extends React.Component<
           </>;
         case ZPY.Phase.KITTY:
           return <>
-            take the kitty above, then put back that many cards;
-            press {enter} to submit
+            take the kitty above, then put back that many cards
+            ({zpy.kitty.length} total). press {enter} to submit.
           </>;
         case ZPY.Phase.FRIEND:
           return <>
