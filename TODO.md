@@ -44,3 +44,5 @@
   auto-draw, auto-submit-play, auto return-bid-to-hand, keep hand sorted, etc.
 
 - various reported assertion failures
+
+- use `identity` instead of `me` for all checks in UI

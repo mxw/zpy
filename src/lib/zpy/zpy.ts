@@ -57,7 +57,7 @@ export class Data<PlayerID extends keyof any> {
   // players' hands as they are being drawn
   draws: Record<PlayerID, CardPile> = {} as any;
   // current index into players for draws, play, etc.
-  current: number = null;
+  cur_idx: number = null;
 
   // host of the current round; valid iff phase > INIT
   host: PlayerID | null = null;
@@ -106,6 +106,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   }
 
   /////////////////////////////////////////////////////////////////////////////
+  /*
+   * Config getters.
+   */
 
   /*
    * Player counts.
@@ -131,6 +134,22 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     return kitty_sz;
   }
 
+  /////////////////////////////////////////////////////////////////////////////
+  /*
+   * Convenience getters.
+   */
+
+  /*
+   * The current player (NOT the current player's order index).
+   */
+  current(): null | PlayerID {
+    return this.cur_idx !== null ? this.players[this.cur_idx] : null;
+  }
+  is_current(player: PlayerID): boolean {
+    return this.cur_idx !== null &&
+           player === this.players[this.cur_idx];
+  }
+
   /*
    * Get a player's hand as a list of cards (regardless of how it's being
    * represented at the moment).
@@ -139,6 +158,22 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     return p in this.hands ? [...this.hands[p].pile.gen_cards()] :
            p in this.draws ? [...this.draws[p].gen_cards()] : [];
   }
+
+  /*
+   * Whether every player is in this.consensus.
+   */
+  has_consensus(): boolean {
+    return this.consensus.size === this.players.length;
+  }
+
+  /*
+   * Team from string literal.
+   */
+  team(which: 'host' | 'attacking') {
+    return which === 'host' ? this.host_team : this.atk_team;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
 
   /*
    * Currently winning trump bidder.
@@ -171,10 +206,10 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   }
 
   /*
-   * Team from string literal.
+   * Whether everyone has played for a trick.
    */
-  team(which: 'host' | 'attacking') {
-    return which === 'host' ? this.host_team : this.atk_team;
+  trick_over(): boolean {
+    return Object.keys(this.plays).length === this.players.length;
   }
 
   /*
@@ -186,20 +221,6 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     return this.players.reduce((total, p) => total + (
       team.has(p) ? this.points[p].reduce((n, c) => n + c.point_value(), 0) : 0
     ), 0);
-  }
-
-  /*
-   * Whether everyone has played for a trick.
-   */
-  trick_over(): boolean {
-    return Object.keys(this.plays).length === this.players.length;
-  }
-
-  /*
-   * Whether every player is in this.consensus.
-   */
-  has_consensus(): boolean {
-    return this.consensus.size === this.players.length;
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -319,7 +340,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
 
     this.bids = [];
     this.draws = {} as any;
-    this.current = this.order[starting];
+    this.cur_idx = this.order[starting];
 
     this.host = is_host ? starting : null;
     this.tr = is_host
@@ -394,7 +415,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (this.phase !== ZPY.Phase.DRAW) {
       return ZPY.BadPhaseError.from('draw_card', this.phase);
     }
-    if (player !== this.players[this.current]) {
+    if (!this.is_current(player)) {
       return new ZPY.OutOfTurnError();
     }
     let cb = this.draw();
@@ -418,7 +439,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       }
       this.phase = ZPY.Phase.PREPARE;
     }
-    this.current = this.next_player_idx(this.current);
+    this.cur_idx = this.next_player_idx(this.cur_idx);
   }
 
   /*
@@ -543,7 +564,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
 
     let host = this.host ?? (nbids !== 0
       ? this.bids[nbids - 1].player
-      : this.players[this.current]  // starting player defaults to host
+      : this.current()  // starting player defaults to host
     );
     this.install_host(host, this.kitty);
     return [host, this.kitty];
@@ -677,7 +698,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     this.host_team.add(this.host);
 
     this.leader = this.host;
-    this.current = this.order[this.leader];
+    this.cur_idx = this.order[this.leader];
 
     this.phase = ZPY.Phase.LEAD;
   }
@@ -692,7 +713,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     player: PlayerID,
     play: Play,
   ): ZPY.Error | CardPile {
-    if (player !== this.players[this.current]) {
+    if (!this.is_current(player)) {
       return new ZPY.OutOfTurnError();
     }
     let play_pile = new CardPile(play.gen_cards(this.tr), this.tr);
@@ -739,7 +760,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
         }
       }
     }
-    this.current = this.next_player_idx(this.current);
+    this.cur_idx = this.next_player_idx(this.cur_idx);
   }
 
   /*
@@ -912,7 +933,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   }
   observe_follow(player: PlayerID, play: Play): ZPY.Result {
     this.commit_play(player, play);
-    if (this.trick_over()) this.current = null;
+    if (this.trick_over()) this.cur_idx = null;
   }
 
   /*
@@ -945,7 +966,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       return;
     }
     this.leader = this.winning;
-    this.current = this.order[this.leader];
+    this.cur_idx = this.order[this.leader];
     this.winning = null;
     this.lead = null;
     this.plays = {} as any;
@@ -1145,7 +1166,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (player in this.draws) {
       copy.draws[player] = this.draws[player];
     }
-    copy.current = this.current;
+    copy.cur_idx = this.cur_idx;
 
     copy.host = this.host;
     copy.tr   = this.tr;
@@ -1198,7 +1219,7 @@ ${this.bids.map(
     array_fill(n, card.toString(color)).join(' ')
   }`
 ).join('\n')}
-current: ${this.players[this.current]}
+current: ${this.current()}
 
 host: ${this.host}
 tr: ${this.tr?.toString(color)}

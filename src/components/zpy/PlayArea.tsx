@@ -367,7 +367,7 @@ export class PlayArea extends React.Component<
   }
 
   submitDrawCard(): boolean {
-    if (this.props.me.id !== this.props.zpy.current) return false;
+    if (!this.props.zpy.is_current(this.props.me.id)) return false;
 
     return this.attempt(
       {kind: 'draw_card', args: [this.props.me.id]},
@@ -1057,8 +1057,8 @@ export class PlayArea extends React.Component<
         case ZPY.Phase.FRIEND: return me === zpy.host;
         case ZPY.Phase.LEAD: return me === zpy.leader;
         case ZPY.Phase.FLY: return !zpy.consensus.has(me);
-        case ZPY.Phase.FOLLOW: return zpy.current !== null
-          ? me === zpy.players[zpy.current]
+        case ZPY.Phase.FOLLOW: return zpy.cur_idx !== null
+          ? me === zpy.current()
           : me === zpy.winning;
         case ZPY.Phase.FINISH: return me === zpy.host;
         case ZPY.Phase.WAIT: return me === zpy.host
@@ -1087,7 +1087,7 @@ export class PlayArea extends React.Component<
             return <>waiting for the trick leader to play</>;
           case ZPY.Phase.FLY:
             return <>waiting on others to see if the play flies</>;
-          case ZPY.Phase.FOLLOW: return zpy.current !== null
+          case ZPY.Phase.FOLLOW: return zpy.cur_idx !== null
             ? <>waiting for the next player to play</>
             : <>waiting for the winner to collect the trick</>;
           case ZPY.Phase.FINISH:
@@ -1136,7 +1136,7 @@ export class PlayArea extends React.Component<
             or drag a card, tuple, or tractor above
             and press {enter} to contest the play
           </>;
-        case ZPY.Phase.FOLLOW: return zpy.current !== null
+        case ZPY.Phase.FOLLOW: return zpy.cur_idx !== null
           ? <>
               drag cards above and press {enter} to submit your play.
               place cards in separate piles for full control of your play.

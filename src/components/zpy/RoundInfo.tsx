@@ -148,7 +148,7 @@ export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
           user={users[uid]}
           owner={uid === zpy.owner}
           ready={zpy.consensus.has(uid)}
-          current={uid === zpy.players[zpy.current]}
+          current={zpy.is_current(uid)}
           tr={zpy.tr}
           host={uid === zpy.host}
           team={

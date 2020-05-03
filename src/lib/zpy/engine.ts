@@ -250,7 +250,7 @@ const cd_ZPYData = (
     n: C.number,
   })),
   draws: C.record(cd_CardPile(tr)),
-  current: C.nullable(C.number),
+  cur_idx: C.nullable(C.number),
 
   host: C.nullable(PlayerID),
   tr: C.nullable(cd_TrumpMeta),
