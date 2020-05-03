@@ -126,7 +126,7 @@ body {
   justify-content: center;
 
   width: 100%;
-  min-height: rhythm.rh(9);
+  min-height: rhythm.rh(8);
 
   > .ready {
     padding: rhythm.rh(1);
@@ -156,7 +156,7 @@ body {
   @include flex.column;
 
   width: 100%;
-  min-height: rhythm.rh(9);
+  min-height: rhythm.rh(8);
 
   &::before {
     content: "";
