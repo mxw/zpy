@@ -490,6 +490,11 @@ export class PlayArea extends React.Component<
     if (this.props.zpy.trick_over()) {
       return this.submitCollectTrick();
     }
+    if (!this.props.zpy.is_current(this.props.me.id)) {
+      // if we're /not/ the current player, enable auto-play
+      this.setState({auto_play: true});
+      return false;
+    }
     return this.submitFollowLead();
   }
 
@@ -1078,7 +1083,12 @@ export class PlayArea extends React.Component<
       case ZPY.Phase.FRIEND: break;
       case ZPY.Phase.LEAD: opts.push(full_control); break;
       case ZPY.Phase.FLY: break;
-      case ZPY.Phase.FOLLOW: opts.push(full_control, auto_play); break;
+      case ZPY.Phase.FOLLOW:
+        opts.push(full_control);
+        if (this.props.me.id !== this.props.zpy.leader) {
+          opts.push(auto_play);
+        }
+        break;
       case ZPY.Phase.FINISH: break;
       case ZPY.Phase.WAIT: break;
     }
