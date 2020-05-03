@@ -77,11 +77,13 @@ export class PlayArea extends React.Component<
       pending_cards: [],
     }, hand, 0);
 
+    /*
     if (kitty.length > 0) {
       // a host's kitty phase is the only time we add the kitty to our hand
       state.areas.push({ordered: [], id_to_pos: {}});
       state = PlayArea.withCardsAdded(state, kitty, 1);
     }
+    */
     this.state = PlayArea.validate(state);
 
     this.props.funcs.subscribeReset(this.onReset);
@@ -174,9 +176,9 @@ export class PlayArea extends React.Component<
         }
       };
       add_new(hand, 0);
-      add_new(kitty, 1);
+      //add_new(kitty, 1);
 
-      const to_rm = card_delta([...hand, ...kitty], all_cards, zpy.tr).right;
+      const to_rm = card_delta([...hand], all_cards, zpy.tr).right;
       if (to_rm.length > 0) {
         state = PlayArea.withCardsRemoved(state, props, to_rm);
       }
