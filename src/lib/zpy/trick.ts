@@ -634,7 +634,10 @@ export class Hand {
 
           if (!K || K.length === 0) continue;
 
-          assert(n === K[0].n && m === K[0].m);
+          assert(
+            n === K[0].n && m === K[0].m,
+            'Hand#follow_with: malformed K'
+          );
           return fn(sh, K, ...args);
         }
       }
@@ -682,7 +685,10 @@ export class Hand {
             play_pile.remove(card, n);
             undo_chain = this.remove_(card, n, undo_chain);
           }
-          assert(!node.valid); // should be invalidated by the remove
+          assert(
+            !node.valid, // should be invalidated by the remove
+            'Hand#follow_with: remove error'
+          );
 
           let m = shape.len - node.shape.len;
           let n = shape.arity - node.shape.arity;
@@ -794,7 +800,10 @@ export class Hand {
         for (let [card, n] of node.gen_counts(this.tr)) {
           chain = this.remove_(card, n, chain);
         }
-        assert(!node.valid); // should be invalidated by the remove
+        assert(
+          !node.valid, // should be invalidated by the remove
+          'Hand#follow_with: remove error'
+        );
 
         cur_path.push(node);
 
@@ -825,10 +834,13 @@ export class Hand {
         if (code === Code.STOP) finish_path();
 
         let out = cur_path.pop();
-        assert(node === out); // should be the exact same object
+        assert(
+          node === out, // should be the exact same object
+          'Hand#follow_with: stack error'
+        );
 
         this.undo(node.gen_counts(this.tr), chain);
-        assert(node.valid);
+        assert(node.valid, 'Hand#follow_with: undo error');
         shapes = orig_shapes;
         // don't return; continue and try the next branch.
       }
