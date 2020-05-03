@@ -52,7 +52,7 @@ body {
     background-color: rgba(51, 170, 51, 0.5);
 
     &.me {
-      animation: pulse-current 4s infinite;
+      animation: pulse-current 3s infinite;
     }
 
     // the host icon is positioned relative to the padding-edge of its
@@ -109,12 +109,15 @@ body {
 @keyframes pulse-current {
   0% {
     background-color: rgba(51, 170, 51, 0.5);
+    border-color: green;
   }
   50% {
-    background-color: rgba(51, 170, 51, 0.8);
+    background-color: rgba(67, 166, 226, 0.75);
+    border-color: deepskyblue;
   }
   0% {
     background-color: rgba(51, 170, 51, 0.5);
+    border-color: green;
   }
 }
 
