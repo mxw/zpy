@@ -229,26 +229,6 @@ export class PlayArea extends React.Component<
   }
 
   /*
-   * pull the cards from `this.props.zpy` that we use for initialization
-   */
-  static cardsForInit(me: P.UserID, zpy: ZPYEngine.ClientState): {
-    hand: CardBase[],
-    kitty: CardBase[],
-  } {
-    const hand =
-      me in zpy.hands ? [...zpy.hands[me].pile.gen_cards()] :
-      me in zpy.draws ? [...zpy.draws[me].gen_cards()] : [];
-
-    const kitty = (
-      me === zpy.host &&
-      zpy.kitty.length > 0 &&
-      zpy.phase === ZPY.Phase.KITTY
-    ) ? [...zpy.kitty] : [];
-
-    return {hand, kitty};
-  }
-
-  /*
    * return a copy of `state` with `to_add` added to area `adx`
    *
    * we treat `cards` as never-before-seen objects, and assign them id's
