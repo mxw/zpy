@@ -50,6 +50,7 @@ export type CardShapeProps = {
 export const CardShape = (props: CardShapeProps) => {
   const {
     width,
+    children = null,
     xclip = 1,
     yclip = 1,
     dim = null,
@@ -102,7 +103,9 @@ export const CardShape = (props: CardShapeProps) => {
       ...background_image,
     }}
     {...more}
-  />
+  >
+    {children}
+  </div>;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -113,7 +116,7 @@ export type CardImageProps = CardShapeProps & {
 };
 
 export const CardImage = (props: CardImageProps) => {
-  const {card, style, ...more} = props;
+  const {card, style, children, ...more} = props;
 
   const svg = "url(/static/svg/cards/" + card + ".svg)";
 
@@ -123,5 +126,7 @@ export const CardImage = (props: CardImageProps) => {
       backgroundImage: svg,
     }}
     {...more}
-  />
+  >
+    {children}
+  </CardShape>;
 };

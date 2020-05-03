@@ -73,7 +73,11 @@ export class EmptyArea extends React.Component<EmptyArea.Props, {}> {
           backgroundColor: 'lightgrey',
           border: 'solid grey 1px',
         }}
-      />
+      >
+        <div className="cardarea-text">
+          drag cards here
+        </div>
+      </CardShape>
     </Area>;
   }
 }

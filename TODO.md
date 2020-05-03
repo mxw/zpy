@@ -35,8 +35,6 @@
 - fix bug where cards just suddenly reorder?  putting natural trumps before
   other trumps?
 
-- highlight background for current player
-
 - make it more clear when instruction test changes
 
 - if you submit a wrong kitty, you can't re-submit a correct one
