@@ -35,3 +35,6 @@
 - use `identity` instead of `me` for all checks in UI
 
 - double-click cards to move them between areas
+
+- if you have a fresh session with fresh cookies, join a game, change your
+  name, it doesn't update, and if you refresh you get reinstantiated

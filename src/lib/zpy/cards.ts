@@ -263,6 +263,7 @@ export class Card extends CardBase {
           console.trace('Card.from', cb, card);
         }
       }
+      return new Card(cb.suit, cb.rank, tr);
     }
     return (cb instanceof Card) ? cb : new Card(cb.suit, cb.rank, tr);
   }
