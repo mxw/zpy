@@ -72,6 +72,7 @@ export class PlayArea extends React.Component<
 
       keep_hand_sorted: false,
       auto_draw: false,
+      auto_play: false,
       full_control: false,
 
       action_pending: false,
@@ -154,6 +155,7 @@ export class PlayArea extends React.Component<
 
       keep_hand_sorted: state.keep_hand_sorted,
       auto_draw: state.auto_draw,
+      auto_play: state.auto_play,
       full_control: state.full_control,
 
       action_pending: state.action_pending,
@@ -247,6 +249,15 @@ export class PlayArea extends React.Component<
             ...PlayArea.withCardsRemoved(state, props, state.pending_cards),
             pending_cards: [],
           }));
+        }
+        break;
+      }
+      case 'observe_follow': {
+        if (this.state.auto_play &&
+            this.props.phase === ZPY.Phase.FOLLOW &&
+            zpy.is_current(me) &&
+            !zpy.trick_over()) {
+          this.submitFollowLead();
         }
         break;
       }
@@ -589,9 +600,16 @@ export class PlayArea extends React.Component<
           'lead_play already in flight',
           state.pending_cards
         );
-        return {...state, pending_cards: to_rm};
+        return {
+          ...state,
+          auto_play: false,
+          pending_cards: to_rm,
+        };
       }
-      return PlayArea.withCardsRemoved(state, props, to_rm)
+      return {
+        ...PlayArea.withCardsRemoved(state, props, to_rm),
+        auto_play: false,
+      };
     });
     this.onEffect(effect);
   }
@@ -970,7 +988,7 @@ export class PlayArea extends React.Component<
   renderToggleButton(
     label: string,
     option: keyof PlayArea.UserOptions,
-    tooltip?: string,
+    tooltip: string,
     on_toggle?: (checked: boolean) => void,
   ) {
     const checked = this.state[option];
@@ -996,8 +1014,6 @@ export class PlayArea extends React.Component<
       </div>
     </label>;
 
-    if (!tooltip) return toggle;
-
     return <div
       key={option}
       aria-label={tooltip}
@@ -1014,6 +1030,7 @@ export class PlayArea extends React.Component<
       'sort by rank order, alternating suits, with trumps last',
       checked => { if (checked) this.sortHand(); }
     );
+
     const auto_draw = this.renderToggleButton(
       'auto-draw',
       'auto_draw',
@@ -1026,10 +1043,28 @@ export class PlayArea extends React.Component<
         }
       }
     );
+
+    const auto_play = this.renderToggleButton(
+      'auto-play staged',
+      'auto_play',
+      'auto-play the cards below when it\'s your turn',
+      checked => {
+        if (!checked) return;
+
+        // refuse if there are no cards staged
+        const count = this.state.areas.slice(1).reduce(
+          (total, a) => total + a.ordered.length, 0
+        );
+        if (count === 0) this.setState({auto_play: false});
+        // we undo auto-play every time a play is made; see onPlayEffect()
+      }
+    );
+
     const full_control = this.renderToggleButton(
       'full play control',
       'full_control',
       'enable playing cards in separate piles for complex fly patterns',
+      // reset the play area, or else some cards might get hidden
       checked => { if (!checked) this.resetPlays(); }
     );
 
@@ -1043,14 +1078,12 @@ export class PlayArea extends React.Component<
       case ZPY.Phase.FRIEND: break;
       case ZPY.Phase.LEAD: opts.push(full_control); break;
       case ZPY.Phase.FLY: break;
-      case ZPY.Phase.FOLLOW: opts.push(full_control); break;
+      case ZPY.Phase.FOLLOW: opts.push(full_control, auto_play); break;
       case ZPY.Phase.FINISH: break;
       case ZPY.Phase.WAIT: break;
     }
 
-    return <div className="user-options">
-      {opts.reverse()}
-    </div>;
+    return <div className="user-options">{opts}</div>;
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -1402,6 +1435,7 @@ type Area = {
 export type UserOptions = {
   keep_hand_sorted: boolean;
   auto_draw: boolean;
+  auto_play: boolean;
   full_control: boolean;
 };
 

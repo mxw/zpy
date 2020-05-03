@@ -276,8 +276,8 @@ body {
 
 .user-options {
   display: flex;
-  flex-direction: row;
-  justify-content: flex-end;
+  flex-direction: row-reverse;
+  justify-content: flex-start;
 
   align-self: flex-end;
 
