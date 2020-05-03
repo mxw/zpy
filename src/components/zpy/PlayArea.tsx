@@ -1011,7 +1011,7 @@ export class PlayArea extends React.Component<
     const keep_hand_sorted = this.renderToggleButton(
       'keep hand sorted',
       'keep_hand_sorted',
-      'sort by rank order, alternating suits, with trumps last' +
+      'sort by rank order, alternating suits, with trumps last',
       checked => { if (checked) this.sortHand(); }
     );
     const auto_draw = this.renderToggleButton(
