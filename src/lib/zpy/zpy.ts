@@ -15,7 +15,7 @@ import { plural } from 'utils/string.ts';
 
 import { UserID } from 'protocol/protocol.ts'
 
-import {strict as assert} from 'assert';
+import assert from 'utils/assert.ts'
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -291,7 +291,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
    * Draw a card from deck.
    */
   private draw(): CardBase {
-    assert(this.deck.length > 0);
+    assert(this.deck.length > 0, 'ZPY: draw from empty deck');
     return this.deck.pop();
   }
 
@@ -403,7 +403,11 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   }
   add_to_hand(player: PlayerID, cb: null | CardBase): ZPY.Result {
     if (cb !== null) {
-      assert(this.can_see(player));
+      assert(
+        this.can_see(player),
+        'ZPY: exposed add_to_hand',
+        player, this.identity
+      );
       this.draws[player].insert(cb);
     }
     if (--this.deck_sz === 0) {
@@ -1051,7 +1055,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
           case ZPY.KittyMultiplierRule.EXP: return 2 ** multiplier;
           case ZPY.KittyMultiplierRule.MULT: return 2 * multiplier;
         }
-        assert(false);
+        assert(false, 'ZPY: invalid kitty rules');
       })();
     })();
 

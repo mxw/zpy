@@ -15,7 +15,7 @@ import * as ZPYEngine from 'lib/zpy/engine.ts'
 import { Client } from 'components/zpy/common.ts'
 import { Card } from 'components/zpy/Card.tsx'
 
-import { strict as assert} from 'assert'
+import assert from 'utils/assert.ts'
 
 
 export const card_width = 100;
@@ -165,7 +165,7 @@ export class Reveal extends React.Component<Reveal.Props, {}> {
       }
       return null;
     })();
-    assert(inner !== null);
+    assert(inner !== null, 'invalid Reveal effect', effect);
 
     return <div className="reveal">{inner}</div>;
   }

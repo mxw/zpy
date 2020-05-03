@@ -18,7 +18,7 @@
  */
 import * as React from 'react'
 
-import { strict as assert} from 'assert'
+import assert from 'utils/assert.ts'
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -58,9 +58,9 @@ export const CardShape = (props: CardShapeProps) => {
     ...more
   } = props;
 
-  assert(xclip >= 0 && xclip <= 1);
-  assert(yclip >= 0 && yclip <= 1);
-  assert(dim === null || (dim >= 0 && dim <= 1));
+  assert(xclip >= 0 && xclip <= 1, 'invalid xclip', xclip);
+  assert(yclip >= 0 && yclip <= 1, 'invalid yclip', yclip);
+  assert(dim === null || (dim >= 0 && dim <= 1), 'invalid dim pct', dim);
 
   // use rems for everything
   const w = width * rem_per_px;

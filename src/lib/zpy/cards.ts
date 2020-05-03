@@ -9,7 +9,7 @@
 import { array_fill } from 'utils/array.ts';
 import { ansi } from 'utils/string.ts';
 
-import {strict as assert} from 'assert';
+import assert from 'utils/assert.ts'
 
 /*
  * Card suit enum.
@@ -138,7 +138,7 @@ export class TrumpMeta {
   devirt(suit: Suit, rank: Rank, osnt_suit?: Suit): [Suit, Rank] {
     switch (rank) {
       case Rank.N_off:
-        assert(typeof osnt_suit === 'number');
+        assert(typeof osnt_suit === 'number', 'invalid osnt_suit', osnt_suit);
         return [osnt_suit, this.rank];
       case Rank.N_on:
         return [this.suit, this.rank];
@@ -171,7 +171,7 @@ export class CardBase {
     readonly suit: Suit,
     readonly rank: Rank,
   ) {
-    assert(CardBase.validate(suit, rank));
+    assert(CardBase.validate(suit, rank), 'CardBase: validation', suit, rank);
   }
 
   static readonly SUITS = [
@@ -393,7 +393,7 @@ export class CardPile {
   }
   remove(cb: CardBase, n: number = 1): void {
     let c = Card.from(cb, this.#tr);
-    assert(this.count(c) >= n);
+    assert(this.count(c) >= n, 'CardPile.remove', c, this.count(c), n);
     this.#total -= n;
     this.#suit_counts[c.v_suit] -= n;
     if (c.v_rank === Rank.N_off) {

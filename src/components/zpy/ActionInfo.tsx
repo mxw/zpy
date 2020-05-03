@@ -15,7 +15,7 @@ import { CardFan } from 'components/zpy/CardFan.tsx'
 
 import { array_fill } from 'utils/array.ts'
 
-import { strict as assert} from 'assert'
+import assert from 'utils/assert.ts'
 
 
 const card_width = 72;
@@ -83,7 +83,7 @@ export class ActionInfo extends React.Component<ActionInfo.Props> {
     }
 
     const tr = this.props.tr;
-    assert(tr !== null);
+    assert(tr !== null, 'TrumpMeta should be non-null during play phases');
 
     const ts = play.ts();
 
@@ -128,7 +128,7 @@ export class ActionInfo extends React.Component<ActionInfo.Props> {
     }
 
     if (this.props.winning) {
-      assert(indicator === null);
+      assert(indicator === null, "trick winner can't be trying a fly");
       indicator = <div
         aria-label="current trick winner"
         data-balloon-pos="up-left"

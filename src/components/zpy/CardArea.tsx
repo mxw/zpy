@@ -14,7 +14,7 @@ import { CardShape } from "components/zpy/CardImage.tsx"
 import { Card } from "components/zpy/Card.tsx"
 import { CardFan } from "components/zpy/CardFan.tsx"
 
-import { strict as assert} from 'assert'
+import assert from 'utils/assert.ts'
 
 
 export const card_width = 100;

@@ -10,8 +10,9 @@ import * as Session from 'server/session.ts'
 
 import * as WebSocket from 'ws'
 import * as Http from 'http'
-import assert from 'assert'
 import * as Uuid from 'uuid'
+
+import assert from 'utils/assert.ts'
 
 export type GameId = string;
 export type Principal = Session.Id;

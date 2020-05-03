@@ -20,7 +20,7 @@ import { isWindows } from 'components/utils/platform.ts'
 
 import { hash_code } from 'utils/string.ts'
 
-import { strict as assert} from 'assert'
+import assert from 'utils/assert.ts'
 
 
 export class PlayerInfo extends React.Component<

@@ -11,7 +11,7 @@ import { State as Z } from 'lib/zpy/engine.ts'
 
 import { Card } from 'components/zpy/Card.tsx'
 
-import { strict as assert} from 'assert'
+import assert from 'utils/assert.ts'
 
 
 const card_width = 48;

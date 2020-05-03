@@ -15,7 +15,7 @@ import { PlayArea } from 'components/zpy/PlayArea.tsx'
 
 import * as options from 'options.ts'
 
-import { strict as assert} from 'assert'
+import assert from 'utils/assert.ts'
 
 
 export class Board extends React.Component<Board.Props, Board.State> {

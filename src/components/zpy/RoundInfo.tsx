@@ -13,7 +13,7 @@ import { ActionInfo } from 'components/zpy/ActionInfo.tsx'
 import { PlayerInfo } from 'components/zpy/PlayerInfo.tsx'
 import { ScoreInfo } from 'components/zpy/ScoreInfo.tsx'
 
-import { strict as assert} from 'assert'
+import assert from 'utils/assert.ts'
 
 
 class Column extends React.Component<Column.Props, {}> {

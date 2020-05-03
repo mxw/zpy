@@ -20,8 +20,7 @@ import { Reveal } from 'components/zpy/Reveal.tsx'
 import { ErrorMessage } from 'components/zpy/ErrorMessage.tsx'
 
 import * as options from 'options.ts'
-
-import { strict as assert} from 'assert'
+import assert from 'utils/assert.ts'
 
 import 'styles/zpy/zpy.scss'
 

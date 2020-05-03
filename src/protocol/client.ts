@@ -1,9 +1,9 @@
-import {isOK, isErr} from "utils/result.ts"
+import {isOK, isErr} from 'utils/result.ts'
 
-import * as P from "protocol/protocol.ts"
-import {Engine} from "protocol/engine.ts"
+import * as P from 'protocol/protocol.ts'
+import {Engine} from 'protocol/engine.ts'
 
-import assert from "assert"
+import assert from 'utils/assert.ts'
 
 export class GameClient<
   Config,
@@ -175,18 +175,28 @@ export class GameClient<
             break;
 
           case "update": {
-            assert(this.state !== null);
-            assert(this.status === "pending-update" ||
-                   this.status === "sync");
+            assert(
+              this.state !== null && (
+                this.status === "pending-update" ||
+                this.status === "sync"
+              ),
+              'GameClient: unexpected update',
+              this.status, this.state
+            );
 
             this.update(msg.tx, msg.command);
             break;
           }
 
           case "reject":
-            assert(this.state !== null);
-            assert(this.status === "pending-update" ||
-                   this.status === "sync");
+            assert(
+              this.state !== null && (
+                this.status === "pending-update" ||
+                this.status === "sync"
+              ),
+              'GameClient: unexpected reject',
+              this.status, this.state
+            );
 
             const cb = this.pending[msg.tx];
             cb?.onReject?.(this, msg.reason, cb?.ctx);
@@ -251,8 +261,7 @@ export class GameClient<
       }
       return;
     }
-    console.error(result.err);
-    assert(false);
+    assert(false, 'GameClient#update: failed apply_client', result.err);
   }
 
   /*
@@ -270,8 +279,11 @@ export class GameClient<
   ) {
     // TODO we could queue updates locally if we're desynced
     // but it's not necessary for ZPY--it's easier to pretend it can't happen
-    assert(this.status === "sync");
-    assert(this.state !== null);
+    assert(
+      this.status === "sync" && this.state !== null,
+      'GameClient#attempt: invalid state',
+      this.status, this.state
+    );
 
     const tx = this.next_tx++;
     const predicted = this.engine.predict(this.state, intent, this.me);

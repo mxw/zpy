@@ -31,7 +31,7 @@ import { Either } from 'fp-ts/lib/Either'
 import * as C from 'io-ts/lib/Codec';
 import * as D from 'io-ts/lib/Decoder';
 
-import {strict as assert} from 'assert';
+import assert from 'utils/assert.ts'
 
 ///////////////////////////////////////////////////////////////////////////////
 /*

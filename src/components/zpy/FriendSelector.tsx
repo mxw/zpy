@@ -14,7 +14,7 @@ import { Card } from 'components/zpy/Card.tsx'
 
 import { nth_suffixed } from 'utils/string.ts'
 
-import { strict as assert} from 'assert'
+import assert from 'utils/assert.ts'
 
 
 const card_width = 80;

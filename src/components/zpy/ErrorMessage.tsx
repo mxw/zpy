@@ -6,7 +6,7 @@ import * as React from 'react'
 import { ZPY } from 'lib/zpy/zpy.ts'
 import * as ZPYEngine from 'lib/zpy/engine.ts'
 
-import { strict as assert} from 'assert'
+import assert from 'utils/assert.ts'
 
 
 export class ErrorMessage extends React.Component<ErrorMessage.Props, {}> {

@@ -16,7 +16,7 @@ import {
 import { array_fill } from 'utils/array.ts';
 import { ansi } from 'utils/string.ts';
 
-import {strict as assert} from 'assert';
+import assert from 'utils/assert.ts'
 
 /*
  * The most basic unit of play: N copies of one card.
@@ -28,7 +28,7 @@ export class CardTuple {
     readonly card: Card,
     readonly arity: number
   ) {
-    assert(arity > 0);
+    assert(arity > 0, 'CardTuple');
   }
 
   /*
@@ -195,7 +195,7 @@ export abstract class Play {
    * predict the player's intent in most cases.
    */
   static extract(cards: CardBase[], tr: TrumpMeta): Play {
-    assert(cards.length > 0);
+    assert(cards.length > 0, 'Play.extract');
 
     let pile = new CardPile(cards, tr);
 
@@ -308,7 +308,7 @@ export class Flight extends Play {
 
   constructor(tractors: Tractor[]) {
     super();
-    assert(Flight.validate(tractors));
+    assert(Flight.validate(tractors), 'Flight', tractors);
 
     this.tractors = tractors.sort((l, r) => {
       let shape_cmp = Tractor.Shape.compare(l.shape, r.shape);
@@ -341,7 +341,11 @@ export class Flight extends Play {
   }
 
   beats(other: Play): boolean {
-    assert(this.count === other.count);
+    assert(
+      this.count === other.count,
+      'Flight#beats: incompatible play',
+      this, other
+    );
 
     if (other instanceof Toss) return true;
 
@@ -356,7 +360,7 @@ export class Flight extends Play {
       }
       return false;
     }
-    assert(false);
+    assert(false, 'Flight#beats: bad arg', other);
   }
 
   toString(tr: TrumpMeta, color: boolean = false): string {
@@ -373,7 +377,7 @@ export class Flight extends Play {
 export class Toss extends Play {
   constructor(readonly cards: CardBase[]) {
     super();
-    assert(cards.length > 0);
+    assert(cards.length > 0, 'Toss');
   }
 
   get count(): number { return this.cards.length; }
@@ -581,11 +585,19 @@ export class Hand {
     trace: boolean = false
   ): [boolean, Hand.Node] {
     assert(lead.count === play_pile.size);
-    assert(this.tr.suit === play_pile.tr.suit &&
-           this.tr.rank === play_pile.tr.rank);
+    assert(
+      this.tr.suit === play_pile.tr.suit &&
+      this.tr.rank === play_pile.tr.rank,
+      'Hand#follow_with: incompatible args',
+      lead, play_pile
+    );
 
     // Ensure `play` is a subset of `this`.
-    assert(this.pile.contains(play_pile));
+    assert(
+      this.pile.contains(play_pile),
+      'Hand#follow_with: must contain play',
+      this.pile, play_pile
+    );
 
     play_pile = CardPile.copy(play_pile); // don't mutate inputs
 

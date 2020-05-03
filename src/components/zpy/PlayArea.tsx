@@ -25,7 +25,7 @@ import { isWindows } from 'components/utils/platform.ts'
 import { array_fill } from 'utils/array.ts'
 import { plural } from 'utils/string.ts'
 
-import { strict as assert} from 'assert'
+import assert from 'utils/assert.ts'
 
 
 export class PlayArea extends React.Component<
@@ -258,7 +258,7 @@ export class PlayArea extends React.Component<
     to_add: Iterable<CardBase>,
     adx: number,
   ): PlayArea.State {
-    assert(adx === 0 || adx === 1);
+    assert(adx === 0 || adx === 1, 'withCardsAdded: invalid adx', adx);
 
     state = PlayArea.copyState(state);
 
@@ -373,7 +373,7 @@ export class PlayArea extends React.Component<
       {kind: 'draw_card', args: [this.props.me.id]},
       (effect: ZPYEngine.Effect) => {
         if (effect.kind !== 'add_to_hand') {
-          assert(false);
+          assert(false, 'unexpected effect for draw_card', effect);
           return;
         }
         if (effect.args[0] !== this.props.me.id) return;
@@ -560,7 +560,8 @@ export class PlayArea extends React.Component<
   onPlayEffect(to_rm: CardID[], effect: ZPYEngine.Effect) {
     assert(effect.kind === 'replace_kitty' ||
            effect.kind === 'lead_play' ||
-           effect.kind === 'follow_lead');
+           effect.kind === 'follow_lead',
+           'unexpected effect for card submit', effect);
 
     if (effect.args[0] !== this.props.me.id) return;
 
@@ -569,7 +570,11 @@ export class PlayArea extends React.Component<
           effect.args[1].tractors.length > 1) {
         // we're trying to fly something, so we need to defer the removal of
         // cards from our hand until the fly either passes or fails
-        assert(state.pending_cards.length === 0);
+        assert(
+          state.pending_cards.length === 0,
+          'lead_play already in flight',
+          state.pending_cards
+        );
         return {...state, pending_cards: to_rm};
       }
       return PlayArea.withCardsRemoved(state, props, to_rm)
@@ -680,7 +685,8 @@ export class PlayArea extends React.Component<
 
     this.setState((state, props): PlayArea.State => {
       assert(state.prev_start === null ||
-             state.selected.has(state.prev_start));
+             state.selected.has(state.prev_start),
+             'incoherent select state');
 
       if (state.prev_start === null || metaKey) {
         // either an initial selection or a continued selection
