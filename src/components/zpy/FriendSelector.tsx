@@ -37,11 +37,7 @@ export class FriendSelector extends React.Component<FriendSelector.Props, {}> {
 
     return <div className={classes.join(' ')}>
       {this.props.selected.map((fr, i) =>
-        <div
-          key={'' + i}
-          aria-label={`${nth_suffixed(i + 1)} played`}
-          data-balloon-pos="left"
-        >
+        <div key={'' + i}>
           <div
             key={'' + i}
             className="friend-selector-unit"
