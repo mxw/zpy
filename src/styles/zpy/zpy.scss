@@ -111,9 +111,17 @@ body {
     background-color: rgba(51, 170, 51, 0.5);
     border-color: green;
   }
+  20% {
+    background-color: rgba(51, 170, 51, 0.5);
+    border-color: green;
+  }
   50% {
     background-color: rgba(170, 51, 51, 0.5);
     border-color: red;
+  }
+  80% {
+    background-color: rgba(51, 170, 51, 0.5);
+    border-color: green;
   }
   0% {
     background-color: rgba(51, 170, 51, 0.5);
@@ -339,9 +347,10 @@ body {
 }
 
 .cardarea-text {
+  margin: rhythm.rh(0.25);
+
   color: dimgrey;
   text-align: center;
-
   user-select: none;
 }
 
