@@ -474,7 +474,10 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       this.consensus = (new Set<PlayerID>()).add(player);
     }
     this.bids.push({player, card, n});
-    this.tr = new TrumpMeta(card.suit, card.rank);
+
+    const tr_rank = this.ranks[this.host ?? player].rank;
+    this.tr = new TrumpMeta(card.suit, tr_rank);
+
     for (let p in this.draws) this.draws[p].rehash(this.tr);
   }
 

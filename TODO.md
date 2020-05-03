@@ -46,3 +46,9 @@
 - make it more obvious when it's your turn to draw?
 
 - make it more clear when instruction test changes
+
+- don't capture S and R in name editing...
+
+- if you submit a wrong kitty, you can't re-submit a correct one
+
+- refresh gives you two copies of the kitty
