@@ -230,6 +230,7 @@ export class PlayerInfo extends React.Component<
 
     let div_class = ["player-info"];
     if (pr.current) div_class.push("current");
+    if (pr.me.id === pr.user.id) div_class.push("me");
 
     return <div
       ref={node => this.node = node}
