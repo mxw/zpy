@@ -294,6 +294,8 @@ body {
 .cardarea-text {
   color: dimgrey;
   text-align: center;
+
+  user-select: none;
 }
 
 .card {
