@@ -43,6 +43,4 @@
 
 - if you submit a wrong kitty, you can't re-submit a correct one
 
-- don't submit draw when it's not your turn
-
 - people are looking at board above; move text above?

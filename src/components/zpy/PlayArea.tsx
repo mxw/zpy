@@ -367,6 +367,8 @@ export class PlayArea extends React.Component<
   }
 
   submitDrawCard(): boolean {
+    if (this.props.me.id !== this.props.zpy.current) return false;
+
     return this.attempt(
       {kind: 'draw_card', args: [this.props.me.id]},
       (effect: ZPYEngine.Effect) => {
