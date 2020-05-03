@@ -58,7 +58,7 @@ export class PlayerInfo extends React.Component<
 
   componentDidUpdate(
     prevProps: PlayerInfo.Props,
-    prevState: PlayerInfo.State
+    prevState: PlayerInfo.State,
   ) {
     if (this.props.me.id !== this.props.user.id &&
         this.state.nick !== this.props.user.nick) {
@@ -143,11 +143,11 @@ export class PlayerInfo extends React.Component<
    *
    * ref: https://github.com/JedWatson/react-input-autosize/blob/master/src/AutosizeInput.js
    */
-  updateWidth() {
+  updateWidth(prevState: PlayerInfo.State) {
     const width = this.nicksize?.scrollWidth;
     if (!width) return; // including if 0
 
-    if (width !== this.state.nick_width) {
+    if (width !== prevState.nick_width) {
       this.setState({nick_width: width});
     }
   }
