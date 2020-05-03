@@ -54,10 +54,7 @@ export class PlayArea extends React.Component<
     this.onDragStart = this.onDragStart.bind(this);
     this.onDragEnd = this.onDragEnd.bind(this);
 
-    const {hand, kitty} = PlayArea.cardsForInit(
-      this.props.me.id,
-      this.props.zpy,
-    );
+    const hand = this.props.zpy.hand(this.props.me.id);
 
     let state = PlayArea.withCardsAdded({
       seen: [],
@@ -77,13 +74,6 @@ export class PlayArea extends React.Component<
       pending_cards: [],
     }, hand, 0);
 
-    /*
-    if (kitty.length > 0) {
-      // a host's kitty phase is the only time we add the kitty to our hand
-      state.areas.push({ordered: [], id_to_pos: {}});
-      state = PlayArea.withCardsAdded(state, kitty, 1);
-    }
-    */
     this.state = PlayArea.validate(state);
 
     this.props.funcs.subscribeReset(this.onReset);
@@ -164,21 +154,18 @@ export class PlayArea extends React.Component<
    * account for new/removed cards from a server reset
    */
   onReset(zpy: ZPYEngine.ClientState) {
-    const {hand, kitty} = PlayArea.cardsForInit(this.props.me.id, zpy);
+    const hand = zpy.hand(this.props.me.id);
 
     this.setState((state, props) => {
       const all_cards = PlayArea.filter(state);
+      const {
+        left: to_add,
+        right: to_rm
+      } = card_delta(hand, all_cards, zpy.tr);
 
-      const add_new = (input: Iterable<CardBase>, adx: number) => {
-        const delta = card_delta(input, all_cards, zpy.tr).left;
-        if (delta.length > 0) {
-          state = PlayArea.withCardsAdded(state, delta, adx);
-        }
-      };
-      add_new(hand, 0);
-      //add_new(kitty, 1);
-
-      const to_rm = card_delta([...hand], all_cards, zpy.tr).right;
+      if (to_add.length > 0) {
+        state = PlayArea.withCardsAdded(state, to_add, 0);
+      }
       if (to_rm.length > 0) {
         state = PlayArea.withCardsRemoved(state, props, to_rm);
       }

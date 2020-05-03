@@ -132,6 +132,15 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   }
 
   /*
+   * Get a player's hand as a list of cards (regardless of how it's being
+   * represented at the moment).
+   */
+  hand(p: PlayerID): Card[] {
+    return p in this.hands ? [...this.hands[p].pile.gen_cards()] :
+           p in this.draws ? [...this.draws[p].gen_cards()] : [];
+  }
+
+  /*
    * Currently winning trump bidder.
    */
   winning_bid(): ZPY<PlayerID>['bids'][number] {
