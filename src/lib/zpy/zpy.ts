@@ -1119,8 +1119,8 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
 
     // deck is redacted, but not deck_sz
     copy.deck_sz = this.deck_sz;
-    if (this.phase == ZPY.Phase.KITTY &&
-        this.bids.length === 0) {
+    if (this.phase === ZPY.Phase.KITTY &&
+        (player === this.host || this.bids.length === 0)) {
       // kitty is public during Phase.KITTY iff no one bid
       copy.kitty = this.kitty;
     }

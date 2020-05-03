@@ -25,3 +25,18 @@
 
 - support game persistence across server disruptions (serialize state to some
   database)
+
+## notes
+
+- does click-out of name-edit send over the socket?
+
+- make sure that enter submits nick and not card
+
+- undo state for "readying"?  or make it more obvious you need to bid?
+
+- sort hand alternating colors
+
+- indicate how many cards are in the kitty in instruction test
+
+- fix bug where cards just suddenly reorder?  putting natural trumps before
+  other trumps?
