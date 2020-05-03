@@ -93,6 +93,9 @@ export class PlayArea extends React.Component<
   }
 
   /////////////////////////////////////////////////////////////////////////////
+  /*
+   * this.state coherency
+   */
 
   /*
    * assert coherency of `state`, then return it for convenience
@@ -341,6 +344,9 @@ export class PlayArea extends React.Component<
   }
 
   /////////////////////////////////////////////////////////////////////////////
+  /*
+   * intent submission
+   */
 
   submitStartGame(): boolean {
     return this.attempt({kind: 'start_game', args: [this.props.me.id]});
@@ -609,6 +615,9 @@ export class PlayArea extends React.Component<
   }
 
   /////////////////////////////////////////////////////////////////////////////
+  /*
+   * event handlers
+   */
 
   /*
    * intercepted keypresses:
@@ -908,7 +917,7 @@ export class PlayArea extends React.Component<
 
   /////////////////////////////////////////////////////////////////////////////
   /*
-   * render functions
+   * toplevel render functions
    */
 
   renderSingletonStagingArea() {
