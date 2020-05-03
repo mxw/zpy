@@ -28,10 +28,6 @@
 
 ## notes
 
-- does click-out of name-edit send over the socket?
-
-- make sure that enter submits nick and not card
-
 - undo state for "readying"?  or make it more obvious you need to bid?
 
 - sort hand alternating colors

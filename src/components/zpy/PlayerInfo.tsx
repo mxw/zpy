@@ -106,15 +106,12 @@ export class PlayerInfo extends React.Component<
 
     const metaKey = isWindows() ? ev.ctrlKey : ev.metaKey;
 
-    if (ev.key === 'a' && metaKey) {
-      // we need to thread a message through to the PlayArea's keydown event
-      // handler in order to prevent the card selection behavior (while
-      // retaining the default input text-selection behavior)
-      const native_ev = ev.nativeEvent;
-      const ne = native_ev as (typeof native_ev & {preventPlayArea: boolean});
-      ne.preventPlayArea = true;
-      return;
-    }
+    // we need to thread a message through to the PlayArea's keydown event
+    // handler in order to prevent the card selection behavior (while
+    // retaining the default text input behavior)
+    const native_ev = ev.nativeEvent;
+    const ne = native_ev as (typeof native_ev & {preventPlayArea: boolean});
+    ne.preventPlayArea = true;
 
     if (ev.key !== 'Enter') return;
     ev.preventDefault();
