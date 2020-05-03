@@ -156,7 +156,10 @@ export class TrumpMeta {
    * This will happily keep incrementing past joker.
    */
   inc_rank(rank: Rank): Rank {
-    return rank + 1 === this.rank ? rank + 2 : rank + 1;
+    return (rank + 1 === this.rank &&
+            this.rank <= Rank.A)
+      ? rank + 2
+      : rank + 1;
   }
 
   toString(color: boolean = false): string {

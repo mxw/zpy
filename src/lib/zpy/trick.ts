@@ -467,8 +467,11 @@ export class Hand {
           break;
         }
         if (next > card.v_rank) {
-          assert(p.v_rank === 2);
-          assert(card.v_rank === 2);
+          assert(
+            p.v_rank === 2 && card.v_rank === 2,
+            'Hand: inc_rank',
+            next, p, card
+          );
           break;
         }
         p.v_rank = next;

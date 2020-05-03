@@ -38,3 +38,11 @@
 
 - if you have a fresh session with fresh cookies, join a game, change your
   name, it doesn't update, and if you refresh you get reinstantiated
+
+- make clubs and spades more distinct
+
+- highlight the "me" player
+
+- disable current selector during KITTY phase
+
+- sort your own trump bid rank first in free-for-all draws

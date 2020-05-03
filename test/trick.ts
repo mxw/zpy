@@ -39,6 +39,37 @@ describe('new Hand', () => {
     ], tr);
     let hand = new Hand(pile);
 
+     tr = new TrumpMeta(Suit.TRUMP, Rank.B);
+
+    pile = new CardPile([
+      new CardBase(Suit.CLUBS, 5),
+      new CardBase(Suit.CLUBS, 6),
+      new CardBase(Suit.CLUBS, 7),
+      new CardBase(Suit.CLUBS, 8),
+      new CardBase(Suit.CLUBS, 8),
+      new CardBase(Suit.CLUBS, 9),
+      new CardBase(Suit.CLUBS, 10),
+      new CardBase(Suit.CLUBS, Rank.J),
+      new CardBase(Suit.DIAMONDS, Rank.A),
+      new CardBase(Suit.SPADES, 7),
+      new CardBase(Suit.SPADES, 7),
+      new CardBase(Suit.SPADES, 8),
+      new CardBase(Suit.SPADES, 9),
+      new CardBase(Suit.SPADES, 10),
+      new CardBase(Suit.SPADES, Rank.J),
+      new CardBase(Suit.SPADES, Rank.K),
+      new CardBase(Suit.HEARTS, 5),
+      new CardBase(Suit.HEARTS, 6),
+      new CardBase(Suit.HEARTS, 6),
+      new CardBase(Suit.HEARTS, 10),
+      new CardBase(Suit.HEARTS, Rank.Q),
+      new CardBase(Suit.HEARTS, 2),
+      new CardBase(Suit.TRUMP, Rank.S),
+      new CardBase(Suit.TRUMP, Rank.B),
+      new CardBase(Suit.TRUMP, Rank.B),
+    ], tr);
+    hand = new Hand(pile);
+
     console.log(hand.toString());
   });
 });
