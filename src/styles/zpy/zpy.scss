@@ -361,21 +361,6 @@ kbd {
 
   height: rhythm.rh(10);
   padding: rhythm.rh(1);
-
-  &::after {
-    content: "[hand]";
-
-    position: absolute;
-    bottom: 0;
-    right: 0;
-
-    opacity: 0;
-    transition: all ease-in 4s;
-  }
-  &:hover::after {
-    opacity: 1;
-    transition: all 0s;
-  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
