@@ -50,6 +50,8 @@ export class FriendSelector extends React.Component<FriendSelector.Props, {}> {
               const key = cb.toString();
               return <div
                 key={key}
+                aria-label={`${nth_suffixed(i + 1)} ${key}`}
+                data-balloon-pos="up"
                 onClick={ev => this.props.onSelect(cb, i, ev)}
               >
                 <Card
