@@ -1126,13 +1126,13 @@ export class PlayArea extends React.Component<
     </div>;
   }
 
-  static isStagingAreaVariadic(props: PlayArea.Props) {
-    return props.phase === ZPY.Phase.LEAD ||
-           props.phase === ZPY.Phase.FOLLOW;
-  }
-
   renderStagingArea() {
-    if (!PlayArea.isStagingAreaVariadic(this.props)) {
+    const variadic_staging = this.state.full_control && (
+      this.props.phase === ZPY.Phase.LEAD ||
+      this.props.phase === ZPY.Phase.FOLLOW
+    );
+
+    if (!variadic_staging) {
       return <div className="action staging">
         {this.renderSingletonStagingArea()}
       </div>;
@@ -1153,6 +1153,7 @@ export class PlayArea extends React.Component<
       <EmptyArea
         key={this.state.areas.length}
         droppableId={'' + this.state.areas.length}
+        text="start another fly chunk"
       />
     </div>
   }

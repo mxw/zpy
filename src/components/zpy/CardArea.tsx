@@ -66,6 +66,8 @@ export class EmptyArea extends React.Component<EmptyArea.Props, {}> {
   }
 
   render() {
+    const text = this.props.text ?? 'drag cards here';
+
     return <Area classes={["empty"]} {...this.props}>
       <CardShape
         width={card_width}
@@ -74,9 +76,7 @@ export class EmptyArea extends React.Component<EmptyArea.Props, {}> {
           border: 'solid grey 1px',
         }}
       >
-        <div className="cardarea-text">
-          drag cards here
-        </div>
+        <div className="cardarea-text">{text}</div>
       </CardShape>
     </Area>;
   }
@@ -86,6 +86,7 @@ export namespace EmptyArea {
 
 export type Props = {
   droppableId: string;
+  text?: string;
 };
 
 }
