@@ -369,7 +369,6 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     }
     if (this.ndecks === 0) {
       this.ndecks = Math.ceil(this.nplayers / 2);
-      this.ndecks = 1;
     }
     this.reset_round(this.owner, false);
     this.phase = ZPY.Phase.DRAW;
