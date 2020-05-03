@@ -241,7 +241,17 @@ export class Card extends CardBase {
   }
 
   static from(cb: CardBase, tr: TrumpMeta): Card {
-    return (cb instanceof Card) ? cb : new Card(cb.suit, cb.rank, tr);
+    // XXX: debugging
+    const card = new Card(cb.suit, cb.rank, tr);
+    if (cb instanceof Card) {
+      if (cb.suit !== card.suit ||
+          cb.rank !== card.rank ||
+          cb.v_suit !== card.v_suit ||
+          cb.v_rank !== card.v_rank) {
+        console.trace('Card.from', cb, card);
+      }
+    }
+    return card;
   }
 
   /*
