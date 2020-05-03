@@ -1082,11 +1082,16 @@ export class PlayArea extends React.Component<
   renderDrawArea() {
     return <div className="action draw">
       <div className="deck">
-        <CardImage
-          card="back"
-          width={card_width}
-          onClick={this.onClickDeck}
-        />
+        <div
+          aria-label={`${this.props.zpy.deck_sz} cards left`}
+          data-balloon-pos="left"
+        >
+          <CardImage
+            card="back"
+            width={card_width}
+            onClick={this.onClickDeck}
+          />
+        </div>
       </div>
       <div className="bids">
         {this.renderSingletonStagingArea()}
