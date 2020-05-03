@@ -67,7 +67,7 @@ export class PlayerInfo extends React.Component<
       // the UI of the other.  who cares, maybe?
       this.setState({nick: this.props.user.nick});
     }
-    this.updateWidth();
+    this.updateWidth(prevState);
   }
 
   onClickOut(
