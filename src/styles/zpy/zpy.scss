@@ -288,6 +288,15 @@ body {
   }
 }
 
+.cardarea-text {
+  color: dimgrey;
+  text-align: center;
+}
+
+.card {
+  @include flex.row-center;
+}
+
 $-card-height-friend: card.height-for(card.$width-friend);
 
 /*
