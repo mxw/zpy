@@ -46,3 +46,5 @@
 - various reported assertion failures
 
 - use `identity` instead of `me` for all checks in UI
+
+- double-click cards to move them between areas

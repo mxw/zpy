@@ -757,86 +757,19 @@ export class PlayArea extends React.Component<
       return;
     }
 
-    this.setState((state, props): PlayArea.State => {
-      const multidrag_id = state.multidrag?.id ?? null;
-      state = {...state, multidrag: null};
+    const src_adx = parseInt(src.droppableId);
+    const dst_adx = parseInt(dst.droppableId);
 
-      const src_adx = parseInt(src.droppableId);
-      const dst_adx = parseInt(dst.droppableId);
+    const src_area = this.state.areas[src_adx];
+    const src_id = src_area.ordered[src.index].id;
 
-      if (dst_adx === state.areas.length) {
-        // user dragged into the "next area" area OR into a bid/kitty area that
-        // we don't have set up in `state`; instantiate it here
-        state = {
-          ...state,
-          areas: [...state.areas, {ordered: [], id_to_pos: {}}],
-        };
-      }
-
-      const src_area = state.areas[src_adx];
-      const dst_area = state.areas[dst_adx];
-
-      const src_id = src_area.ordered[src.index].id;
-
-      const is_dragging = (card: CardID): boolean => {
-        return state.selected.size !== 0
-          ? state.selected.has(card.id)
-          : card.id === src_id;
-      };
-      const is_not_dragging = (card: CardID): boolean => !is_dragging(card);
-
-      // count the number of cards that remain before dst.index once we move
-      // all the dragging cards out of the way
-      let dst_index = Math.min(
-        dst_area.ordered.reduce((n, card, i) => {
-          if (i > dst.index) return n;
-
-          const skip = (true || multidrag_id === null) // [multidrag policy]
-            ? is_dragging(card)
-            : card.id === multidrag_id;
-
-          return skip ? n : n + 1;
-        }, 0),
-        dst.index
-      );
-
-      const not_dragging = [...dst_area.ordered].filter(is_not_dragging);
-
-      const dst_ordered = [
-        ...not_dragging.slice(0, dst_index),
-        ...PlayArea.filter(state, is_dragging),
-        ...not_dragging.slice(dst_index),
-      ];
-
-      const selected = state.selected.size !== 0
-        ? [...state.selected]
-        : [src_id];
-      const affected_areas = new Set(selected.map(id => state.id_to_area[id]));
-
-      return PlayArea.validate(PlayArea.reapAreas({
-        ...state,
-        areas: state.areas.map((area, adx) => {
-          if (adx === dst_adx) {
-            return {
-              ordered: dst_ordered,
-              id_to_pos: id_to_pos(dst_ordered)
-            };
-          }
-          if (affected_areas.has(adx)) {
-            const ordered = [...area.ordered].filter(is_not_dragging);
-            return {ordered, id_to_pos: id_to_pos(ordered)};
-          }
-          return area;
-        }),
-        id_to_area: {
-          ...state.id_to_area,
-          ...Object.fromEntries(selected.map(id => [id, dst_adx]))
-        },
-      }, props));
-    });
+    this.moveCards(dst_adx, dst.index, src_id);
   };
 
   /////////////////////////////////////////////////////////////////////////////
+  /*
+   * card area manipulation
+   */
 
   selectAll() {
     this.setState((state, props) => ({
@@ -896,7 +829,87 @@ export class PlayArea extends React.Component<
     });
   }
 
+  /*
+   * take all selected cards (or the card given by `src_id` if no cards are
+   * selected) and move them into `dst_adx` at `dst_pos`
+   */
+  moveCards(dst_adx: number, dst_pos: number, src_id: string) {
+    this.setState((state, props): PlayArea.State => {
+      const multidrag_id = state.multidrag?.id ?? null;
+      state = {...state, multidrag: null};
+
+      if (dst_adx === state.areas.length) {
+        // user dragged into the "next area" area OR into a bid/kitty area that
+        // we don't have set up in `state`; instantiate it here
+        state = {
+          ...state,
+          areas: [...state.areas, {ordered: [], id_to_pos: {}}],
+        };
+      }
+      const dst_area = state.areas[dst_adx];
+
+      const is_dragging = (card: CardID): boolean => {
+        return state.selected.size !== 0
+          ? state.selected.has(card.id)
+          : card.id === src_id;
+      };
+      const is_not_dragging = (card: CardID): boolean => !is_dragging(card);
+
+      // count the number of cards that remain before dst_pos once we move all
+      // the dragging cards out of the way
+      const dst_pos_after = Math.min(
+        dst_area.ordered.reduce((n, card, i) => {
+          if (i > dst_pos) return n;
+
+          const skip = (true || multidrag_id === null) // [multidrag policy]
+            ? is_dragging(card)
+            : card.id === multidrag_id;
+
+          return skip ? n : n + 1;
+        }, 0),
+        dst_pos
+      );
+
+      const not_dragging = [...dst_area.ordered].filter(is_not_dragging);
+
+      const dst_ordered = [
+        ...not_dragging.slice(0, dst_pos_after),
+        ...PlayArea.filter(state, is_dragging),
+        ...not_dragging.slice(dst_pos_after),
+      ];
+
+      const selected = state.selected.size !== 0
+        ? [...state.selected]
+        : [src_id];
+      const affected_areas = new Set(selected.map(id => state.id_to_area[id]));
+
+      return PlayArea.validate(PlayArea.reapAreas({
+        ...state,
+        areas: state.areas.map((area, adx) => {
+          if (adx === dst_adx) {
+            return {
+              ordered: dst_ordered,
+              id_to_pos: id_to_pos(dst_ordered)
+            };
+          }
+          if (affected_areas.has(adx)) {
+            const ordered = [...area.ordered].filter(is_not_dragging);
+            return {ordered, id_to_pos: id_to_pos(ordered)};
+          }
+          return area;
+        }),
+        id_to_area: {
+          ...state.id_to_area,
+          ...Object.fromEntries(selected.map(id => [id, dst_adx]))
+        },
+      }, props));
+    });
+  }
+
   /////////////////////////////////////////////////////////////////////////////
+  /*
+   * render functions
+   */
 
   renderSingletonStagingArea() {
     return <CardArea
