@@ -51,8 +51,6 @@
 
 - make team affiliations more obvious
 
-- off by one error in rank-up logic
-
 - fix sorting of off-suit natural trumps together
 
 - make help icon more obvious

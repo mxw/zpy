@@ -1090,12 +1090,12 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     const atk_points = this.team_point_total('attacking') + kitty_points;
 
     // number of ranks the attacking team ascends
-    let delta = Math.ceil(atk_points / (this.ndecks * 20)) - 2;
+    let delta = Math.floor(atk_points / (this.ndecks * 20)) - 2;
     if (atk_points === 0) --delta;
 
     const winner = delta >= 0 ? 'attacking' : 'host';
 
-    return {kitty_points, atk_points, delta, winner};
+    return {kitty_points, atk_points, delta: Math.abs(delta), winner};
   }
 
   next_ready(player: PlayerID): ZPY.Result {
