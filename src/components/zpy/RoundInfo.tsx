@@ -148,7 +148,14 @@ export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
           user={users[uid]}
           owner={uid === zpy.owner}
           ready={zpy.consensus.has(uid)}
-          current={zpy.is_current(uid)}
+          current={
+            zpy.is_current(uid) &&
+            // we maintain the current player across PREPARE and KITTY in the
+            // event of no-bid free-for-all draws, but we shouldn't display
+            // anyone as current during those phases
+            zpy.phase !== ZPY.Phase.PREPARE &&
+            zpy.phase !== ZPY.Phase.KITTY
+          }
           tr={zpy.tr}
           host={uid === zpy.host}
           team={

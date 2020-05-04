@@ -43,8 +43,6 @@
 
 - highlight the "me" player
 
-- disable current selector during KITTY phase
-
 - sort your own trump bid rank first in free-for-all draws
 
 - trigger renege when someone fails to contest a fly
