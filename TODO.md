@@ -39,8 +39,6 @@
 
 - make clubs and spades more distinct
 
-- highlight the "me" player
-
 - trigger renege when someone fails to contest a fly
 
 - make team affiliations more obvious
