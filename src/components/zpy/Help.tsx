@@ -40,8 +40,11 @@ export function Help(props: {}) {
         <div className="help-key">{pointer}</div>
         <div>select a card</div>
 
-        <div className="help-key">{pointer} x2</div>
+        <div className="help-key">double-{pointer}</div>
         <div>teleport cards b/w hand and play area</div>
+
+        <div className="help-key">middle-{pointer}</div>
+        <div>same as double-click</div>
 
         <div className="help-key">{cmd}+{pointer}</div>
         <div>select multiple</div>

@@ -50,7 +50,7 @@ export class PlayArea extends React.Component<
 
     // drag/drop/select handlers
     this.onSelect = this.onSelect.bind(this);
-    this.onDblClick = this.onDblClick.bind(this);
+    this.onTeleport = this.onTeleport.bind(this);
     this.onFriendSelect = this.onFriendSelect.bind(this);
     this.onDragStart = this.onDragStart.bind(this);
     this.onDragEnd = this.onDragEnd.bind(this);
@@ -715,7 +715,15 @@ export class PlayArea extends React.Component<
     // click is swallowed if a drag occurred
     if (ev.defaultPrevented) return;
 
-    // left click only
+    // middle-click simulates double-click
+    if ('button' in ev && ev.button === 1) {
+      const dst_adx = this.state.id_to_area[id] === 0 ? 1 : 0;
+      const dst_pos = this.state.areas[dst_adx]?.ordered?.length;
+
+      return this.moveCards(dst_adx, dst_pos, id);
+    }
+
+    // left click only for selection
     if ('button' in ev && ev.button !== 0) return;
 
     // synthetic events won't persist into the setState() callback
@@ -783,15 +791,25 @@ export class PlayArea extends React.Component<
   }
 
   /*
-   * double-click handler: move the clicked or selected cards between the hand
-   * and staging area
+   * teleport the clicked or selected cards between the hand and staging area
+   *
+   * we handle dblclick events as well as mousedown, for middle-click
    */
-  onDblClick(id: string, ev: React.MouseEvent | React.TouchEvent) {
+  onTeleport(id: string, ev: React.MouseEvent) {
     // click is swallowed if a drag occurred
     if (ev.defaultPrevented) return;
 
-    // left click only
-    if ('button' in ev && ev.button !== 0) return;
+    switch (ev.type) {
+      case 'dblclick':
+        // left dblclick only
+        if (ev?.button !== 0) return;
+        break;
+      case 'mousedown':
+        // middle mousedown only
+        if (ev?.button !== 1) return;
+        break;
+      default: return;
+    }
 
     ev.preventDefault(); // bypass window handler
 
@@ -1135,7 +1153,7 @@ export class PlayArea extends React.Component<
       selected={this.state.selected}
       multidrag={this.state.multidrag}
       onSelect={this.onSelect}
-      onDblClick={this.onDblClick}
+      onTeleport={this.onTeleport}
     />;
   }
 
@@ -1226,7 +1244,7 @@ export class PlayArea extends React.Component<
           selected={this.state.selected}
           multidrag={this.state.multidrag}
           onSelect={this.onSelect}
-          onDblClick={this.onDblClick}
+          onTeleport={this.onTeleport}
         />
       })}
       <EmptyArea
@@ -1386,7 +1404,7 @@ export class PlayArea extends React.Component<
         selected={this.state.selected}
         multidrag={this.state.multidrag}
         onSelect={this.onSelect}
-        onDblClick={this.onDblClick}
+        onTeleport={this.onTeleport}
       />
     </div>;
   }

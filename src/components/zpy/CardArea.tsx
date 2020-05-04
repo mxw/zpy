@@ -134,7 +134,8 @@ export class CardArea extends React.Component<CardArea.Props, {}> {
                 ...provided.draggableProps.style
               }, snapshot)}
               onClick={ev => this.props.onSelect(id, ev)}
-              onDoubleClick={ev => this.props.onDblClick(id, ev)}
+              onDoubleClick={ev => this.props.onTeleport(id, ev)}
+              onMouseDown={ev => this.props.onTeleport(id, ev)}
             >
               {(() => {
                 if (this.props.multidrag?.id === id) {
@@ -187,7 +188,7 @@ export type Props = {
     pile: CardBase[];
   };
   onSelect: OnClickCard;
-  onDblClick: OnClickCard;
+  onTeleport: OnClickCard;
 };
 
 }
