@@ -107,6 +107,20 @@ export class Tractor {
   }
 
   /*
+   * Convenience helper for gen_counts() on an array of Tractors.
+   */
+  static * gen_all(
+    tractors: Tractor[],
+    tr: TrumpMeta,
+  ): Generator<[Card, number], void> {
+    for (let tractor of tractors) {
+      for (let count of tractor.gen_counts(tr)) {
+        yield count;
+      }
+    }
+  }
+
+  /*
    * Spaceship-style comparator.
    *
    * Return null if `l` and `r` are incomparable (e.g., if they have different
@@ -335,14 +349,27 @@ export class Flight extends Play {
            tractors.every(t => t.v_suit === tractors[0].v_suit);
   }
 
+  /*
+   * Return the virtual suit of this Flight.
+   */
   get v_suit(): Suit { return this.tractors[0].v_suit; }
 
-  * gen_counts(tr: TrumpMeta): Generator<[Card, number], void> {
-    for (let tractor of this.tractors) {
-      for (let count of tractor.gen_counts(tr)) {
-        yield count;
-      }
-    }
+  /*
+   * The "shape" of the Flight.
+   */
+  blueprint(): Blueprint {
+    const shapes = this.tractors
+      .map(t => t.shape)
+      .filter(sh => sh.arity > 1);
+
+    return {
+      design: shapes,
+      accessories: this.tractors.length - shapes.length,
+    };
+  }
+
+  gen_counts(tr: TrumpMeta): Generator<[Card, number], void> {
+    return Tractor.gen_all(this.tractors, tr);
   }
   * gen_cards(tr: TrumpMeta): Generator<Card, void> {
     for (let [card, n] of this.gen_counts(tr)) {
@@ -410,6 +437,34 @@ export class Toss extends Play {
     return this.cards.map(c => `[${c.toString(color)}]`).join('');
   }
 }
+
+/*
+ * The "shape" of a Flight.
+ */
+export type Blueprint = {
+  // nontrivial tractor shapes in lexicographic order
+  design: Tractor.Shape[];
+  // number of singles
+  accessories: number;
+};
+
+export namespace Blueprint {
+
+export function compare_with(l: Tractor.Shape[], r: Tractor[]): number {
+  for (let i = 0; i < l.length; ++i) {
+    // if `l` is longer than `r` and has `r` as a prefix, `l` wins.
+    if (i >= r.length) return 1;
+
+    let cmp = Tractor.Shape.compare(l[i], r[i].shape);
+    if (cmp !== 0) return cmp;
+  }
+  // either l == r or `l` is a prefix of `r`; return accordingly.
+  return Math.sign(l.length - r.length);
+};
+
+}
+
+///////////////////////////////////////////////////////////////////////////////
 
 /*
  * A CardPile with a bunch of tractor-finding metadata.  We convert a CardPile
@@ -614,8 +669,7 @@ export class Hand {
   } {
     assert(lead.count === play_pile.size);
     assert(
-      this.tr.suit === play_pile.tr.suit &&
-      this.tr.rank === play_pile.tr.rank,
+      TrumpMeta.same(this.tr, play_pile.tr),
       'Hand#follow_with: lead and play have incompatible trump',
       lead, play_pile
     );
@@ -670,12 +724,11 @@ export class Hand {
       return {follows, undo_chain, parses};
     };
 
+    const blueprint = lead.blueprint();
+
     // `shapes` is kept ordered with the "strongest" shape at the end (so it's
     // basically a poor man's prioqueue).
-    let shapes = lead.tractors
-      .map(t => t.shape)
-      .filter(sh => sh.arity > 1)
-      .reverse();
+    let shapes = [...blueprint.design].reverse();
 
     enum Code { DONE, FAIL, STOP };
 
@@ -778,20 +831,6 @@ export class Hand {
     // all paths we've seen whose shape-sequence matches `best_seq`.
     let paths : Hand.Node[][] = [];
 
-    // spaceship comparator for path shape and path: -1 if l < r, 0 if l == r,
-    // 1 if l > r.
-    const compare_paths = (l: Tractor.Shape[], ...r: Hand.Node[]) => {
-      for (let i = 0; i < l.length; ++i) {
-        // if `l` is longer than `r` and has `r` as a prefix, `l` wins.
-        if (i >= r.length) return 1;
-
-        let cmp = Tractor.Shape.compare(l[i], r[i].shape);
-        if (cmp !== 0) return cmp;
-      }
-      // either l == r or `l` is a prefix of `r`; return accordingly.
-      return Math.sign(l.length - r.length);
-    };
-
     // debug trace helpers
     const seq_to_str = (seq: Tractor.Shape[]): string => {
       return seq.map(sh => sh.toString()).join('-');
@@ -815,7 +854,7 @@ export class Hand {
       const finish_path = () => {
         if (trace) console.log(' '.repeat((depth + 1) * 3) + 'terminated');
 
-        let cmp = compare_paths(best_seq, ...cur_path);
+        let cmp = Blueprint.compare_with(best_seq, cur_path);
         if (cmp < 0) {
           // replace `best_seq`, and nuke and re-fill `paths`.
           best_seq = cur_path.map(n => n.shape);
@@ -837,8 +876,9 @@ export class Hand {
 
         // if the new node would result in a worse path than the best we've
         // seen so far, we don't need to explore this branch.
-        const cmp = compare_paths(
-          best_seq.slice(0, cur_path.length + 1), ...cur_path, node
+        const cmp = Blueprint.compare_with(
+          best_seq.slice(0, cur_path.length + 1),
+          [...cur_path, node]
         );
         if (cmp > 0) continue;
 
@@ -910,18 +950,14 @@ export class Hand {
       }
     }
 
-    const gen_path_counts = function*(path: Hand.Node[]) {
-      for (let node of path) {
-        for (let count of node.gen_counts(this.tr)) {
-          yield count;
-        }
-      }
-    }.bind(this);
-
-    const the_path = paths.find(
-      path => play_pile.contains(gen_path_counts(path))
+    // all paths that can actually match the play
+    //
+    // note that there can indeed be multiple; say the lead is a (2,2)-tractor,
+    // and two pairs, and our play is two (2,2)-tractors.
+    const matching_paths = paths.filter(
+      path => play_pile.contains(Tractor.gen_all(path, this.tr))
     );
-    if (!the_path) return finish(false, undo_chain);
+    if (matching_paths.length === 0) return finish(false, undo_chain);
 
     return finish(true, undo_chain);
   }

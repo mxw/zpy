@@ -114,6 +114,10 @@ export class TrumpMeta {
     readonly rank: Rank,
   ) {}
 
+  static same(l: TrumpMeta, r: TrumpMeta): boolean {
+    return l.suit === r.suit && l.rank === r.rank;
+  }
+
   /*
    * Default TrumpMeta: jokers only.
    */
@@ -393,6 +397,13 @@ export class CardPile {
   get size(): number { return this.#total; }
 
   /*
+   * Count of cards in each v_suit.
+   */
+  count_suit(v_suit: Suit): number {
+    return this.#suit_counts[v_suit];
+  }
+
+  /*
    * Get, add to, or deduct from the count of `card` in `this`.
    */
   count(cb: CardBase): number {
@@ -420,32 +431,42 @@ export class CardPile {
   }
 
   /*
-   * Count of cards in each v_suit.
+   * Whether `this` contains all the cards in `other`.
    */
-  count_suit(v_suit: Suit): number {
-    return this.#suit_counts[v_suit];
+  contains(other: Iterable<[Card, number]>): boolean {
+    for (let [card, n] of this.as_pile(other)) {
+      if (this.count(card) < n) return false;
+    }
+    return true;
   }
 
   /*
-   * Whether `this` contains all the cards in `other`.
+   * Yield every card in the pile minus those given by `other`.
    */
-  contains(counts: Iterable<[Card, number]>): boolean {
-    if (counts instanceof CardPile) {
-      for (let [card, n] of counts) {
-        if (this.count(card) < n) return false;
-      }
-      return true;
-    }
+  * without(other: Iterable<[Card, number]>): Generator<[Card, number], void> {
+    const other_pile = this.as_pile(other);
 
-    let gen_cards = function*() {
-      for (let [card, n] of counts) {
+    for (let [card, n] of this) {
+      const diff = n - other_pile.count(card);
+      if (diff > 0) yield [card, diff];
+    }
+  }
+
+  /*
+   * Get `other` as a CardPile (or, more saliently, something we can iterate
+   * over and obtain uniquified card  counts).
+   */
+  private as_pile(other: Iterable<[Card, number]>): CardPile {
+    if (other instanceof CardPile &&
+        TrumpMeta.same(this.tr, other.tr)) {
+      return other;
+    }
+    const gen_cards = function*() {
+      for (let [card, n] of other) {
         for (let i = 0; i < n; ++i) yield card;
       }
-    }.bind(this);
-
-    // we can't rely on uniqueness, so turn `counts` into a pile
-    let other_pile = new CardPile(gen_cards(), this.tr);
-    return this.contains(other_pile);
+    };
+    return new CardPile(gen_cards(), this.tr);
   }
 
   /*
