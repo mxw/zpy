@@ -916,14 +916,17 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       );
     }
 
-    let [correct, undo] = this.hands[player].follow_with(this.lead, play_pile);
-    if (!correct) {
+    const {
+      follows,
+      undo_chain
+    } = this.hands[player].follow_with(this.lead, play_pile);
+    if (!follows) {
       switch (this.rules.renege) {
         case ZPY.RenegeRule.ACCUSE: {
           // TODO: implement this
         }
         case ZPY.RenegeRule.FORBID: {
-          this.hands[player].undo(play_pile, undo);
+          this.hands[player].undo(play_pile, undo_chain);
           return new ZPY.InvalidPlayError('invalid follow');
         }
         case ZPY.RenegeRule.AUTOLOSE: {

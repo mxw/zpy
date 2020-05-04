@@ -598,14 +598,20 @@ export class Hand {
    * Hand#follow_with() returns two values:
    *    - `follows` indicates whether or not a successful follow was made.  if
    *      it's false, it means the following player reneged.
-   *    - `undo` is an undo chain for this play which can be rewound with
-   *      Hand#undo()
+   *    - `undo_chain` is the handle for unwinding this play via Hand#undo()
+   *    - `parses` is a list of all interpretations of the play whose structure
+   *      matches `lead`.  it can be used to authoritatively determine whether
+   *      the play can beat the lead.
    */
   follow_with(
     lead: Flight,
     play_pile: CardPile,
     trace: boolean = false
-  ): [boolean, Hand.Node] {
+  ): {
+    follows: boolean,
+    undo_chain: Hand.Node,
+    parses: Flight[],
+  } {
     assert(lead.count === play_pile.size);
     assert(
       this.tr.suit === play_pile.tr.suit &&
@@ -614,14 +620,55 @@ export class Hand {
       lead, play_pile
     );
 
-    // Ensure `play` is a subset of `this`.
+    // ensure `play` is a subset of `this`.
     assert(
       this.pile.contains(play_pile),
       'Hand#follow_with: hand must contain play',
       this.pile, play_pile
     );
 
+    // check for suit-following.
+    const on_suit_left = this.pile.count_suit(lead.v_suit);
+    const on_suit_played = play_pile.count_suit(lead.v_suit);
+
+    // if we neither played entirely on suit nor played all our remaining
+    // cards in the lead suit, we're bad.
+    if (on_suit_played !== play_pile.size &&
+        on_suit_played !== on_suit_left) {
+      let undo_chain: Hand.Node = null;
+
+      for (let [card, n] of play_pile) {
+        undo_chain = this.remove_(card, n, undo_chain);
+      }
+      return {follows: false, parses: [], undo_chain};
+    }
+
+    // we also check to see if `play_pile` may represent an attempt to trump
+    // the lead.  if so, we know the follow was valid, but we hijack the rest
+    // of this function to instead parse the trump play to see if it can beat
+    // the lead in some configuration.
+    const trumps_played = play_pile.count_suit(Suit.TRUMP);
+    const target_suit = trumps_played === play_pile.size
+      ? Suit.TRUMP
+      : lead.v_suit;
+
     play_pile = CardPile.copy(play_pile); // don't mutate inputs
+
+    // consume the remainder of the play and patch up the result.
+    const finish = (
+      follows: boolean,
+      undo_chain: Hand.Node,
+      parses: Flight[] = [],
+    ) => {
+      // if we were doing a trump check, follow still succeeds
+      follows = follows || target_suit !== lead.v_suit;
+
+      // remove all cards we haven't already removed.
+      for (let [card, n] of play_pile) {
+        undo_chain = this.remove_(card, n, undo_chain);
+      }
+      return {follows, undo_chain, parses};
+    };
 
     // `shapes` is kept ordered with the "strongest" shape at the end (so it's
     // basically a poor man's prioqueue).
@@ -654,7 +701,7 @@ export class Hand {
 
       for (let n = sh.arity; n >= 2; --n) {
         for (let m = sh.len; m >= 1; --m) {
-          let K = this.#K[lead.v_suit]?.[n]?.[m];
+          let K = this.#K[target_suit]?.[n]?.[m];
           if (K) K = K.filter((n: Hand.Node) => n.valid);
 
           if (!K || K.length === 0) continue;
@@ -668,27 +715,6 @@ export class Hand {
       }
       return Code.DONE;
     }.bind(this);
-
-    // check for suit following and consume the remainder of the play.
-    const finish = (
-      result: boolean,
-      undo_chain: Hand.Node
-    ): [boolean, Hand.Node] => {
-      let on_suit_left = this.pile.count_suit(lead.v_suit);
-      let on_suit_played = play_pile.count_suit(lead.v_suit);
-
-      // if we neither played entirely on suit nor played all our remaining
-      // cards in the lead suit, we're bad.
-      if (on_suit_played !== play_pile.size &&
-          on_suit_played !== on_suit_left) {
-        result = false;
-      }
-      // remove all cards we haven't already removed.
-      for (let [card, n] of play_pile) {
-        undo_chain = this.remove_(card, n, undo_chain);
-      }
-      return [result, undo_chain];
-    };
 
     let undo_chain: Hand.Node = null;
 
@@ -845,7 +871,7 @@ export class Hand {
 
         const orig_shapes = (() => {
           if (m > 0 && n > 1) {
-            let copy = [...shapes];
+            const copy = [...shapes];
             shapes.push(new Tractor.Shape(m, n));
             shapes = shapes.sort(Tractor.Shape.compare);
             return copy;
@@ -897,12 +923,6 @@ export class Hand {
     );
     if (!the_path) return finish(false, undo_chain);
 
-    for (let node of the_path) {
-      for (let [card, n] of node.gen_counts(this.tr)) {
-        undo_chain = this.remove_(card, n, undo_chain);
-        play_pile.remove(card, n);
-      }
-    }
     return finish(true, undo_chain);
   }
 

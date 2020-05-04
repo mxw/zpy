@@ -495,13 +495,13 @@ describe('Hand#follow_with', () => {
     play = new CardPile([
       new Card(Suit.DIAMONDS, Rank.K, tr),
     ], tr);
-    expect(() => hand.follow_with(lead, play)[0]).to.throw();
+    expect(() => hand.follow_with(lead, play)).to.throw();
 
     // on-suit follow
     play = new CardPile([
       new Card(Suit.DIAMONDS, 4, tr),
     ], tr);
-    expect(hand.follow_with(lead, play)[0]).to.be.true;
+    expect(hand.follow_with(lead, play).follows).to.be.true;
     expect(hand.pile.toString()).to.equal(`
 ♦[1]: 4♦
 ♠[2]: 8♠ 9♠
@@ -513,7 +513,7 @@ describe('Hand#follow_with', () => {
     play = new CardPile([
       new Card(Suit.SPADES, 9, tr),
     ], tr);
-    expect(hand.follow_with(lead, play)[0]).to.be.false;
+    expect(hand.follow_with(lead, play).follows).to.be.false;
     expect(hand.pile.toString()).to.equal(`
 ♦[1]: 4♦
 ♠[1]: 8♠
@@ -528,7 +528,7 @@ describe('Hand#follow_with', () => {
     play = new CardPile([
       new Card(Suit.SPADES, 8, tr),
     ], tr);
-    expect(hand.follow_with(lead, play)[0]).to.be.true;
+    expect(hand.follow_with(lead, play).follows).to.be.true;
     expect(hand.pile.toString()).to.equal(`
 ♦[1]: 4♦
 ☉[2]: J♣ J♥
@@ -542,7 +542,7 @@ describe('Hand#follow_with', () => {
     play = new CardPile([
       new Card(Suit.CLUBS, Rank.J, tr),
     ], tr);
-    expect(hand.follow_with(lead, play)[0]).to.be.true;
+    expect(hand.follow_with(lead, play).follows).to.be.true;
     expect(hand.pile.toString()).to.equal(`
 ♦[1]: 4♦
 ☉[1]: J♥
@@ -600,7 +600,7 @@ describe('Hand#follow_with', () => {
     play = new CardPile([
       new Card(Suit.DIAMONDS, 3, tr),
     ], tr);
-    expect(() => hand.follow_with(lead, play)[0]).to.throw();
+    expect(() => hand.follow_with(lead, play)).to.throw();
 
     // invalid play: count too high
     play = new CardPile([
@@ -608,14 +608,14 @@ describe('Hand#follow_with', () => {
       new Card(Suit.DIAMONDS, 3, tr),
       new Card(Suit.DIAMONDS, 4, tr),
     ], tr);
-    expect(() => hand.follow_with(lead, play)[0]).to.throw();
+    expect(() => hand.follow_with(lead, play)).to.throw();
 
     // correct matching follow
     play = new CardPile([
       new Card(Suit.DIAMONDS, 3, tr),
       new Card(Suit.DIAMONDS, 3, tr),
     ], tr);
-    expect(hand.follow_with(lead, play)[0]).to.be.true;
+    expect(hand.follow_with(lead, play).follows).to.be.true;
     expect(hand.pile.toString()).to.equal(`
 ♣[2]: 7♣ J♣
 ♦[11]: 4♦ 4♦ 4♦ 6♦ 6♦ 6♦ 9♦ 9♦ 9♦ 10♦ 10♦
@@ -633,7 +633,7 @@ describe('Hand#follow_with', () => {
       new Card(Suit.CLUBS, 7, tr),
       new Card(Suit.CLUBS, Rank.J, tr),
     ], tr);
-    expect(hand.follow_with(lead, play)[0]).to.be.true;
+    expect(hand.follow_with(lead, play).follows).to.be.true;
     expect(hand.pile.toString()).to.equal(`
 ♦[11]: 4♦ 4♦ 4♦ 6♦ 6♦ 6♦ 9♦ 9♦ 9♦ 10♦ 10♦
 ♠[10]: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
@@ -652,7 +652,7 @@ describe('Hand#follow_with', () => {
       new Card(Suit.DIAMONDS, 4, tr),
       new Card(Suit.DIAMONDS, 9, tr),
     ], tr);
-    expect(hand.follow_with(lead, play)[0]).to.be.false;
+    expect(hand.follow_with(lead, play).follows).to.be.false;
     expect(hand.pile.toString()).to.equal(`
 ♦[8]: 4♦ 6♦ 6♦ 6♦ 9♦ 9♦ 10♦ 10♦
 ♠[10]: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
@@ -669,7 +669,7 @@ describe('Hand#follow_with', () => {
       new Card(Suit.DIAMONDS, 4, tr),
       new Card(Suit.DIAMONDS, 10, tr),
     ], tr);
-    expect(hand.follow_with(lead, play)[0]).to.be.false;
+    expect(hand.follow_with(lead, play).follows).to.be.false;
     expect(hand.pile.toString()).to.equal(`
 ♦[6]: 6♦ 6♦ 6♦ 9♦ 9♦ 10♦
 ♠[10]: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
@@ -690,7 +690,7 @@ describe('Hand#follow_with', () => {
       new Card(Suit.DIAMONDS, 6, tr),
       new Card(Suit.DIAMONDS, 10, tr),
     ], tr);
-    expect(hand.follow_with(lead, play)[0]).to.be.true;
+    expect(hand.follow_with(lead, play).follows).to.be.true;
     expect(hand.pile.toString()).to.equal(`
 ♦[2]: 9♦ 9♦
 ♠[10]: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
@@ -709,7 +709,7 @@ describe('Hand#follow_with', () => {
       new Card(Suit.DIAMONDS, 9, tr),
       new Card(Suit.HEARTS, 2, tr),
     ], tr);
-    expect(hand.follow_with(lead, play)[0]).to.be.true;
+    expect(hand.follow_with(lead, play).follows).to.be.true;
     expect(hand.pile.toString()).to.equal(`
 ♠[10]: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
 ☉[8]: 2♥ K♥ K♥ A♥ A♥ A♥ Q♥ Q♥
@@ -725,7 +725,7 @@ describe('Hand#follow_with', () => {
       new Card(Suit.HEARTS, 2, tr),
       new Card(Suit.HEARTS, Rank.K, tr),
     ], tr);
-    expect(hand.follow_with(lead, play)[0]).to.be.true;
+    expect(hand.follow_with(lead, play).follows).to.be.true;
     expect(hand.pile.toString()).to.equal(`
 ♠[10]: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
 ☉[6]: K♥ A♥ A♥ A♥ Q♥ Q♥
@@ -824,11 +824,11 @@ describe('Hand#follow_with', () => {
 
     expect(hand1.pile.toString()).to.equal(hand1_str);
 
-    let [result, undo] = hand1.follow_with(lead, play);
+    let {follows, undo_chain} = hand1.follow_with(lead, play);
     expect(hand1.pile.toString()).to.equal('♣[4]: 7♣ 7♣ 8♣ 8♣');
-    expect(result).to.be.false;
+    expect(follows).to.be.false;
 
-    hand1.undo(play, undo);
+    hand1.undo(play, undo_chain);
     expect(hand1.pile.toString()).to.equal(hand1_str);
 
     // ambiguous follow
@@ -856,6 +856,6 @@ describe('Hand#follow_with', () => {
       new Card(Suit.CLUBS, Rank.K, tr),
       new Card(Suit.CLUBS, Rank.J, tr),
     ], tr);
-    expect(hand2.follow_with(lead, play)[0]).to.be.true;
+    expect(hand2.follow_with(lead, play).follows).to.be.true;
   });
 });
