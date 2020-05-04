@@ -679,10 +679,11 @@ export class Hand {
     const on_suit_left = this.pile.count_suit(lead.v_suit);
     const on_suit_played = play_pile.count_suit(lead.v_suit);
 
+    const full_follow = on_suit_played === play_pile.size;
+
     // if we neither played entirely on suit nor played all our remaining
     // cards in the lead suit, we're bad.
-    if (on_suit_played !== play_pile.size &&
-        on_suit_played !== on_suit_left) {
+    if (!full_follow && on_suit_played !== on_suit_left) {
       let undo_chain: Hand.Node = null;
 
       for (let [card, n] of play_pile) {
@@ -695,10 +696,8 @@ export class Hand {
     // the lead.  if so, we know the follow was valid, but we hijack the rest
     // of this function to instead parse the trump play to see if it can beat
     // the lead in some configuration.
-    const trumps_played = play_pile.count_suit(Suit.TRUMP);
-    const target_suit = trumps_played === play_pile.size
-      ? Suit.TRUMP
-      : lead.v_suit;
+    const full_trump = play_pile.count_suit(Suit.TRUMP) === play_pile.size;
+    const target_suit = full_trump ? Suit.TRUMP : lead.v_suit;
 
     play_pile = CardPile.copy(play_pile); // don't mutate inputs
 
@@ -764,6 +763,7 @@ export class Hand {
     }.bind(this);
 
     let undo_chain: Hand.Node = null;
+    let prefix: Tractor[] = [];
 
     while (true) {
       const code = step((shape: Tractor.Shape, K: Hand.Node[]): Code => {
@@ -778,6 +778,8 @@ export class Hand {
 
         for (let node of K) {
           if (!play_pile.contains(node.gen_counts(this.tr))) continue;
+
+          prefix.push(node);
 
           for (let [card, n] of node.gen_counts(this.tr)) {
             play_pile.remove(card, n);
@@ -808,15 +810,31 @@ export class Hand {
       break;
     }
 
-    if (shapes.length === 0) return finish(true, undo_chain);
+    if (shapes.length === 0) {
+      if ((full_follow || full_trump) &&
+          Blueprint.compare_with(blueprint.design, prefix) === 0) {
+        // everything that's left should be considered a singleton
+        const trivial = new Tractor.Shape(1, 1);
+
+        for (let card of play_pile.gen_cards()) {
+          prefix.push(new Tractor(trivial, card, card.osnt_suit));
+        }
+        return finish(true, undo_chain, [new Flight(prefix)]);
+      }
+      return finish(true, undo_chain);
+    }
 
     // oof... we have to switch to a painful recursive approach with
     // backtracking.  our goal here is to perform the same algorithm as above,
     // but do it for each "branch" we can take at a K(m,n) with multiple valid
     // entries.  we then take all the paths that have the highest "value"---
-    // determined by a lexicographic comparison over a sequence of tractor
-    // shapes that we matched---and see if `play` actually satisfies any of
-    // them.  if so, `play` successfully followed; and if not, it's a renege.
+    // determined by a Blueprint comparison---and see if `play` actually
+    // satisfies any of them.  if so, `play` successfully followed; and if not,
+    // it's a renege.
+    //
+    // note that we may have already processed some of the `shapes` and part of
+    // the `play_pile` in the non-backtracking work above; that path prefix is
+    // stored in `prefix`.
 
     // the best path sequence we've encountered so far.  since the comparison
     // is lexicographic, we can greedily prune suboptimal paths.
@@ -944,15 +962,41 @@ export class Hand {
       }
     }
 
-    // all paths that can actually match the play
+    // all paths that can actually match the play.
     //
     // note that there can indeed be multiple; say the lead is a (2,2)-tractor,
     // and two pairs, and our play is two (2,2)-tractors.
-    const matching_paths = paths.filter(
-      path => play_pile.contains(Tractor.gen_all(path, this.tr))
+    const paths_and_piles = paths.map(path => ({
+      path: path,
+      pile: new CardPile(gen_cards(Tractor.gen_all(path, this.tr)), this.tr),
+    }));
+    const matches = paths_and_piles.filter(
+      ({pile}) => play_pile.contains(pile)
     );
-    if (matching_paths.length === 0) return finish(false, undo_chain);
+    if (matches.length === 0) return finish(false, undo_chain);
 
+    const a_full_path: Tractor[] = [...prefix, ...matches[0].path];
+
+    if ((full_follow || full_trump) &&
+        Blueprint.compare_with(blueprint.design, a_full_path) === 0) {
+      // generate all the parses.
+      const trivial = new Tractor.Shape(1, 1);
+
+      const parses = matches.map(({path, pile}) => {
+        const suffix = gen_cards(play_pile.without(pile));
+
+        // we need to prepend the prefix computed by the non-backtracing
+        // portion of the algorithm, then attach everything else as a
+        // singleton.
+        return new Flight([
+          ...prefix,
+          ...path,
+          ...[...suffix].map(c => new Tractor(trivial, c, c.osnt_suit))
+        ]);
+      });
+
+      return finish(true, undo_chain, parses);
+    }
     return finish(true, undo_chain);
   }
 
