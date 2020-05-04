@@ -46,3 +46,17 @@
 - disable current selector during KITTY phase
 
 - sort your own trump bid rank first in free-for-all draws
+
+- make friend indicator bigger
+
+- trigger renege when someone fails to contest a fly
+
+- make team affiliations more obvious
+
+- 10 of spades beats 10 of spades on fly contest
+
+- should force play the smallest, not the biggest one that's beaten
+
+- fix "ranks" plural text in end game reveal
+
+- off by one error in rank-up logic

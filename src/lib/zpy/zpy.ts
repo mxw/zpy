@@ -1041,7 +1041,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     let next_idx = this.next_player_idx(this.order[this.host]);
     while (true) {
       let player = this.players[next_idx];
-      if (this.host_team.has(player)) {
+      if (this.team(winner).has(player)) {
         this.host = player;
         break;
       }
