@@ -91,7 +91,7 @@ export class Tractor {
     for (let [i, v_rank] = [0, this.card.v_rank];
          i < this.length;
          ++i, v_rank = tr.inc_rank(v_rank)) {
-      let [suit, rank] = tr.devirt(this.card.v_suit, v_rank, this.osnt_suit);
+      const [suit, rank] = tr.devirt(this.card.v_suit, v_rank, this.osnt_suit);
       yield [new Card(suit, rank, tr), this.arity];
     }
   }
@@ -136,7 +136,7 @@ export namespace Tractor {
     ) {}
 
     static compare(l: Tractor.Shape, r: Tractor.Shape): number {
-      let arity_cmp = Math.sign(l.arity - r.arity);
+      const arity_cmp = Math.sign(l.arity - r.arity);
       if (arity_cmp !== 0) return arity_cmp;
       return Math.sign(l.len - r.len);
     }
@@ -197,7 +197,7 @@ export abstract class Play {
   static extract(cards: CardBase[], tr: TrumpMeta): Play {
     assert(cards.length > 0, 'Play.extract');
 
-    let pile = new CardPile(cards, tr);
+    const pile = new CardPile(cards, tr);
 
     const suits = [
       Suit.CLUBS,
@@ -211,15 +211,25 @@ export abstract class Play {
       return new Toss(cards);
     }
 
-    let chunks : CardTuple[][] = [[]];
+    const chunks : CardTuple[][] = [[]];
 
     for (let [card, arity] of pile) {
       let cur_chunk = chunks[chunks.length - 1];
-      let prev = cur_chunk[cur_chunk.length - 1];
+      const prev = cur_chunk[cur_chunk.length - 1];
 
-      let should_continue = !prev ||
-        (arity !== 1 && prev.arity !== 1 &&
-         tr.inc_rank(prev.card.v_rank) === card.v_rank);
+      // we're accumulating contiguous card ranges where the min arity of the
+      // whole sequence is at least 2.
+      //
+      // note that, because we don't fork on off-suit natural trumps here, we
+      // will not correctly handle piles that are intended as a tractor going
+      // through an osnt if there are any nonidentical osnt's thrown in.  such
+      // plays seem exceedingly rare, and we'll have to hope players are savvy
+      // enough to parse such plays themselves.
+      const should_continue = !prev || (
+        arity !== 1 &&
+        prev.arity !== 1 &&
+        tr.inc_rank(prev.card.v_rank) === card.v_rank
+      );
 
       if (!should_continue) {
         cur_chunk = [];
@@ -228,18 +238,19 @@ export abstract class Play {
       cur_chunk.push(new CardTuple(card, arity));
     }
 
-    let tractors : Tractor[] = [];
+    const tractors : Tractor[] = [];
 
     for (let chunk of chunks) {
-      let base = chunk.reduce((base, tuple) => {
-        return Math.min(base, tuple.arity);
-      }, Number.POSITIVE_INFINITY);
+      let base = chunk.reduce(
+        (base, tuple) => Math.min(base, tuple.arity),
+        Number.POSITIVE_INFINITY
+      );
 
       // look for the highest water mark nontrivial subsequence.
       let [begin, end, , ] = chunk.reduce(
         ([begin, end, i, prev], tuple) => {
-          let new_begin = tuple.arity >= prev && prev > base;
-          let new_end = end <= begin && tuple.arity < chunk[begin].arity;
+          const new_begin = tuple.arity >= prev && prev > base;
+          const new_end = end <= begin && tuple.arity < chunk[begin].arity;
           return [
             // start index of the highest-arity subsequence
             new_begin ? i - 1 : begin,
@@ -253,7 +264,7 @@ export abstract class Play {
       );
 
       if (begin >= 0) {
-        let len = chunk.length;
+        const len = chunk.length;
 
         // partition the chunk up to three ways, and re-queue the parts that
         // aren't our high water mark subsequence.
@@ -263,9 +274,10 @@ export abstract class Play {
 
         // make our subsequence the new current chunk.
         chunk = chunk.slice(begin, end);
-        base = chunk.reduce((base, tuple) => {
-          return Math.min(base, tuple.arity);
-        }, Number.POSITIVE_INFINITY);
+        base = chunk.reduce(
+          (base, tuple) => Math.min(base, tuple.arity),
+          Number.POSITIVE_INFINITY
+        );
       }
 
       // at this point, `chunk` now contains a (chunk.length,base)-tractor,
@@ -280,7 +292,7 @@ export abstract class Play {
       for (let tuple of chunk) {
         if (tuple.arity === base) continue;
 
-        let arity = tuple.arity - base;
+        const arity = tuple.arity - base;
         tractors.push(new Tractor(
           new Tractor.Shape(1, arity),
           tuple.card,
@@ -311,7 +323,7 @@ export class Flight extends Play {
     assert(Flight.validate(tractors), 'Flight', tractors);
 
     this.tractors = tractors.sort((l, r) => {
-      let shape_cmp = Tractor.Shape.compare(l.shape, r.shape);
+      const shape_cmp = Tractor.Shape.compare(l.shape, r.shape);
       if (shape_cmp !== 0) return -shape_cmp;
       return -Tractor.compare(l, r);
     });
@@ -355,7 +367,7 @@ export class Flight extends Play {
 
       // ...and compare stricly greater in every component.
       for (let i = 0; i < this.tractors.length; ++i) {
-        let cmp = Tractor.compare(this.tractors[i], other.tractors[i]);
+        const cmp = Tractor.compare(this.tractors[i], other.tractors[i]);
         if (cmp === null || cmp >= 0) return true;
       }
       return false;
@@ -429,7 +441,7 @@ export class Toss extends Play {
  *
  * This is the initial value of I(p + 1).  Then for every (m,n) in S(p + 1), we
  * add (m,n) to each set I(p - m + 2)...I(p).  (We do this by chaining elements
- * of I together in a linked list, where (m,n) chains into (m + 1,n)).
+ * of I together in a linked list, where (m,n) chains into (m + 1, n)).
  *
  * We then add the starting rank of every tractor shape (m,n) in S(p + 1) to
  * K(m,n).
@@ -443,7 +455,7 @@ export class Hand {
   #I_osnt: Hand.Node[][][] = [];  // v_suit -> suit -> [nodes]
 
   constructor(readonly pile: CardPile) {
-    let p : {v_suit?: Suit, v_rank?: Rank} = {};
+    const p : {v_suit?: Suit, v_rank?: Rank} = {};
 
     for (let [card, n] of this.pile) {
       if (p.v_suit !== card.v_suit) {
@@ -455,12 +467,13 @@ export class Hand {
       // 1-tuples are equivalent to void ranks.
       if (n === 1) continue;
 
-      let K = (this.#K[p.v_suit] = this.#K[p.v_suit] ?? []);
+      const K = (this.#K[p.v_suit] = this.#K[p.v_suit] ?? []);
 
+      // get I(p) for the rank preceding that of `card`
       let I_p : Hand.Node[];
 
       while (true) {
-        let next = this.tr.inc_rank(p.v_rank);
+        const next = this.tr.inc_rank(p.v_rank);
 
         if (next === card.v_rank) {
           I_p = this.I(p.v_suit, p.v_rank);
@@ -478,17 +491,17 @@ export class Hand {
       }
       assert(!I_p || this.tr.inc_rank(p.v_rank) === card.v_rank);
 
-      let I_cur = this.I(card.v_suit, card.v_rank, card.suit);
+      const I_cur = this.I(card.v_suit, card.v_rank, card.suit);
 
-      let register = (node: Hand.Node) => {
+      const register = (node: Hand.Node) => {
         I_cur.push(node);
-        let K_n = (K[node.n] = K[node.n] ?? []);
+        const K_n = (K[node.n] = K[node.n] ?? []);
         K_n[node.m] = K_n[node.m] ?? [];
         K_n[node.m].push(node);
       };
 
       for (let n_ = 2; n_ <= n; ++n_) {
-        let node = new Hand.Node(
+        const node = new Hand.Node(
           new Tractor.Shape(1, n_),
           card,
           card.osnt_suit
@@ -498,7 +511,7 @@ export class Hand {
 
       for (let src of I_p ?? []) {
         if (src.n > n) continue;
-        let node = Hand.Node.chain_from(src, card.osnt_suit);
+        const node = Hand.Node.chain_from(src, card.osnt_suit);
         register(node);
       }
     }
@@ -528,12 +541,12 @@ export class Hand {
     this.remove_(c, n);
   }
   private remove_(c: Card, n: number, prev: Hand.Node = null): Hand.Node {
-    let remaining = this.pile.count(c) - n;
+    const remaining = this.pile.count(c) - n;
     assert(remaining >= 0);
 
-    let I_p = this.I(c.v_suit, c.v_rank, c.suit);
+    const I_p = this.I(c.v_suit, c.v_rank, c.suit);
 
-    let invalidate = function invalidate(node: Hand.Node) {
+    const invalidate = function invalidate(node: Hand.Node) {
       if (!node.valid) return;
 
       for (let next of node.next) invalidate(next);
@@ -552,7 +565,7 @@ export class Hand {
   }
 
   /*
-   * Register `play`, and determine whether it correctly follows `lead`.
+   * Register `play_pile`, and determine whether it correctly follows `lead`.
    *
    * To find out, we walk the tractor shapes of `lead` in lexicographic order.
    * For each (m,n)-tractor, we iteratively try K(m -> 1, n -> 2) (with the
@@ -581,6 +594,12 @@ export class Hand {
    *
    * We always succeed at making `play`, even if it would result in a renege
    * (unless `play` is invalid for the Hand, in which case we assert).
+   *
+   * Hand#follow_with() returns two values:
+   *    - `follows` indicates whether or not a successful follow was made.  if
+   *      it's false, it means the following player reneged.
+   *    - `undo` is an undo chain for this play which can be rewound with
+   *      Hand#undo()
    */
   follow_with(
     lead: Flight,
@@ -591,14 +610,14 @@ export class Hand {
     assert(
       this.tr.suit === play_pile.tr.suit &&
       this.tr.rank === play_pile.tr.rank,
-      'Hand#follow_with: incompatible args',
+      'Hand#follow_with: lead and play have incompatible trump',
       lead, play_pile
     );
 
     // Ensure `play` is a subset of `this`.
     assert(
       this.pile.contains(play_pile),
-      'Hand#follow_with: must contain play',
+      'Hand#follow_with: hand must contain play',
       this.pile, play_pile
     );
 
@@ -623,11 +642,14 @@ export class Hand {
     // biggest shape off `shapes`, and try to find a match in this.#K.  if we
     // find such a match, call `fn` and return its result.  if we don't, return
     // Code.DONE.
-    let step = function step<T extends Array<any>>(fn: StepFn<T>, ...args: T): Code {
+    const step = function<T extends Array<any>>(
+      fn: StepFn<T>,
+      ...args: T
+    ): Code {
       if (shapes.length === 0) return Code.STOP;
       if (play_pile.size <= 1) return Code.STOP;
 
-      let sh = shapes.pop();
+      const sh = shapes.pop();
       assert(sh.arity > 1);
 
       for (let n = sh.arity; n >= 2; --n) {
@@ -648,7 +670,7 @@ export class Hand {
     }.bind(this);
 
     // check for suit following and consume the remainder of the play.
-    let finish = (
+    const finish = (
       result: boolean,
       undo_chain: Hand.Node
     ): [boolean, Hand.Node] => {
@@ -671,7 +693,7 @@ export class Hand {
     let undo_chain: Hand.Node = null;
 
     while (true) {
-      let code = step((shape: Tractor.Shape, K: Hand.Node[]): Code => {
+      const code = step((shape: Tractor.Shape, K: Hand.Node[]): Code => {
         if (K.length > 1 &&
             play_pile.size - K[0].count > 1) {
           // if there's only one match or we have no more non-singletons left
@@ -693,8 +715,8 @@ export class Hand {
             'Hand#follow_with: remove error'
           );
 
-          let m = shape.len - node.shape.len;
-          let n = shape.arity - node.shape.arity;
+          const m = shape.len - node.shape.len;
+          const n = shape.arity - node.shape.arity;
           assert(m >= 0 && n >= 0);
 
           if (m > 0 && n > 1) {
@@ -732,7 +754,7 @@ export class Hand {
 
     // spaceship comparator for path shape and path: -1 if l < r, 0 if l == r,
     // 1 if l > r.
-    let compare_paths = (l: Tractor.Shape[], ...r: Hand.Node[]) => {
+    const compare_paths = (l: Tractor.Shape[], ...r: Hand.Node[]) => {
       for (let i = 0; i < l.length; ++i) {
         // if `l` is longer than `r` and has `r` as a prefix, `l` wins.
         if (i >= r.length) return 1;
@@ -745,10 +767,10 @@ export class Hand {
     };
 
     // debug trace helpers
-    let seq_to_str = (seq: Tractor.Shape[]): string => {
+    const seq_to_str = (seq: Tractor.Shape[]): string => {
       return seq.map(sh => sh.toString()).join('-');
     };
-    let path_to_str = (path: Hand.Node[]): string => {
+    const path_to_str = (path: Hand.Node[]): string => {
       return path.map(n => n.shape.toString()).join('-') +
         ` [${path.map(n => n.toString(this.tr, true)).join('-')}]`;
     };
@@ -756,15 +778,15 @@ export class Hand {
     // current path that we're descending.  note that since JS and TS arrays
     // are always passed "by reference" and hence mutable, we avoid threading
     // arguments to make the statefulness overt.
-    let cur_path : Hand.Node[] = [];
+    const cur_path : Hand.Node[] = [];
 
-    let explore = function explore<T>(
+    const explore = function<T>(
       shape: Tractor.Shape,
       K: Hand.Node[],
       explore_: T,
       depth: number,
     ): Code {
-      let finish_path = () => {
+      const finish_path = () => {
         if (trace) console.log(' '.repeat((depth + 1) * 3) + 'terminated');
 
         let cmp = compare_paths(best_seq, ...cur_path);
@@ -772,10 +794,10 @@ export class Hand {
           // replace `best_seq`, and nuke and re-fill `paths`.
           best_seq = cur_path.map(n => n.shape);
           paths.length = 0;
-          paths.push(cur_path.map(n => n)); // must make a copy
+          paths.push([...cur_path]); // must make a copy
         } else if (cmp === 0) {
           // register `cur_path` as an equally-valid option.
-          paths.push(cur_path.map(n => n)); // must make a copy
+          paths.push([...cur_path]); // must make a copy
         }
         // if `cur_path` is worse than `best_seq`, just quietly drop it.
       };
@@ -789,7 +811,7 @@ export class Hand {
 
         // if the new node would result in a worse path than the best we've
         // seen so far, we don't need to explore this branch.
-        let cmp = compare_paths(
+        const cmp = compare_paths(
           best_seq.slice(0, cur_path.length + 1), ...cur_path, node
         );
         if (cmp > 0) continue;
@@ -811,19 +833,19 @@ export class Hand {
         cur_path.push(node);
 
         if (trace) {
-          let prefix = ' '.repeat(depth * 3);
+          const prefix = ' '.repeat(depth * 3);
           console.log(prefix + 'recursing');
           console.log(prefix + '├--shapes remaining:', seq_to_str(shapes));
           console.log(prefix + '└--cur_path:', path_to_str(cur_path));
         }
 
-        let m = shape.len - node.shape.len;
-        let n = shape.arity - node.shape.arity;
+        const m = shape.len - node.shape.len;
+        const n = shape.arity - node.shape.arity;
         assert(m >= 0 && n >= 0);
 
-        let orig_shapes = (() => {
+        const orig_shapes = (() => {
           if (m > 0 && n > 1) {
-            let copy = shapes.map(sh => sh);
+            let copy = [...shapes];
             shapes.push(new Tractor.Shape(m, n));
             shapes = shapes.sort(Tractor.Shape.compare);
             return copy;
@@ -831,12 +853,12 @@ export class Hand {
           return shapes;
         })();
 
-        let code = step(explore_, explore_, depth + 1);
+        const code = step(explore_, explore_, depth + 1);
         // if we got STOP, it means the mutual recursion finished immediately
         // before invoking explore again, so we need to do the bookkeeping.
         if (code === Code.STOP) finish_path();
 
-        let out = cur_path.pop();
+        const out = cur_path.pop();
         assert(
           node === out, // should be the exact same object
           'Hand#follow_with: stack error'
@@ -852,7 +874,7 @@ export class Hand {
       return Code.DONE;
     }.bind(this);
 
-    let code = step(explore, explore, 0);
+    const code = step(explore, explore, 0);
     assert(code === Code.DONE);
 
     if (trace) {
@@ -862,7 +884,7 @@ export class Hand {
       }
     }
 
-    let gen_path_counts = function*(path: Hand.Node[]) {
+    const gen_path_counts = function*(path: Hand.Node[]) {
       for (let node of path) {
         for (let count of node.gen_counts(this.tr)) {
           yield count;
@@ -870,7 +892,9 @@ export class Hand {
       }
     }.bind(this);
 
-    let the_path = paths.find(path => play_pile.contains(gen_path_counts(path)));
+    const the_path = paths.find(
+      path => play_pile.contains(gen_path_counts(path))
+    );
     if (!the_path) return finish(false, undo_chain);
 
     for (let node of the_path) {
