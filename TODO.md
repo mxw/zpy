@@ -42,3 +42,5 @@
 - trigger renege when someone fails to contest a fly
 
 - make team affiliations more obvious
+
+- SSBB doesn't beat 88JJ of diamonds

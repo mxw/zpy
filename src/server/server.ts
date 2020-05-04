@@ -24,10 +24,12 @@ interface Client {
   socket: WebSocket;
 };
 
-// the server-side protocol monkey
-//
-// this manages the network communication w/ the clients and shovels updates
-// into the game engine as appropriate.
+/*
+ * the server-side protocol monkey
+ *
+ * this manages the network communication w/ the clients and shovels updates
+ * into the game engine as appropriate.
+ */
 class Game<
   Config,
   Intent,
@@ -95,8 +97,6 @@ class Game<
   hello(source: Client, nick: string): void {
     const known = source.principal in this.users;
 
-    let user = this.users[source.principal] ?? null;
-
     if (!known) {
       // new principal; conjure a user object for them
       this.users[source.principal] = {
@@ -146,7 +146,7 @@ class Game<
    * an update messsage after we handle the update or as a reject message
    */
   update(source: Client, tx: P.TxID, intent: Intent) {
-    let result = this.engine.larp(
+    const result = this.engine.larp(
       this.state,
       intent,
       source.user,
@@ -165,7 +165,7 @@ class Game<
       ));
       return;
     }
-    let [state, effects] = result.ok;
+    const [state, effects] = result.ok;
 
     this.state = state;
 
@@ -173,7 +173,7 @@ class Game<
       if (!client.sync) continue;
       if (!(client.user.id in effects)) continue;
 
-      let for_tx = client === source ? tx : null;
+      const for_tx = client === source ? tx : null;
 
       const Update = P.Update(this.engine.Effect(this.state));
 
@@ -195,7 +195,7 @@ class Game<
    * client's state
    */
   reset(client: Client) {
-    let cs = this.engine.redact(this.state, client.user);
+    const cs = this.engine.redact(this.state, client.user);
 
     const Reset = P.Reset(this.engine.ClientState);
 
@@ -222,7 +222,7 @@ class Game<
   }
 
   /*
-   * process a bye request from a client. simply reply 'bye' and disconnect
+   * process a bye request from a client: simply reply 'bye' and disconnect
    */
   bye(client: Client) {
     client.socket.send(JSON.stringify(
@@ -287,8 +287,8 @@ class Game<
     this.clients.push(client);
 
     sock.on('message', (data: string) => {
-      let d = JSON.parse(data);
-      let ClientMessage = P.ClientMessage(this.engine.Intent(this.state));
+      const d = JSON.parse(data);
+      const ClientMessage = P.ClientMessage(this.engine.Intent(this.state));
 
       P.on_decode(ClientMessage, d, msg => {
         switch (msg.verb) {
@@ -345,7 +345,7 @@ export class GameServer<
     this.ws = new WebSocket.Server({noServer: true});
 
     server.on('upgrade', async (req: Http.IncomingMessage, sock, head) => {
-      let bail = (reason: string) => {
+      const bail = (reason: string) => {
         console.log(reason)
         sock.write('HTTP/1.1 400 Bad Request\r\n' +
                    'X-Reason: ' + reason + '\r\n');
@@ -354,17 +354,17 @@ export class GameServer<
       };
 
       // is the url cromulent
-      let matches = req.url.match(`^\/${url_pref}\/([^\\\/]*)\/$`);
+      const matches = req.url.match(`^\/${url_pref}\/([^\\\/]*)\/$`);
       if (matches === null) {
         return bail("invalid uri");
       }
 
       // is the game a real thing
-      let game_id = matches[1];
+      const game_id = matches[1];
       if (!(game_id in this.games)) {
         return bail("no such game: " + game_id);
       }
-      let game = this.games[game_id];
+      const game = this.games[game_id];
 
       // is this someone we know about
       let id: string | null = null;
@@ -372,7 +372,7 @@ export class GameServer<
 
       for (let c of req.headers.cookie.split(';')) {
         // sketchy cookie parsing let's gooooo
-        let matches = c.trim().match(/^([^=]*)=([^=]*)$/);
+        const matches = c.trim().match(/^([^=]*)=([^=]*)$/);
         if (matches === null || matches.length !== 3) {
           continue;
         } else if (matches[1] === "id") {
@@ -386,7 +386,7 @@ export class GameServer<
         return bail("no principal provided (log in first)");
       }
 
-      let session = Session.get(id);
+      const session = Session.get(id);
       if (session === null) {
         return bail("no session " + id);
       }
