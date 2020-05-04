@@ -50,6 +50,7 @@ export class PlayArea extends React.Component<
 
     // drag/drop/select handlers
     this.onSelect = this.onSelect.bind(this);
+    this.onDblClick = this.onDblClick.bind(this);
     this.onFriendSelect = this.onFriendSelect.bind(this);
     this.onDragStart = this.onDragStart.bind(this);
     this.onDragEnd = this.onDragEnd.bind(this);
@@ -782,6 +783,25 @@ export class PlayArea extends React.Component<
   }
 
   /*
+   * double-click handler: move the clicked or selected cards between the hand
+   * and staging area
+   */
+  onDblClick(id: string, ev: React.MouseEvent | React.TouchEvent) {
+    // click is swallowed if a drag occurred
+    if (ev.defaultPrevented) return;
+
+    // left click only
+    if ('button' in ev && ev.button !== 0) return;
+
+    ev.preventDefault(); // bypass window handler
+
+    const dst_adx = this.state.id_to_area[id] === 0 ? 1 : 0;
+    const dst_pos = this.state.areas[dst_adx]?.ordered?.length;
+
+    this.moveCards(dst_adx, dst_pos, id);
+  }
+
+  /*
    * event handler for clicking outside of all selectable items
    */
   onClickOut(
@@ -834,6 +854,8 @@ export class PlayArea extends React.Component<
   }
 
   deselectAll() {
+    if (this.state.selected.size === 0) return;
+
     this.setState({
       selected: new Set(),
       prev_start: null,
@@ -1113,6 +1135,7 @@ export class PlayArea extends React.Component<
       selected={this.state.selected}
       multidrag={this.state.multidrag}
       onSelect={this.onSelect}
+      onDblClick={this.onDblClick}
     />;
   }
 
@@ -1203,6 +1226,7 @@ export class PlayArea extends React.Component<
           selected={this.state.selected}
           multidrag={this.state.multidrag}
           onSelect={this.onSelect}
+          onDblClick={this.onDblClick}
         />
       })}
       <EmptyArea
@@ -1359,6 +1383,7 @@ export class PlayArea extends React.Component<
         selected={this.state.selected}
         multidrag={this.state.multidrag}
         onSelect={this.onSelect}
+        onDblClick={this.onDblClick}
       />
     </div>;
   }
