@@ -44,3 +44,5 @@
 - make team affiliations more obvious
 
 - SSBB doesn't beat 88JJ of diamonds
+
+- keep-hand-sorted should sort on teleports and resets
