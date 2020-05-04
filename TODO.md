@@ -53,8 +53,6 @@
 
 - make team affiliations more obvious
 
-- fix "ranks" plural text in end game reveal
-
 - off by one error in rank-up logic
 
 - fix sorting of off-suit natural trumps together

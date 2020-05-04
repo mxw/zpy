@@ -15,6 +15,8 @@ import * as ZPYEngine from 'lib/zpy/engine.ts'
 import { Client } from 'components/zpy/common.ts'
 import { Card } from 'components/zpy/Card.tsx'
 
+import { plural } from 'utils/string.ts'
+
 import assert from 'utils/assert.ts'
 
 
@@ -136,7 +138,9 @@ export class Reveal extends React.Component<Reveal.Props, {}> {
       </>;
     })();
 
-    const rank_txt = delta !== 0 ? ` and ascends ${delta} ranks` : '';
+    const rank_txt = delta !== 0
+      ? ` and ascends ${delta} rank${plural(delta)}`
+      : '';
 
     return <>
       {points_reveal}
