@@ -4,6 +4,7 @@
 import * as React from 'react'
 
 import * as P from 'protocol/protocol.ts'
+import { GameId } from 'server/server.ts'
 
 import { CardBase, Suit, Rank } from 'lib/zpy/cards.ts'
 import { ZPY } from 'lib/zpy/zpy.ts'
@@ -34,6 +35,7 @@ export class Board extends React.Component<Board.Props, Board.State> {
       <div className="board">
         <RoundInfo
           key="round-info"
+          gid={this.props.gid}
           me={this.props.me}
           zpy={zpy}
           users={this.props.users}
@@ -53,6 +55,7 @@ export class Board extends React.Component<Board.Props, Board.State> {
 export namespace Board {
 
 export type Props = {
+  gid: GameId;
   me: P.User;
   zpy: ZPYEngine.State;
   users: P.User[];

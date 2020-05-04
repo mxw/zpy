@@ -241,6 +241,7 @@ export class Game extends React.Component<Game.Props, Game.State> {
     return <>
       <Help />
       <Board
+        gid={this.props.id}
         me={client.me}
         zpy={client.state}
         users={client.users}

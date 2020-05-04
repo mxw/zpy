@@ -13,6 +13,7 @@ import * as React from 'react'
 import axios from "axios"
 
 import * as P from 'protocol/protocol.ts'
+import { GameId } from 'server/server.ts'
 
 import { ZPY } from 'lib/zpy/zpy.ts'
 
@@ -230,7 +231,7 @@ export class PlayerInfo extends React.Component<
   render() {
     const pr = this.props;
     const avatar_id =
-      Math.abs(hash_code(`${pr.user.id}:${this.state.nick}`)) % 78 + 1;
+      Math.abs(hash_code(`${pr.gid}:${this.state.nick}`)) % 78 + 1;
 
     let div_class = ["player-info"];
     if (pr.current) div_class.push("current");
@@ -256,6 +257,7 @@ export namespace PlayerInfo {
 
 export type Props = {
   me: P.User;
+  gid: GameId;
   phase: ZPY.Phase;
   user: P.User;
 

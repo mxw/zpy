@@ -4,6 +4,7 @@
 import * as React from 'react'
 
 import * as P from 'protocol/protocol.ts'
+import { GameId } from 'server/server.ts'
 
 import { CardBase, Suit } from 'lib/zpy/cards.ts'
 import { ZPY } from 'lib/zpy/zpy.ts'
@@ -31,6 +32,7 @@ class Column extends React.Component<Column.Props, {}> {
       <PlayerInfo
         key="player"
         me={pr.me}
+        gid={pr.gid}
         phase={pr.phase}
         user={pr.user}
         owner={pr.owner}
@@ -144,6 +146,7 @@ export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
         <Column
           key={uid}
           me={this.props.me}
+          gid={this.props.gid}
           phase={zpy.phase}
           user={users[uid]}
           owner={uid === zpy.owner}
@@ -181,6 +184,7 @@ export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
 export namespace RoundInfo {
 
 export type Props = {
+  gid: GameId;
   me: P.User;
   zpy: Z;
   users: P.User[];
