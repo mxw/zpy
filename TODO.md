@@ -53,10 +53,14 @@
 
 - make team affiliations more obvious
 
-- 10 of spades beats 10 of spades on fly contest
-
-- should force play the smallest, not the biggest one that's beaten
-
 - fix "ranks" plural text in end game reveal
 
 - off by one error in rank-up logic
+
+- fix sorting of off-suit natural trumps together
+
+- make help icon more obvious
+
+- condense points space more
+
+- limit nickname lengths

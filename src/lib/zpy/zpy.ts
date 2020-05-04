@@ -842,15 +842,22 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
         'reveal must be a singleton, tuple, or tractor'
       );
     }
-    let the_tractor = flight.tractors[0];
+    let counter = flight.tractors[0];
 
-    for (let component of this.lead.tractors) {
-      if (Tractor.Shape.compare(the_tractor.shape, component.shape) !== 0 ||
-          Tractor.compare(the_tractor, component) < 0) {
-        continue;
-      }
-      this.reject_fly(player, reveal, component);
-      return [reveal, component];
+    // get all the compatible tractors...
+    let compat = this.lead.tractors.filter(
+      trc => Tractor.Shape.compare(counter.shape, trc.shape) === 0
+    );
+    if (compat.length === 0) {
+      return new ZPY.InvalidPlayError(
+        'reveal doesn\'t match any components of lead'
+      );
+    }
+    let smallest = compat[compat.length - 1];
+
+    if (Tractor.compare(counter, smallest) > 0) {
+      this.reject_fly(player, reveal, smallest);
+      return [reveal, smallest];
     }
     return new ZPY.InvalidPlayError('reveal fails to counter fly');
   }

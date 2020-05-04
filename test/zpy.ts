@@ -250,7 +250,7 @@ describe('ZPY', () => {
 
     /////////////////////////////////////////////////////////////////
 
-    lead(e, [Suit.CLUBS, 8], [Suit.CLUBS, 8], [Suit.CLUBS, Rank.A]);
+    lead(e, [Suit.CLUBS, 8], [Suit.CLUBS, 8], [Suit.CLUBS, Rank.K]);
 
     expect_err(
       zpy.contest_fly(e, [new CardBase(Suit.CLUBS, Rank.A)]),
@@ -293,6 +293,12 @@ describe('ZPY', () => {
       zpy.contest_fly(a, [
         new CardBase(Suit.CLUBS, 7),
         new CardBase(Suit.CLUBS, 7),
+      ]),
+      ZPY.InvalidPlayError, 'reveal fails to counter fly'
+    );
+    expect_err(
+      zpy.contest_fly(d, [
+        new CardBase(Suit.CLUBS, Rank.K),
       ]),
       ZPY.InvalidPlayError, 'reveal fails to counter fly'
     );
