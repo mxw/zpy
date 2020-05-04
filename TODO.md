@@ -47,8 +47,6 @@
 
 - sort your own trump bid rank first in free-for-all draws
 
-- make friend indicator bigger
-
 - trigger renege when someone fails to contest a fly
 
 - make team affiliations more obvious

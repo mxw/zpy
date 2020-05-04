@@ -223,8 +223,8 @@ body {
 
 .friend-indicator-wrapper {
   position: absolute;
-  top: rhythm.rh(2.375);
-  left: -1 * rhythm.rh(2.5);
+  top: rhythm.rh(2);
+  left: -1 * rhythm.rh(4);
 
   > .friend-indicator {
     @include flex.column;
@@ -232,7 +232,7 @@ body {
 
     > .friend {
       color: darkgrey;
-      font-size: rhythm.rh(1);
+      font-size: rhythm.rh(1.5);
 
       &.found {
         color: lightgrey;
