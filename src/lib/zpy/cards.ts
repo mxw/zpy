@@ -245,6 +245,14 @@ export function* gen_deck(): Generator<CardBase, void> {
   yield new CardBase(Suit.TRUMP, Rank.B);
 }
 
+export function* gen_cards(
+  counts: Iterable<[Card, number]>
+): Generator<Card, void> {
+  for (let [card, n] of counts) {
+    for (let i = 0; i < n; ++i) yield card;
+  }
+}
+
 /*
  * A ZPY-context-sensitive card.
  *
@@ -384,10 +392,8 @@ export class CardPile {
   /*
    * Splatty version of gen_counts().
    */
-  * gen_cards(): Generator<Card, void> {
-    for (let [card, n] of this.gen_counts()) {
-      for (let i = 0; i < n; ++i) yield card;
-    }
+  gen_cards(): Generator<Card, void> {
+    return gen_cards(this.gen_counts());
   }
 
   /*
@@ -461,12 +467,7 @@ export class CardPile {
         TrumpMeta.same(this.tr, other.tr)) {
       return other;
     }
-    const gen_cards = function*() {
-      for (let [card, n] of other) {
-        for (let i = 0; i < n; ++i) yield card;
-      }
-    };
-    return new CardPile(gen_cards(), this.tr);
+    return new CardPile(gen_cards(other), this.tr);
   }
 
   /*

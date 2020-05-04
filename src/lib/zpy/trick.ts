@@ -10,7 +10,7 @@
  */
 
 import {
-  Suit, Rank, TrumpMeta, CardBase, Card, CardPile
+  Suit, Rank, TrumpMeta, CardBase, Card, CardPile, gen_cards
 } from 'lib/zpy/cards.ts';
 
 import { array_fill } from 'utils/array.ts';
@@ -100,10 +100,8 @@ export class Tractor {
       yield new CardTuple(card, n);
     }
   }
-  * gen_cards(tr: TrumpMeta): Generator<Card, void> {
-    for (let [card, n] of this.gen_counts(tr)) {
-      for (let i = 0; i < n; ++i) yield card;
-    }
+  gen_cards(tr: TrumpMeta): Generator<Card, void> {
+    return gen_cards(this.gen_counts(tr));
   }
 
   /*
@@ -371,12 +369,8 @@ export class Flight extends Play {
   gen_counts(tr: TrumpMeta): Generator<[Card, number], void> {
     return Tractor.gen_all(this.tractors, tr);
   }
-  * gen_cards(tr: TrumpMeta): Generator<Card, void> {
-    for (let [card, n] of this.gen_counts(tr)) {
-      for (let i = 0; i < n; ++i) {
-        yield card;
-      }
-    }
+  gen_cards(tr: TrumpMeta): Generator<Card, void> {
+    return gen_cards(this.gen_counts(tr));
   }
 
   beats(other: Play): boolean {
