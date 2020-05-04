@@ -173,6 +173,23 @@ export class PlayerInfo extends React.Component<
     </div>;
   }
 
+  renderSelfIcon() {
+    const pr = this.props;
+    if (pr.me.id !== pr.user.id) return null;
+
+    const food_id =
+      Math.abs(hash_code(`${pr.gid}:${this.state.nick}`)) % 58 + 1;
+
+    return <div key="self" className="self-wrapper">
+      <div aria-label="this is you!" data-balloon-pos="down-left">
+        <img
+          className="self"
+          src={`/static/png/food/${food_id}.png`}
+        />
+      </div>
+    </div>;
+  }
+
   renderNick() {
     if (!this.state.editing) {
       return <div
@@ -247,6 +264,7 @@ export class PlayerInfo extends React.Component<
         className="avatar"
         src={`/static/png/avatars/${avatar_id}.png`}
       />
+      {this.renderSelfIcon()}
       {this.renderNick()}
       {this.renderTeamIcon()}
     </div>;

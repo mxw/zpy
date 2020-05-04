@@ -55,11 +55,15 @@ body {
       animation: pulse-current 5s infinite;
     }
 
-    // the host icon is positioned relative to the padding-edge of its
-    // parent, which changes depending on whether it has the "current" border
+    // these icons are positioned relative to the padding-edge of its parent,
+    // which changes depending on whether it has the "current" border
     > .host-wrapper {
       top: rhythm.rh(-0.875);
       left: rhythm.rh(0.875);
+    }
+    > .self-wrapper {
+      top: rhythm.rh(1.875);
+      left: rhythm.rh(2.375);
     }
   }
 
@@ -78,6 +82,12 @@ body {
     position: absolute;
     top: rhythm.rh(-0.75);
     left: rhythm.rh(1);
+  }
+
+  > .self-wrapper {
+    position: absolute;
+    top: rhythm.rh(2);
+    left: rhythm.rh(2.5);
   }
 
   > .avatar {
@@ -204,6 +214,10 @@ body {
 .host, .indicator {
   width: rhythm.rh(2.25);
   height: rhythm.rh(2.25);
+}
+.self {
+  width: rhythm.rh(1.5);
+  height: rhythm.rh(1.5);
 }
 .team {
   width: rhythm.rh(1.125);
