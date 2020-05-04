@@ -1306,7 +1306,10 @@ export class PlayArea extends React.Component<
           case ZPY.Phase.FLY:
             return <>waiting on others to see if the play flies</>;
           case ZPY.Phase.FOLLOW: return zpy.cur_idx !== null
-            ? <>waiting for the next player to play</>
+            ? <>
+                waiting for the next player to play.
+                you can stage your play above while you wait.
+              </>
             : <>waiting for the winner to collect the trick</>;
           case ZPY.Phase.FINISH:
             return <>waiting for the host to reveal the kitty</>;
