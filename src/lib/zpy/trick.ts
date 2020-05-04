@@ -449,7 +449,7 @@ export function compare_with(l: Tractor.Shape[], r: Tractor[]): number {
     // if `l` is longer than `r` and has `r` as a prefix, `l` wins.
     if (i >= r.length) return 1;
 
-    let cmp = Tractor.Shape.compare(l[i], r[i].shape);
+    const cmp = Tractor.Shape.compare(l[i], r[i].shape);
     if (cmp !== 0) return cmp;
   }
   // either l == r or `l` is a prefix of `r`; return accordingly.
@@ -866,7 +866,7 @@ export class Hand {
       const finish_path = () => {
         if (trace) console.log(' '.repeat((depth + 1) * 3) + 'terminated');
 
-        let cmp = Blueprint.compare_with(best_seq, cur_path);
+        const cmp = Blueprint.compare_with(best_seq, cur_path);
         if (cmp < 0) {
           // replace `best_seq`, and nuke and re-fill `paths`.
           best_seq = cur_path.map(n => n.shape);
@@ -1040,10 +1040,10 @@ export class Hand {
         : (this.#I[v_suit]?.[v_rank] ?? []);
     }
     if (v_rank === Rank.N_off) {
-      let I_s = (this.#I_osnt[v_suit] = this.#I_osnt[v_suit] ?? []);
+      const I_s = (this.#I_osnt[v_suit] = this.#I_osnt[v_suit] ?? []);
       return (I_s[suit] = I_s[suit] ?? []);
     } else {
-      let I_s = (this.#I[v_suit] = this.#I[v_suit] ?? []);
+      const I_s = (this.#I[v_suit] = this.#I[v_suit] ?? []);
       return (I_s[v_rank] = I_s[v_rank] ?? []);
     }
   }
@@ -1082,7 +1082,7 @@ export namespace Hand {
      * from here) passes through an off-suit natural trump.
      */
     static chain_from(src: Node, osnt_suit?: Suit): Node {
-      let next = new Node(
+      const next = new Node(
         new Tractor.Shape(src.m + 1, src.n),
         src.card,
         osnt_suit ?? src.osnt_suit,

@@ -77,7 +77,7 @@ export const CardShape = (props: CardShapeProps) => {
   const background_image = (() => {
     if (dim === null) return {};
 
-    let prefix = `linear-gradient(rgba(0,0,0,${dim}), rgba(0,0,0,${dim}))`;
+    const prefix = `linear-gradient(rgba(0,0,0,${dim}), rgba(0,0,0,${dim}))`;
 
     return {
       backgroundImage: ('backgroundImage' in style)

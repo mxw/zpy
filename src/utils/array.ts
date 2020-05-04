@@ -9,7 +9,7 @@ export function array_fill<T>(
   n: number,
   val: T | (() => T)
 ): T[] {
-  let a : T[] = [];
+  const a : T[] = [];
   a.length = n;
   if (val instanceof Function) {
     a.fill(val());
@@ -24,7 +24,7 @@ export function array_fill<T>(
  */
 export function array_shuffle<T>(arr: T[]): T[] {
   for (let i = arr.length - 1; i > 0; --i) {
-    let j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(Math.random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;

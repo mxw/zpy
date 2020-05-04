@@ -385,7 +385,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       );
     }
 
-    let players = !this.debug
+    const players = !this.debug
       ? array_shuffle(this.players)
       : this.players;
 
@@ -418,7 +418,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (!this.is_current(player)) {
       return new ZPY.OutOfTurnError();
     }
-    let cb = this.draw();
+    const cb = this.draw();
     this.add_to_hand(player, cb);
     return [cb];
   }
@@ -476,7 +476,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       return new ZPY.InvalidPlayError(`invalid trump bid for rank ${tr_rank}`);
     }
 
-    let commit_bid = () => {
+    const commit_bid = () => {
       this.secure_bid(player, card, n);
       return [card, n]
     };
@@ -485,7 +485,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       return commit_bid();
     }
 
-    let prev = this.bids[this.bids.length - 1];
+    const prev = this.bids[this.bids.length - 1];
 
     if (player === prev.player) {
       if (card.suit === prev.card.suit && n > prev.n) {
@@ -560,9 +560,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     this.consensus.add(player);
     if (!this.has_consensus()) return null;
 
-    let nbids = this.bids.length;
+    const nbids = this.bids.length;
 
-    let host = this.host ?? (nbids !== 0
+    const host = this.host ?? (nbids !== 0
       ? this.bids[nbids - 1].player
       : this.current()  // starting player defaults to host
     );
@@ -632,7 +632,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
         `must discard exactly ${this.kitty.length} cards for kitty`
       );
     }
-    let kitty_pile = new CardPile(kitty, this.tr);
+    const kitty_pile = new CardPile(kitty, this.tr);
 
     if (!this.draws[player].contains(kitty_pile)) {
       return new ZPY.InvalidArgError('kitty not part of hand');
@@ -673,7 +673,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
 
     // this is the correct number of friends for all single-digit numbers of
     // players and probably at least some double-digit numbers.
-    let allowed = this.nfriends;
+    const allowed = this.nfriends;
 
     if (friends.length !== allowed) {
       return new ZPY.InvalidPlayError(
@@ -686,7 +686,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
         this.friends.length = 0;
         return new ZPY.InvalidArgError(`friend index ${nth} out of bounds`);
       }
-      let card = new Card(c.suit, c.rank, this.tr);
+      const card = new Card(c.suit, c.rank, this.tr);
 
       if (card.v_rank > Rank.A) {
         this.friends.length = 0;
@@ -716,7 +716,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (!this.is_current(player)) {
       return new ZPY.OutOfTurnError();
     }
-    let play_pile = new CardPile(play.gen_cards(this.tr), this.tr);
+    const play_pile = new CardPile(play.gen_cards(this.tr), this.tr);
 
     if (!this.hands[player].pile.contains(play_pile)) {
       return new ZPY.InvalidArgError('play not part of hand');
@@ -787,7 +787,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (this.phase !== ZPY.Phase.LEAD) {
       return ZPY.BadPhaseError.from('lead_play', this.phase);
     }
-    let play_pile = this.init_play(player, play);
+    const play_pile = this.init_play(player, play);
     if (play_pile instanceof ZPY.Error) return play_pile;
 
     this.observe_lead(player, play);
@@ -824,12 +824,12 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (player === this.leader) {
       return new ZPY.WrongPlayerError('cannot contest own flight');
     }
-    let play = Play.extract(reveal, this.tr);
+    const play = Play.extract(reveal, this.tr);
 
     if (!this.hands[player].pile.contains(play.gen_counts(this.tr))) {
       return new ZPY.InvalidArgError('reveal not part of hand');
     }
-    let flight = play.fl();
+    const flight = play.fl();
 
     if (!flight) {
       return new ZPY.InvalidPlayError('reveal is multiple suits');
@@ -842,10 +842,10 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
         'reveal must be a singleton, tuple, or tractor'
       );
     }
-    let counter = flight.tractors[0];
+    const counter = flight.tractors[0];
 
     // get all the compatible tractors...
-    let compat = this.lead.tractors.filter(
+    const compat = this.lead.tractors.filter(
       trc => Tractor.Shape.compare(counter.shape, trc.shape) === 0
     );
     if (compat.length === 0) {
@@ -853,7 +853,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
         'reveal doesn\'t match any components of lead'
       );
     }
-    let smallest = compat[compat.length - 1];
+    const smallest = compat[compat.length - 1];
 
     if (Tractor.compare(counter, smallest) > 0) {
       this.reject_fly(player, reveal, smallest);
@@ -906,7 +906,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (this.phase !== ZPY.Phase.FOLLOW) {
       return ZPY.BadPhaseError.from('follow_lead', this.phase);
     }
-    let play_pile = this.init_play(player, play);
+    const play_pile = this.init_play(player, play);
     if (play_pile instanceof ZPY.Error) return play_pile;
 
     if (play.count !== this.lead.count) {
@@ -997,7 +997,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
    * A delta of -1 indicates that the player was J'd.
    */
   private rank_up(player: PlayerID, delta: number): void {
-    let meta = this.ranks[player];
+    const meta = this.ranks[player];
 
     for (let i = 0; i < delta; ++i) {
       if ([5,10,Rank.J,Rank.K,Rank.B].includes(meta.rank)) {
@@ -1158,7 +1158,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
    * Make a shallow copy of the game state for `player`.
    */
   redact_for(player: PlayerID): ZPY<PlayerID> {
-    let copy = new ZPY<PlayerID>(this.rules);
+    const copy = new ZPY<PlayerID>(this.rules);
     copy.phase    = this.phase;
     copy.identity = player;
 

@@ -146,8 +146,8 @@ export class CardArea extends React.Component<CardArea.Props, {}> {
                     pile={this.props.multidrag.pile}
                   />;
                 }
-                let should_vanish = this.props.multidrag !== null &&
-                                    this.props.selected.has(id);
+                const should_vanish = this.props.multidrag !== null &&
+                                      this.props.selected.has(id);
                 // the current rendering policy is to dim the cards that
                 // are part of a multigrab.  it's possible to just have
                 // them disappear completely (by returning null here), but

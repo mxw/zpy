@@ -25,7 +25,7 @@ class Column extends React.Component<Column.Props, {}> {
   render() {
     const pr = this.props;
 
-    let classes = ["player-column"];
+    const classes = ["player-column"];
     if (pr.current) classes.push("current");
 
     return <div className={classes.join(' ')}>
@@ -108,7 +108,7 @@ export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
       const key = `${ord_str} ${card_str}`;
       const suitname = Suit[card.suit].toLowerCase();
 
-      let classes = ["friend"];
+      const classes = ["friend"];
       if (tally === 0) classes.push("found");
 
       return <div key={key} className={classes.join(' ')}>

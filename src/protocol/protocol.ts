@@ -24,7 +24,7 @@ export const failure = (s: string) => left(s);
 export function Enum<E>(
   e: Record<string, string | number>
 ): C.Codec<E> {
-  let is_e = (u: unknown): u is E => Object.values<unknown>(e).includes(u);
+  const is_e = (u: unknown): u is E => Object.values<unknown>(e).includes(u);
 
   return {
     decode: (u: unknown) => is_e(u) ? D.success(u) : D.failure(''),

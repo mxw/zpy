@@ -57,7 +57,7 @@ export class PlayArea extends React.Component<
 
     const hand = this.props.zpy.hand(this.props.me.id);
 
-    let state = PlayArea.withCardsAdded({
+    const state = PlayArea.withCardsAdded({
       seen: [],
 
       id_set: new Set(),
@@ -739,7 +739,7 @@ export class PlayArea extends React.Component<
 
       if (state.prev_start === null || metaKey) {
         // either an initial selection or a continued selection
-        let selected = new Set(state.selected);
+        const selected = new Set(state.selected);
         return (selected.delete(id) // true if deletion occured
           ? {...state, selected, prev_start: null}
           : {...state, selected: selected.add(id), prev_start: id}
@@ -756,20 +756,20 @@ export class PlayArea extends React.Component<
         const pos = area.id_to_pos[id];
 
         // range selection
-        let selected = new Set(state.selected);
+        const selected = new Set(state.selected);
 
         const range_for = (prev_id: string) => {
-          let prev_pos = area.id_to_pos[prev_id];
+          const prev_pos = area.id_to_pos[prev_id];
           return [Math.min(pos, prev_pos), Math.max(pos, prev_pos)];
         };
 
         if (state.prev_stop !== null) {
-          let [first, last] = range_for(state.prev_stop);
+          const [first, last] = range_for(state.prev_stop);
           for (let o = first; o <= last; ++o) {
             selected.delete(area.ordered[o].id);
           }
         }
-        let [first, last] = range_for(state.prev_start);
+        const [first, last] = range_for(state.prev_start);
         for (let o = first; o <= last; ++o) {
           selected.add(area.ordered[o].id);
         }
@@ -839,7 +839,7 @@ export class PlayArea extends React.Component<
     }
     // cards were added or removed, or we need to trigger multi-drag rendering
     this.setState((state, props) => {
-      let pile = PlayArea
+      const pile = PlayArea
         .filter(state, card => state.selected.has(card.id))
         .map(card => card.cb);
 

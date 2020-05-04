@@ -250,7 +250,7 @@ export class PlayerInfo extends React.Component<
     const avatar_id =
       Math.abs(hash_code(`${pr.gid}:${this.state.nick}`)) % 78 + 1;
 
-    let div_class = ["player-info"];
+    const div_class = ["player-info"];
     if (pr.current) div_class.push("current");
     if (pr.me.id === pr.user.id) div_class.push("me");
 
