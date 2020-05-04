@@ -851,7 +851,10 @@ export class PlayArea extends React.Component<
     state: PlayArea.State,
     props: PlayArea.Props,
   ): PlayArea.State {
-    const tr = props.zpy.tr;
+    // if there's no host, we want cards of our own rank to be considered trump
+    const tr = props.zpy.host !== null
+      ? props.zpy.tr
+      : new TrumpMeta(Suit.TRUMP, props.zpy.ranks[props.me.id].rank);
     if (tr === null) return;
 
     const suit_order: number[] = [...CardBase.SUITS];
@@ -866,7 +869,9 @@ export class PlayArea extends React.Component<
       const ll = Card.from(l.cb, tr);
       const rr = Card.from(r.cb, tr);
       return Math.sign(suit_order[ll.v_suit] - suit_order[rr.v_suit]) ||
-             Math.sign(ll.v_rank - rr.v_rank);
+             Math.sign(ll.v_rank - rr.v_rank) ||
+             // this last term is for matching up off-suit natural trumps
+             Math.sign(ll.suit - rr.suit);
     });
     return {
       ...state,

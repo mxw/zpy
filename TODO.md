@@ -43,12 +43,8 @@
 
 - highlight the "me" player
 
-- sort your own trump bid rank first in free-for-all draws
-
 - trigger renege when someone fails to contest a fly
 
 - make team affiliations more obvious
-
-- fix sorting of off-suit natural trumps together
 
 - make help icon more obvious
