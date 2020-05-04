@@ -514,7 +514,11 @@ kbd {
   top: 0;
   right: 0;
 
-  margin: rhythm.rh(0.5);
+  padding: rhythm.rh(0.5);
+  border-left: rhythm.$px solid rgb(187, 187, 187);
+  border-bottom: rhythm.$px solid rgb(187, 187, 187);
+
+  background-color: rgba(240, 240, 240, 0.5);
 
   > .help-info {
     display: none;

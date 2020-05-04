@@ -46,5 +46,3 @@
 - trigger renege when someone fails to contest a fly
 
 - make team affiliations more obvious
-
-- make help icon more obvious
