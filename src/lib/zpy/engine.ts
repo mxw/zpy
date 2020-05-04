@@ -27,7 +27,6 @@ import { ZPY, Data as ZPYData } from 'lib/zpy/zpy.ts';
 
 import { Result, OK, Err } from 'utils/result.ts'
 
-import { Either } from 'fp-ts/lib/Either'
 import * as C from 'io-ts/lib/Codec';
 import * as D from 'io-ts/lib/Decoder';
 
@@ -275,9 +274,17 @@ const cd_ZPY = (tr: TrumpMeta): C.Codec<ZPY<PlayerID>> => C.make(
   {encode: (zpy: ZPY<PlayerID>) => cd_ZPYData(tr).encode(zpy)}
 );
 
-export const State = (
-  s: null | State
-): C.Codec<State> => cd_ZPY(s?.tr ?? TrumpMeta.def());
+export const State: C.Codec<State> = C.make(
+  {decode: (u: unknown) => {
+    return P.on_decode(
+      C.type({tr: C.nullable(cd_TrumpMeta)}),
+      u,
+      (v: {tr: null | TrumpMeta}) => cd_ZPY(v.tr ?? TrumpMeta.def()).decode(u),
+      e => D.failure(e)
+    );
+  }},
+  {encode: (zpy: ZPY<PlayerID>) => cd_ZPY(zpy.tr ?? TrumpMeta.def()).encode(zpy)}
+);
 
 export const ClientState = State;
 

@@ -197,7 +197,7 @@ class Game<
   reset(client: Client) {
     let cs = this.engine.redact(this.state, client.user);
 
-    const Reset = P.Reset(this.engine.ClientState(this.state));
+    const Reset = P.Reset(this.engine.ClientState);
 
     client.socket.send(JSON.stringify(
       Reset.encode({
