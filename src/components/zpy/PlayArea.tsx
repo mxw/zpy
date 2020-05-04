@@ -891,10 +891,12 @@ export class PlayArea extends React.Component<
     state: PlayArea.State,
     props: PlayArea.Props,
   ): PlayArea.State {
-    // if there's no host, we want cards of our own rank to be considered trump
-    const tr = props.zpy.host !== null
-      ? props.zpy.tr
-      : new TrumpMeta(Suit.TRUMP, props.zpy.ranks[props.me.id].rank);
+    // if there's no host and nobody has bid yet, we want cards of our own rank
+    // to be considered trump
+    const tr = props.zpy.host === null && props.zpy.bids.length === 0
+      ? new TrumpMeta(Suit.TRUMP, props.zpy.ranks[props.me.id].rank)
+      : props.zpy.tr;
+
     if (tr === null) return;
 
     const suit_order: number[] = [...CardBase.SUITS];
