@@ -918,8 +918,10 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
 
     const {
       follows,
-      undo_chain
+      undo_chain,
+      parses,
     } = this.hands[player].follow_with(this.lead, play_pile);
+
     if (!follows) {
       switch (this.rules.renege) {
         case ZPY.RenegeRule.ACCUSE: {
@@ -938,8 +940,13 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
         }
       }
     }
-    this.observe_follow(player, play);
-    return [play];
+
+    // choose the best parse of `play` that we can, falling back to the user
+    // submission (which may have been obtained via Play#extract())
+    const best_play = parses.find(fl => fl.beats(this.lead)) ?? play;
+
+    this.observe_follow(player, best_play);
+    return [best_play];
   }
   observe_follow(player: PlayerID, play: Play): ZPY.Result {
     this.commit_play(player, play);

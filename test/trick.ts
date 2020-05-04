@@ -39,7 +39,7 @@ describe('new Hand', () => {
     ], tr);
     let hand = new Hand(pile);
 
-     tr = new TrumpMeta(Suit.TRUMP, Rank.B);
+    tr = new TrumpMeta(Suit.TRUMP, Rank.B);
 
     pile = new CardPile([
       new CardBase(Suit.CLUBS, 5),
@@ -857,5 +857,156 @@ describe('Hand#follow_with', () => {
       new Card(Suit.CLUBS, Rank.J, tr),
     ], tr);
     expect(hand2.follow_with(lead, play).follows).to.be.true;
+  });
+
+  const fresh_flight = (fl: Flight) => new Flight(
+    fl.tractors.map(trc => new Tractor(trc.shape, trc.card))
+  );
+
+  it('avoids priority inversion', () => {
+    const cards = [
+      new CardBase(Suit.CLUBS, 4),
+      new CardBase(Suit.CLUBS, 4),
+      new CardBase(Suit.CLUBS, 5),
+      new CardBase(Suit.CLUBS, 5),
+      new CardBase(Suit.CLUBS, Rank.J),
+      new CardBase(Suit.CLUBS, Rank.J),
+      new CardBase(Suit.CLUBS, Rank.J),
+      new CardBase(Suit.CLUBS, Rank.A),
+
+      new CardBase(Suit.HEARTS, 3),
+      new CardBase(Suit.HEARTS, 4),
+      new CardBase(Suit.HEARTS, Rank.A),
+      new CardBase(Suit.HEARTS, Rank.A),
+    ];
+
+    { // big pairs lead beats small tractor
+      const tr = new TrumpMeta(Suit.HEARTS, Rank.Q);
+      const lead = Play.extract([
+        new Card(Suit.CLUBS, 10, tr),
+        new Card(Suit.CLUBS, 10, tr),
+        new Card(Suit.CLUBS, Rank.A, tr),
+        new Card(Suit.CLUBS, Rank.A, tr),
+      ], tr).fl();
+
+      expect(lead.toString(tr)).to.equal('[A♣A♣][10♣10♣]');
+
+      const hand = new Hand(new CardPile(cards, tr));
+      const play = new CardPile([
+        new Card(Suit.CLUBS, 4, tr),
+        new Card(Suit.CLUBS, 4, tr),
+        new Card(Suit.CLUBS, 5, tr),
+        new Card(Suit.CLUBS, 5, tr),
+      ], tr);
+
+      const {follows, undo_chain, parses} = hand.follow_with(lead, play);
+      expect(follows).to.be.true;
+      expect(parses.length).to.equal(2);
+
+      const sh = new Tractor.Shape(1, 2);
+      const pair4 = new Tractor(sh, new Card(Suit.CLUBS, 4, tr));
+      const pair5 = new Tractor(sh, new Card(Suit.CLUBS, 5, tr));
+
+      expect(
+        parses.map(fresh_flight)
+      ).to.have.deep.members([
+        new Flight([pair4, pair5]),
+        new Flight([pair5, pair4]),
+      ]);
+      expect(lead.beats(parses[0])).to.be.true;
+      expect(lead.beats(parses[1])).to.be.true;
+    }
+
+    { // trump fly with pair beats non-trump singleton fly
+      const tr = new TrumpMeta(Suit.HEARTS, Rank.Q);
+      const lead = Play.extract([
+        new Card(Suit.SPADES, 5, tr),
+        new Card(Suit.SPADES, Rank.J, tr),
+        new Card(Suit.SPADES, Rank.A, tr),
+      ], tr).fl();
+
+      expect(lead.toString(tr)).to.equal('[A♠][J♠][5♠]');
+
+      const hand = new Hand(new CardPile(cards, tr));
+      const play = new CardPile([
+        new Card(Suit.HEARTS, 3, tr),
+        new Card(Suit.HEARTS, Rank.A, tr),
+        new Card(Suit.HEARTS, Rank.A, tr),
+      ], tr);
+
+      const {follows, undo_chain, parses} = hand.follow_with(lead, play);
+      expect(follows).to.be.true;
+      expect(parses.length).to.equal(1);
+
+      const sh = new Tractor.Shape(1, 1);
+
+      expect(
+        parses.map(fresh_flight)
+      ).to.have.deep.members([
+        new Flight(
+          [...play.gen_cards()].map(card => new Tractor(sh, card))
+        )
+      ]);
+      expect(!lead.beats(parses[0])).to.be.true;
+    }
+
+    { // natural trump only fly with pair beats non-trump singleton fly
+      const tr = new TrumpMeta(Suit.TRUMP, 4);
+      const lead = Play.extract([
+        new Card(Suit.SPADES, 5, tr),
+        new Card(Suit.SPADES, Rank.J, tr),
+        new Card(Suit.SPADES, Rank.A, tr),
+      ], tr).fl();
+
+      expect(lead.toString(tr)).to.equal('[A♠][J♠][5♠]');
+
+      const hand = new Hand(new CardPile(cards, tr));
+      const play = new CardPile([
+        new Card(Suit.CLUBS, 4, tr),
+        new Card(Suit.CLUBS, 4, tr),
+        new Card(Suit.HEARTS, 4, tr),
+      ], tr);
+
+      const {follows, undo_chain, parses} = hand.follow_with(lead, play);
+      expect(follows).to.be.true;
+      expect(parses.length).to.equal(1);
+
+      const sh = new Tractor.Shape(1, 1);
+
+      expect(
+        parses.map(fresh_flight)
+      ).to.have.deep.members([
+        new Flight(
+          [...play.gen_cards()].map(card => new Tractor(sh, card))
+        )
+      ]);
+      expect(!lead.beats(parses[0])).to.be.true;
+    }
+
+    { // two trump pair doesn't beat non-trump tractor
+      const tr = new TrumpMeta(Suit.CLUBS, Rank.Q);
+      const lead = Play.extract([
+        new Card(Suit.SPADES, 3, tr),
+        new Card(Suit.SPADES, 3, tr),
+        new Card(Suit.SPADES, 4, tr),
+        new Card(Suit.SPADES, 4, tr),
+      ], tr).fl();
+
+      expect(lead.toString(tr)).to.equal('3♠3♠4♠4♠');
+
+      const hand = new Hand(new CardPile(cards, tr));
+      const play = new CardPile([
+        new Card(Suit.CLUBS, 5, tr),
+        new Card(Suit.CLUBS, 5, tr),
+        new Card(Suit.CLUBS, Rank.J, tr),
+        new Card(Suit.CLUBS, Rank.J, tr),
+      ], tr);
+
+      const {follows, undo_chain, parses} = hand.follow_with(lead, play);
+      expect(follows).to.be.true;
+      expect(parses.length).to.equal(0);
+
+      expect(lead.beats(Play.extract([...play.gen_cards()], tr))).to.be.true;
+    }
   });
 });
