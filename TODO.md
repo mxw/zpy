@@ -56,5 +56,3 @@
 - make help icon more obvious
 
 - condense points space more
-
-- limit nickname lengths

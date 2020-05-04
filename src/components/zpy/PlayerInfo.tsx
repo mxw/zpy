@@ -21,6 +21,7 @@ import { isWindows } from 'components/utils/platform.ts'
 import { hash_code } from 'utils/string.ts'
 
 import assert from 'utils/assert.ts'
+import * as options from 'options.ts'
 
 
 export class PlayerInfo extends React.Component<
@@ -188,7 +189,10 @@ export class PlayerInfo extends React.Component<
         type="text"
         value={this.state.nick}
         style={{width: this.state.nick_width ?? "auto"}}
-        onChange={ev => this.setState({nick: ev.target.value})}
+        onChange={ev => this.setState({
+          // don't let the user type past the nickname limit
+          nick: ev.target.value.substring(0, options.nick_limit)
+        })}
         onKeyDown={this.onKeyDown}
       />
       <div

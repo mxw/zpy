@@ -10,6 +10,9 @@ import express from 'express'
 import * as HTTP from 'http'
 import * as WebSocket from 'ws'
 
+import * as options from 'options.ts'
+
+
 const app = express();
 
 app.use('/', express.static("assets/html"));
@@ -50,7 +53,11 @@ app.post('/api/set_nick', (req, res) => {
   const r = req as (typeof req & {session: Session.T});
 
   const nick = r.body.nick;
-  if (nick) res.cookie("nick", nick);
+  if (!nick || nick.length > options.nick_limit) {
+    res.send(false);
+    return;
+  }
+  res.cookie("nick", nick);
   gs.rename(r.session.id, nick);
 
   res.send(true);
