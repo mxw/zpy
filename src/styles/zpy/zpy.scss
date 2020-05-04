@@ -164,7 +164,7 @@ body {
   @include flex.column;
 
   width: 100%;
-  min-height: rhythm.rh(8);
+  min-height: rhythm.rh(7);
 
   &::before {
     content: "";

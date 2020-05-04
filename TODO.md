@@ -54,5 +54,3 @@
 - fix sorting of off-suit natural trumps together
 
 - make help icon more obvious
-
-- condense points space more
