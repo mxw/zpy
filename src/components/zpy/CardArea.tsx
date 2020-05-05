@@ -66,7 +66,7 @@ export class EmptyArea extends React.Component<EmptyArea.Props, {}> {
   }
 
   render() {
-    const text = this.props.text ?? 'drag cards here';
+    const text = this.props.text ?? 'click or drag cards to put them here';
 
     return <Area classes={["empty"]} {...this.props}>
       <CardShape
@@ -86,7 +86,7 @@ export namespace EmptyArea {
 
 export type Props = {
   droppableId: string;
-  text?: string;
+  text?: null | string;
 };
 
 }
@@ -133,9 +133,7 @@ export class CardArea extends React.Component<CardArea.Props, {}> {
                 outline: 'none', // avoid conflicting selection affordance
                 ...provided.draggableProps.style
               }, snapshot)}
-              onClick={ev => this.props.onSelect(id, ev)}
-              onDoubleClick={ev => this.props.onTeleport(id, ev)}
-              onMouseDown={ev => this.props.onTeleport(id, ev)}
+              onClick={ev => this.props.onClick(id, ev)}
             >
               {(() => {
                 if (this.props.multidrag?.id === id) {
@@ -187,8 +185,7 @@ export type Props = {
     id: string;
     pile: CardBase[];
   };
-  onSelect: OnClickCard;
-  onTeleport: OnClickCard;
+  onClick: OnClickCard;
 };
 
 }

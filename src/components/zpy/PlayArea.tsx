@@ -52,8 +52,7 @@ export class PlayArea extends React.Component<
     this.onKeyDown = this.onKeyDown.bind(this);
 
     // drag/drop/select handlers
-    this.onSelect = this.onSelect.bind(this);
-    this.onTeleport = this.onTeleport.bind(this);
+    this.onClickCard = this.onClickCard.bind(this);
     this.onFriendSelect = this.onFriendSelect.bind(this);
     this.onDragStart = this.onDragStart.bind(this);
     this.onDragEnd = this.onDragEnd.bind(this);
@@ -752,21 +751,19 @@ export class PlayArea extends React.Component<
   }
 
   /*
-   * handler for click and touch events to trigger selection behavior
+   * handler for click and touch events to trigger card manipulations
+   *
+   * the rules:
+   *    - single click teleports the selected ?? clicked card(s) between the
+   *      hand and play area 1
+   *    - cmd-click adds or removes cards from the selection
+   *    - shift-click performs range selection/deselection
    */
-  onSelect(id: string, ev: React.MouseEvent | React.TouchEvent) {
+  onClickCard(id: string, ev: React.MouseEvent | React.TouchEvent) {
     // click is swallowed if a drag occurred
     if (ev.defaultPrevented) return;
 
-    // middle-click simulates double-click
-    if ('button' in ev && ev.button === 1) {
-      const dst_adx = this.state.id_to_area[id] === 0 ? 1 : 0;
-      const dst_pos = this.state.areas[dst_adx]?.ordered?.length;
-
-      return this.moveCards(dst_adx, dst_pos, id);
-    }
-
-    // left click only for selection
+    // left click only
     if ('button' in ev && ev.button !== 0) return;
 
     // synthetic events won't persist into the setState() callback
@@ -774,6 +771,13 @@ export class PlayArea extends React.Component<
     const {shiftKey} = ev;
 
     ev.preventDefault(); // bypass window handler
+
+    if (!metaKey && !shiftKey) {
+      const dst_adx = this.state.id_to_area[id] === 0 ? 1 : 0;
+      const dst_pos = this.state.areas[dst_adx]?.ordered?.length;
+
+      return this.moveCards(dst_adx, dst_pos, id);
+    }
 
     this.setState((state, props): PlayArea.State => {
       assert(state.prev_start === null ||
@@ -824,6 +828,7 @@ export class PlayArea extends React.Component<
         };
       }
 
+      // this shouldn't happen if single-click == teleport
       return (state.selected.size === 1 && state.selected.has(id)
         // only this card selected; toggle selection
         ? {...state, selected: new Set(), prev_start: null}
@@ -837,6 +842,9 @@ export class PlayArea extends React.Component<
    * teleport the clicked or selected cards between the hand and staging area
    *
    * we handle dblclick events as well as mousedown, for middle-click
+   *
+   * NB: this is currently unused because single-click is being used as the
+   * teleport trigger
    */
   onTeleport(id: string, ev: React.MouseEvent) {
     // click is swallowed if a drag occurred
@@ -1004,17 +1012,20 @@ export class PlayArea extends React.Component<
    */
   moveCards(dst_adx: number, dst_pos: number, src_id: string) {
     this.setState((state, props): PlayArea.State => {
-      const multidrag_id = state.multidrag?.id ?? null;
-      state = {...state, multidrag: null};
-
       if (dst_adx === state.areas.length) {
-        // user dragged into the "next area" area OR into a bid/kitty area that
-        // we don't have set up in `state`; instantiate it here
+        // user dragged or teleported card(s) into the "next area" area OR into
+        // a play area that we don't have set up in `state`; instantiate it
+        // here (unless the area shouldn't exist)
+        if (props.phase === ZPY.Phase.FRIEND) return;
         state = {
           ...state,
           areas: [...state.areas, {ordered: [], id_to_pos: {}}],
         };
       }
+
+      const multidrag_id = state.multidrag?.id ?? null;
+      state = {...state, multidrag: null};
+
       const dst_area = state.areas[dst_adx];
 
       const is_dragging = (card: CardID): boolean => {
@@ -1197,8 +1208,7 @@ export class PlayArea extends React.Component<
       cards={this.state.areas[1]?.ordered ?? []}
       selected={this.state.selected}
       multidrag={this.state.multidrag}
-      onSelect={this.onSelect}
-      onTeleport={this.onTeleport}
+      onClick={this.onClickCard}
     />;
   }
 
@@ -1313,14 +1323,13 @@ export class PlayArea extends React.Component<
           cards={this.state.areas[adx].ordered}
           selected={this.state.selected}
           multidrag={this.state.multidrag}
-          onSelect={this.onSelect}
-          onTeleport={this.onTeleport}
+          onClick={this.onClickCard}
         />
       })}
       <EmptyArea
         key={this.state.areas.length}
         droppableId={'' + this.state.areas.length}
-        text="start another fly chunk"
+        text={this.state.areas.length > 1 ? "start another fly chunk" : null}
       />
     </div>
   }
@@ -1361,8 +1370,7 @@ export class PlayArea extends React.Component<
         cards={this.state.areas[0].ordered}
         selected={this.state.selected}
         multidrag={this.state.multidrag}
-        onSelect={this.onSelect}
-        onTeleport={this.onTeleport}
+        onClick={this.onClickCard}
       />
     </div>;
   }
