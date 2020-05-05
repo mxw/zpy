@@ -30,7 +30,7 @@ export class GameClient<
   readonly sock_url: string;
 
   // exponential backoff delay for reconnecting the websocket; in milliseconds
-  reconnect_delay: number = 125;
+  reconnect_delay: number = 500;
 
   // whether we are synchronized w/ the server.
   //

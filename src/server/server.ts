@@ -241,7 +241,7 @@ class Game<
    * kick a naughty client by sending them 'bye' and disconnecting
    */
   kick(client: Client, reason: string) {
-    console.log("kick: " + reason);
+    console.log(`kick ${client.user?.id ?? '<unknown>'}: ${reason}`);
     this.bye(client)
   }
 
