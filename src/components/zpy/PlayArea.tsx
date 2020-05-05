@@ -1230,6 +1230,8 @@ export class PlayArea extends React.Component<
   }
 
   renderSetupArea() {
+    if (this.props.me.id !== this.props.zpy.owner) return null;
+
     return <ConfigArea
       nplayers={this.props.zpy.players.length}
       config={this.state.config}
