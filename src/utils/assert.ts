@@ -2,7 +2,7 @@
  * assertion wrapper
  */
 
-import * as assert_ from 'assert'
+import assert_ from 'assert'
 
 export default function assert(
   cond: boolean,
@@ -10,5 +10,5 @@ export default function assert(
   ...args: any[]
 ) {
   if (msg) console.assert(cond, msg, ...args);
-  assert_.strict(cond);
+  assert_(cond);
 }
