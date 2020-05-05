@@ -2,8 +2,6 @@
 
 ## public release
 
-- implement a homepage
-
 - reap dead games
 
 ## wishlist

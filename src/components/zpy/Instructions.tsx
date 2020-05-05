@@ -53,8 +53,8 @@ export class Instructions extends React.Component<Instructions.Props, {}> {
         switch (this.props.phase) {
           case ZPY.Phase.INIT: return me === zpy.owner
             ? <>
-                gather at least {ZPY.min_players} players.
-                you can set game options with the buttons above.
+                gather at least {ZPY.min_players} players by sharing the URL of
+                this page. you can set game options using the buttons above.
               </>
             : <>waiting for the game to start</>;
           case ZPY.Phase.DRAW:
