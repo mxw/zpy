@@ -52,7 +52,10 @@ export class Instructions extends React.Component<Instructions.Props, {}> {
       const text = (() => {
         switch (this.props.phase) {
           case ZPY.Phase.INIT: return me === zpy.owner
-            ? <>gather at least {ZPY.min_players} players</>
+            ? <>
+                gather at least {ZPY.min_players} players.
+                you can set game options with the buttons above.
+              </>
             : <>waiting for the game to start</>;
           case ZPY.Phase.DRAW:
             return null;
@@ -73,7 +76,7 @@ export class Instructions extends React.Component<Instructions.Props, {}> {
               </>
             : <>waiting for the winner to collect the trick</>;
           case ZPY.Phase.FINISH:
-            return <>waiting for the host to reveal the kitty</>;
+            return <>waiting for the host to end the round</>;
           case ZPY.Phase.WAIT: return me === zpy.host
             ? <>waiting for everyone else to be ready</>
             : <>waiting for the host to start the round</>;
@@ -123,7 +126,7 @@ export class Instructions extends React.Component<Instructions.Props, {}> {
             </>
           : <>you won the trick; press {enter} to collect it</>;
         case ZPY.Phase.FINISH:
-          return <>press {enter} to reveal the kitty and end the round</>;
+          return <>press {enter} to end the round</>;
         case ZPY.Phase.WAIT: return me === zpy.host
           ? <>press {enter} to start the next round</>
           : <>press {enter} to indicate you are ready for the next round</>;
