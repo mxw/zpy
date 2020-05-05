@@ -26,6 +26,7 @@
     "react-modal": "^3.11.2",
     "styled-components": "^5.1.0",
     "uuid": "*",
+    "winston": "^3.2.1",
     "ws": "*"
   },
   "devDependencies": {
