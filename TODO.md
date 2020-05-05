@@ -8,8 +8,6 @@
 
 - support parts
 
-- support adding/removing players between rounds
-
 - reap dead games and clients
 
 ## wishlist
@@ -37,6 +35,3 @@
 - make clubs and spades more distinct
 
 - trigger renege when someone fails to contest a fly
-
-- keep-hand-sorted should sort on teleports and resets (it should also uncheck
-  if you rearrange your hand manually)

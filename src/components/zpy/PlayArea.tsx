@@ -1063,7 +1063,7 @@ export class PlayArea extends React.Component<
         : [src_id];
       const affected_areas = new Set(selected.map(id => state.id_to_area[id]));
 
-      return PlayArea.validate(PlayArea.reapAreas({
+      state = PlayArea.validate(PlayArea.reapAreas({
         ...state,
         areas: state.areas.map((area, adx) => {
           if (adx === dst_adx) {
@@ -1083,6 +1083,15 @@ export class PlayArea extends React.Component<
           ...Object.fromEntries(selected.map(id => [id, dst_adx]))
         },
       }, props));
+
+      if (state.keep_hand_sorted) {
+        if (dst_adx === 0 && affected_areas.has(0)) {
+          state = {...state, keep_hand_sorted: false};
+        } else {
+          state = PlayArea.withHandSorted(state, props);
+        }
+      }
+      return state;
     });
   }
 
