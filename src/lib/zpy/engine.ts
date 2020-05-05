@@ -310,6 +310,7 @@ const card_arr = <L extends string> (
 namespace A {
 
 export const add_player = trivial('add_player');
+export const rm_player = trivial('rm_player');
 
 export const set_decks = C.type({
   kind: C.literal('set_decks'),
@@ -392,6 +393,7 @@ export const next_round = trivial('next_round');
 
 const Intent_ = (tr: TrumpMeta) => C.sum('kind')({
   'add_player': A.add_player,
+  'rm_player': A.rm_player,
   'set_decks': A.set_decks,
   'set_rule_mods': A.set_rule_mods,
   'start_game': A.start_game,
@@ -423,6 +425,7 @@ export type Action = Intent;
 
 const Effect_ = (tr: TrumpMeta) => C.sum('kind')({
   'add_player': A.add_player,
+  'rm_player': A.rm_player,
   'set_decks': A.set_decks,
   'set_rule_mods': A.set_rule_mods,
   'init_game': A.init_game,
@@ -466,6 +469,7 @@ export const predict = (
 ): null | Result<{effect: Effect, state: ClientState}, UpdateError> => {
   switch (intent.kind) {
     case 'add_player': break;
+    case 'rm_player': break;
     case 'set_decks': {
       const result = state[intent.kind](...intent.args);
       return (result instanceof ZPY.Error)
@@ -556,6 +560,11 @@ export const larp = (
 
   switch (intent.kind) {
     case 'add_player': {
+      const result = state[intent.kind](...intent.args);
+      if (result instanceof ZPY.Error) return Err(result);
+      return OK([state, everyone(intent)]);
+    }
+    case 'rm_player': {
       const result = state[intent.kind](...intent.args);
       if (result instanceof ZPY.Error) return Err(result);
       return OK([state, everyone(intent)]);
@@ -683,6 +692,10 @@ export const apply_client = (
 
       switch (effect.kind) {
         case 'add_player': {
+          const result = state[effect.kind](...effect.args);
+          return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+        }
+        case 'rm_player': {
           const result = state[effect.kind](...effect.args);
           return (result instanceof ZPY.Error) ? Err(result) : OK(state);
         }

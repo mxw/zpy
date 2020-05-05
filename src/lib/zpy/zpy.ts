@@ -281,6 +281,35 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   }
 
   /*
+   * Phase.{INIT,WAIT} : {Action,Effect}.rm_player
+   *
+   * Remove a player from the game.
+   */
+  rm_player(player: PlayerID): ZPY.Result {
+    if (this.phase !== ZPY.Phase.INIT &&
+        this.phase !== ZPY.Phase.WAIT) {
+      return ZPY.BadPhaseError.from('rm_player', this.phase);
+    }
+    const idx = this.players.indexOf(player);
+    if (idx < 0) {
+      return new ZPY.InvalidArgError('player not in game');
+    }
+
+    this.players.splice(idx, 1);
+    for (let i = 0; i < this.nplayers; ++i) {
+      this.order[this.players[i]] = i;
+    }
+    delete this.ranks[player];
+
+    // we don't need to reset anything else; reset_round() takes care of it
+
+    if (player === this.owner) {
+      // need a new owner; it doesn't really matter who
+      this.owner = this.host ?? this.players[0];
+    }
+  }
+
+  /*
    * Phase.{INIT,WAIT} : {Action,Effect}.set_decks
    * Phase.{INIT,WAIT} : {Action,Effect}.set_rule_mods
    *

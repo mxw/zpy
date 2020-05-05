@@ -440,6 +440,30 @@ body {
   }
 }
 
+.door-wrapper {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+
+  @include rhythm.rh-border-full(0.375);
+  border-bottom-left-radius: rhythm.rh(0.5);
+  border-style: solid;
+  border-color: grey grey transparent transparent;
+
+  &.join {
+    background-color: rgba(51, 170, 51, 0.5);
+  }
+  &.leave {
+    background-color: rgba(170, 51, 51, 0.37);
+  }
+}
+
+.door {
+  width: rhythm.rh(3);
+  height: rhythm.rh(3);
+  vertical-align: middle;
+}
+
 $-card-height-friend: card.height-for(card.$width-friend);
 
 /*
