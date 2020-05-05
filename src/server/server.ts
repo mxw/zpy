@@ -441,9 +441,12 @@ export class GameServer<
     const id = Uuid.v4();
 
     const cleanup = () => {
+      console.log(`queueing /zpy/${id} for deletion`);
+
       setTimeout(() => {
         if (id in this.games &&
             this.games[id].clients.length === 0) {
+          console.log(`deleting /zpy/${id}`);
           delete this.games[id];
         }
       }, options.game_expiry); // 30 minutes of inactivity

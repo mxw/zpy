@@ -305,7 +305,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
 
     if (player === this.owner) {
       // need a new owner; it doesn't really matter who
-      this.owner = this.host ?? this.players[0];
+      this.owner = this.host ?? this.players[0] ?? null;
     }
   }
 
