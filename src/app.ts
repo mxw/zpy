@@ -11,6 +11,8 @@ import * as HTTP from 'http'
 import * as WebSocket from 'ws'
 
 import * as options from 'options.ts'
+import assert from 'utils/assert.ts'
+import log from 'utils/logger.ts'
 
 
 const app = express();
@@ -32,6 +34,8 @@ app.use(express.json());
 
 const server = HTTP.createServer(app);
 const gs = new GameServer(ZPYEngine, server, "zpy");
+
+///////////////////////////////////////////////////////////////////////////////
 
 /*
  * return the client's session id
@@ -73,10 +77,14 @@ app.post('/api/new_game', (req, res) => {
     rank: 0,
     kitty: 0,
   }, r.session.id);
-  console.log(`/zpy/${game_id} initiated by ${r.session.id}`);
+
+  log.info('creating game', {
+    game: game_id,
+    owner: r.session.id,
+  });
   res.send(game_id);
 });
 
 server.listen(8080, () => {
-  console.log("listening on port 8080");
+  log.info('listening on port 8080');
 });

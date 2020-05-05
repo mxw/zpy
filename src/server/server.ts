@@ -14,6 +14,7 @@ import * as Uuid from 'uuid'
 
 import * as options from 'options.ts'
 import assert from 'utils/assert.ts'
+import log from 'utils/logger.ts'
 
 export type GameId = string;
 export type Principal = Session.Id;
@@ -24,6 +25,14 @@ interface Client {
   sync: boolean;
   socket: WebSocket;
 };
+
+function log_client(client: Client) {
+  return {
+    session: client.principal,
+    uid: client.user?.id ?? null,
+    nick: client.user?.nick ?? '<unknown>',
+  };
+}
 
 /*
  * the server-side protocol monkey
@@ -241,7 +250,7 @@ class Game<
    * kick a naughty client by sending them 'bye' and disconnecting
    */
   kick(client: Client, reason: string) {
-    console.log(`kick ${client.user?.id ?? '<unknown>'}: ${reason}`);
+    log.info('kick', {...log_client(client), reason});
     this.bye(client)
   }
 
@@ -317,8 +326,12 @@ class Game<
           case "req:update": this.update(client, msg.tx, msg.intent); break;
         }
       }, (e: any) => {
-        console.error(P.draw_error(e), d);
-        this.kick(client, "invalid msg");
+        log.error('failed to decode client message', {
+          ...log_client(client),
+          msg: d,
+          draw: P.draw_error(e),
+        });
+        this.kick(client, 'invalid msg');
       });
     });
 
@@ -366,8 +379,9 @@ export class GameServer<
     this.ws = new WebSocket.Server({noServer: true});
 
     server.on('upgrade', async (req: Http.IncomingMessage, sock, head) => {
-      const bail = (reason: string) => {
-        console.log(reason)
+      const bail = (reason: string, details?: object) => {
+        log.error('websocket upgrade failure', {...details, reason});
+
         sock.write('HTTP/1.1 400 Bad Request\r\n' +
                    'X-Reason: ' + reason + '\r\n');
         sock.destroy();
@@ -377,13 +391,13 @@ export class GameServer<
       // is the url cromulent
       const matches = req.url.match(`^\/${url_pref}\/([^\\\/]*)\/$`);
       if (matches === null) {
-        return bail("invalid uri");
+        return bail('invalid uri', {uri: req.url});
       }
 
       // is the game a real thing
       const game_id = matches[1];
       if (!(game_id in this.games)) {
-        return bail("no such game: " + game_id);
+        return bail(`no such game: ${game_id}`, {game: game_id});
       }
       const game = this.games[game_id];
 
@@ -409,11 +423,11 @@ export class GameServer<
 
       const session = Session.get(id);
       if (session === null) {
-        return bail("no session " + id);
+        return bail(`no such session: ${id}`, {id});
       }
 
       if (token !== session.token) {
-        return bail("invalid token: " + token);
+        return bail(`invalid token: ${token}`, {token});
       }
 
       this.ws.handleUpgrade(req, sock, head, async (ws: WebSocket) => {
@@ -441,12 +455,12 @@ export class GameServer<
     const id = Uuid.v4();
 
     const cleanup = () => {
-      console.log(`queueing /zpy/${id} for deletion`);
+      log.info('queueing game for deletion', {game: id});
 
       setTimeout(() => {
         if (id in this.games &&
             this.games[id].clients.length === 0) {
-          console.log(`deleting /zpy/${id}`);
+          log.info('deleting game', {game: id});
           delete this.games[id];
         }
       }, options.game_expiry); // 30 minutes of inactivity
