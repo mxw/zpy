@@ -62,6 +62,10 @@ export class Home extends React.Component<{}, Home.State> {
         <p>
           ZPY was made by <a href="https://github.com/mxw/">max wang</a>.
         </p>
+        <p>
+          ZPY is currently in <b><i>beta</i></b>, so expect occasional
+          disruptions as issues are fixed live.
+        </p>
       </div>
     </div>;
   }
