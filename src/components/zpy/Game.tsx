@@ -38,6 +38,7 @@ export class Game extends React.Component<Game.Props, Game.State> {
     this.attempt = this.attempt.bind(this);
     this.subscribeReset = this.subscribeReset.bind(this);
     this.subscribeUpdate = this.subscribeUpdate.bind(this);
+    this.queueError = this.queueError.bind(this);
 
     this.onClickDoor = this.onClickDoor.bind(this);
     this.closeReveal = this.closeReveal.bind(this);
@@ -177,6 +178,13 @@ export class Game extends React.Component<Game.Props, Game.State> {
     }
   }
 
+  queueError(ue: ZPYEngine.UpdateError) {
+    this.setState((state, props) => ({
+      next_err_id: state.next_err_id + 1,
+      pending_error: {id: state.next_err_id, ue},
+    }));
+  }
+
   onReject<T>(
     cb: null | ((ue: ZPYEngine.UpdateError, ctx?: T) => void),
     client: Client,
@@ -289,6 +297,7 @@ export class Game extends React.Component<Game.Props, Game.State> {
           attempt: this.attempt,
           subscribeReset: this.subscribeReset,
           subscribeUpdate: this.subscribeUpdate,
+          queueError: this.queueError,
         }}
       />
       {this.renderReveal()}

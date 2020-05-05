@@ -468,8 +468,16 @@ export class PlayArea extends React.Component<
   }
 
   submitLeadPlay(): boolean {
-    const fl = this.extractPlay()?.fl();
-    if (!fl) return false;
+    const play = this.extractPlay();
+    if (!play) return false;
+
+    const fl = play.fl();
+    if (!fl) {
+      this.props.funcs.queueError(new ZPY.InvalidPlayError(
+        'no mixed-suit leads'
+      ));
+      return false;
+    }
 
     const to_rm = this.state.areas.slice(1).flatMap(a => a.ordered);
 
@@ -559,22 +567,39 @@ export class PlayArea extends React.Component<
     );
     if (piles.length === 0) return null;
 
-    if (piles.length === 1) {
-      // XXX: if this is a guess, assume it's right
+    // full-control: just return the Play#extract'd play
+    if (!this.state.full_control && piles.length === 1) {
       return piles[0];
     }
+
+    // even in full-control mode, a single Toss is valid
+    if (piles.length === 1 && piles[0].ts() !== null) {
+      return piles[0];
+    }
+    // past this point, we should be in full-control mode with either multiple
+    // piles or a single pile that's a Flight
 
     const components: Flight[] = piles
       .map(p => p.fl())
       .filter(fl => fl !== null);
 
     // no component can be a Toss
-    if (components.length !== piles.length) return null;
+    if (components.length !== piles.length) {
+      this.props.funcs.queueError(new ZPY.InvalidPlayError(
+        'all cards must be the same suit in full-control mode'
+      ));
+      return null;
+    }
 
-    const v_suit = this.props.zpy.lead?.tractors[0].v_suit ??
-                   components[0].v_suit;
+    const v_suit = components[0].v_suit;
+
     // all components must be the same suit
-    if (!components.every(fl => fl.v_suit === v_suit)) return null;
+    if (!components.every(fl => fl.v_suit === v_suit)) {
+      this.props.funcs.queueError(new ZPY.InvalidPlayError(
+        'all cards must be the same suit in full-control mode'
+      ));
+      return null;
+    }
 
     let singletons: null | Flight = null;
 
@@ -582,11 +607,21 @@ export class PlayArea extends React.Component<
       if (fl.tractors.length === 1) continue;
 
       // at most one component with > 1 tractor allowed
-      if (singletons !== null) return null;
+      if (singletons !== null) {
+        this.props.funcs.queueError(new ZPY.InvalidPlayError(
+          'separate all your tuples, tractors, and singletons'
+        ));
+        return null;
+      }
       singletons = fl;
 
       // that component must be all singletons
-      if (fl.count !== fl.tractors.length) return null;
+      if (fl.count !== fl.tractors.length) {
+        this.props.funcs.queueError(new ZPY.InvalidPlayError(
+          'separate all your tuples, tractors, and singletons'
+        ));
+        return null;
+      }
     }
     // the piles form a valid Flight; flatten them all together
     return new Flight(components.flatMap(fl => fl.tractors));

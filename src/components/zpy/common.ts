@@ -22,6 +22,9 @@ export type Client = GameClient<
  * callback table threaded through the component hierarchy
  */
 export type EngineCallbacks<T> = {
+  /*
+   * make a game action request to the server
+   */
   attempt: (
     intent: ZPYEngine.Intent,
     onUpdate: null | ((effect: ZPYEngine.Effect, ctx?: T) => void),
@@ -29,8 +32,17 @@ export type EngineCallbacks<T> = {
     ctx?: T,
   ) => void;
 
+  /*
+   * subscribe to server updates, including ones not initiated by our player
+   */
   subscribeReset: (callback: (state: ZPYEngine.ClientState) => void) => void;
   subscribeUpdate: (callback: (effect: ZPYEngine.Effect) => void) => void;
+
+  /*
+   * queue up an error to be rendered, for UI action errors that simulate game
+   * action errors
+   */
+  queueError: (ue: ZPYEngine.UpdateError) => void;
 };
 
 /*

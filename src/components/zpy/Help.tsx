@@ -33,24 +33,19 @@ export function Help(props: {}) {
 
       <h3>playing cards</h3>
       <p>
-        drag and drop cards between your hand and the play area.
+        click or drag and drop cards to move them between your hand and the
+        play area.
       </p>
 
       <div className="help-shortcuts">
         <div className="help-key">{pointer}</div>
-        <div>select a card</div>
-
-        <div className="help-key">double-{pointer}</div>
         <div>teleport cards b/w hand and play area</div>
 
-        <div className="help-key">middle-{pointer}</div>
-        <div>same as double-click</div>
-
         <div className="help-key">{cmd}+{pointer}</div>
-        <div>select multiple</div>
+        <div>select/deselect cards</div>
 
         <div className="help-key">{shift}+{pointer}</div>
-        <div>select range</div>
+        <div>select range of cards</div>
 
         <div className="help-key">{enter}</div>
         <div>submit a play or confirm a prompt</div>

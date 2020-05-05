@@ -34,18 +34,9 @@
 
 - use `identity` instead of `me` for all checks in UI
 
-- if you have a fresh session with fresh cookies, join a game, change your
-  name, it doesn't update, and if you refresh you get reinstantiated
-
 - make clubs and spades more distinct
 
 - trigger renege when someone fails to contest a fly
 
-- make team affiliations more obvious
-
-- SSBB doesn't beat 88JJ of diamonds
-
 - keep-hand-sorted should sort on teleports and resets (it should also uncheck
   if you rearrange your hand manually)
-
-- don't forget error text for UI-invalidated plays
