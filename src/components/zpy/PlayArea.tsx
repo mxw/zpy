@@ -44,7 +44,6 @@ export class PlayArea extends React.Component<
     // player actions
     this.onSubmit = this.onSubmit.bind(this);
     this.onEffect = this.onEffect.bind(this);
-    this.onClickDoor = this.onClickDoor.bind(this);
     this.onConfigChange = this.onConfigChange.bind(this);
     this.onClickDeck = this.onClickDeck.bind(this);
 
@@ -1185,42 +1184,12 @@ export class PlayArea extends React.Component<
     }));
   }
 
-  onClickDoor(ev: React.MouseEvent | React.TouchEvent) {
-    if (ev.defaultPrevented) return;
-    if ('button' in ev && ev.button !== 0) return;
-
-    ev.preventDefault();
-
-    if (this.props.zpy.players.includes(this.props.me.id)) {
-      this.attempt({kind: 'rm_player', args: [this.props.me.id]});
-    } else {
-      this.attempt({kind: 'add_player', args: [this.props.me.id]});
-    }
-  }
-
   renderSetupArea() {
-    const action = this.props.zpy.players.includes(this.props.me.id)
-      ? 'leave'
-      : 'join';
-
-    return <>
-      <div
-        className={`door-wrapper ${action}`}
-        onClick={this.onClickDoor}
-      >
-        <div aria-label={`${action} game`} data-balloon-pos="right">
-          <img
-            className="door"
-            src="/static/png/icons/door.png"
-          />
-        </div>
-      </div>
-      <ConfigArea
-        nplayers={this.props.zpy.players.length}
-        config={this.state.config}
-        onChange={this.onConfigChange}
-      />
-    </>;
+    return <ConfigArea
+      nplayers={this.props.zpy.players.length}
+      config={this.state.config}
+      onChange={this.onConfigChange}
+    />;
   }
 
   onClickDeck(ev: React.MouseEvent | React.TouchEvent) {

@@ -39,6 +39,7 @@ export class Game extends React.Component<Game.Props, Game.State> {
     this.subscribeReset = this.subscribeReset.bind(this);
     this.subscribeUpdate = this.subscribeUpdate.bind(this);
 
+    this.onClickDoor = this.onClickDoor.bind(this);
     this.closeReveal = this.closeReveal.bind(this);
 
     this.state = {
@@ -203,8 +204,8 @@ export class Game extends React.Component<Game.Props, Game.State> {
 
   attempt(
     intent: ZPYEngine.Intent,
-    onUpdate: (effect: ZPYEngine.Effect, ctx?: any) => void,
-    onReject: (ue: ZPYEngine.UpdateError, ctx?: any) => void,
+    onUpdate: null | ((effect: ZPYEngine.Effect, ctx?: any) => void),
+    onReject: null | ((ue: ZPYEngine.UpdateError, ctx?: any) => void),
     ctx?: any,
   ) {
     this.state.client.attempt(
@@ -228,6 +229,42 @@ export class Game extends React.Component<Game.Props, Game.State> {
 
   /////////////////////////////////////////////////////////////////////////////
 
+  onClickDoor(ev: React.MouseEvent | React.TouchEvent) {
+    if (ev.defaultPrevented) return;
+    if ('button' in ev && ev.button !== 0) return;
+
+    ev.preventDefault();
+
+    const me = this.state.client.me.id;
+
+    if (this.state.client.state.players.includes(me)) {
+      this.attempt({kind: 'rm_player', args: [me]}, null, null);
+    } else {
+      this.attempt({kind: 'add_player', args: [me]}, null, null);
+    }
+  }
+
+  renderDoor() {
+    const me = this.state.client.me.id;
+    const action = this.state.client.state.players.includes(me)
+      ? 'leave'
+      : 'join';
+
+    return <div
+      className={`door-wrapper ${action}`}
+      onClick={this.onClickDoor}
+    >
+      <div aria-label={`${action} game`} data-balloon-pos="left">
+        <img
+          className="door-icon"
+          src="/static/png/icons/door.png"
+        />
+      </div>
+    </div>;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+
   render() {
     const client = this.state.client;
 
@@ -239,7 +276,10 @@ export class Game extends React.Component<Game.Props, Game.State> {
     if (client.state === null) return null;
 
     return <>
-      <Help />
+      <div className="sidebar">
+        <Help />
+        {this.renderDoor()}
+      </div>
       <Board
         gid={this.props.id}
         me={client.me}

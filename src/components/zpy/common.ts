@@ -24,8 +24,8 @@ export type Client = GameClient<
 export type EngineCallbacks<T> = {
   attempt: (
     intent: ZPYEngine.Intent,
-    onUpdate: (effect: ZPYEngine.Effect, ctx?: T) => void,
-    onReject: (ue: ZPYEngine.UpdateError, ctx?: T) => void,
+    onUpdate: null | ((effect: ZPYEngine.Effect, ctx?: T) => void),
+    onReject: null | ((ue: ZPYEngine.UpdateError, ctx?: T) => void),
     ctx?: T,
   ) => void;
 
