@@ -118,25 +118,10 @@ class Game<
       })
     ));
 
-    for (let client of this.clients) {
-      if (!client.sync) continue;
-
-      const Update = P.Update(this.engine.Effect(this.state));
-
-      client.socket.send(JSON.stringify(
-        Update.encode({
-          verb: "update",
-          tx: null,
-          command: {
-            kind: "protocol",
-            effect: {
-              verb: known ? "user:rejoin" : "user:join",
-              who: source.user,
-            },
-          },
-        })
-      ));
-    }
+    this.broadcast(source, {
+      verb: known ? "user:rejoin" : "user:join",
+      who: source.user,
+    });
   }
 
   /*
@@ -144,6 +129,8 @@ class Game<
    *
    * the response will be marked w/ the transaction id provided here; either as
    * an update messsage after we handle the update or as a reject message
+   *
+   * this function also handles translated protocol action broadcasts
    */
   update(source: Client, tx: P.TxID, intent: Intent) {
     const result = this.engine.larp(
@@ -154,6 +141,8 @@ class Game<
     );
 
     if (isErr(result)) {
+      if (!source.sync) return;
+
       const UpdateReject = P.UpdateReject(this.engine.UpdateError);
 
       source.socket.send(JSON.stringify(
@@ -211,14 +200,20 @@ class Game<
 
   /*
    * after we are finished w/ a client session, close their socket and remove
-   * them from the list of clients
-   *
-   * TODO: this should also be responsible for processing leaves if necessary
+   * them from the list of clients, and notify all clients appropriately
    */
-  dispose(client: Client) {
-    client.sync = false;
-    client.socket.close();
-    this.clients.splice(this.clients.indexOf(client));
+  dispose(victim: Client) {
+    // then remove the victim client
+    victim.sync = false;
+    victim.socket.close();
+    this.clients.splice(this.clients.indexOf(victim));
+
+    // broadcast the part.  de-syncing the victim above prevents us from
+    // attempting to send messages over the closed socket.
+    this.broadcast(victim, {
+      verb: "user:part",
+      id: victim.user.id,
+    });
   }
 
   /*
@@ -250,25 +245,40 @@ class Game<
 
     user.nick = nick;
 
+    const source = this.clients.find(cl => cl.principal === principal);
+    if (source === null) return;
+
+    this.broadcast(source, {
+      verb: "user:nick",
+      who: user,
+    });
+  }
+
+  /*
+   * broadcast a protocol action, including any associated engine effect
+   */
+  broadcast(source: Client, pa: P.ProtocolAction) {
+    const Update = P.Update(this.engine.Effect(this.state));
+
+    const update = JSON.stringify(
+      Update.encode({
+        verb: "update",
+        tx: null,
+        command: {
+          kind: "protocol",
+          effect: pa,
+        },
+      })
+    );
+
     for (let client of this.clients) {
       if (!client.sync) continue;
-
-      const Update = P.Update(this.engine.Effect(this.state));
-
-      client.socket.send(JSON.stringify(
-        Update.encode({
-          verb: "update",
-          tx: null,
-          command: {
-            kind: "protocol",
-            effect: {
-              verb: "user:nick",
-              who: user,
-            },
-          },
-        })
-      ));
+      client.socket.send(update);
     }
+
+    // engine action follows protocol action
+    const intent = this.engine.translate(this.state, pa, source.user);
+    if (intent !== null) this.update(source, null, intent);
   }
 
   /*
@@ -301,7 +311,9 @@ class Game<
         console.error(P.draw_error(e), d);
         this.kick(client, "invalid msg");
       });
-    })
+    });
+
+    sock.on('close', () => this.dispose(client));
   }
 }
 

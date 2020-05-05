@@ -142,7 +142,7 @@ export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
       : zpy.players;
 
     return <div className="round">
-      {ordered.map(uid =>
+      {ordered.map(uid => uid in users ? // users and players may be desync'd
         <Column
           key={uid}
           me={this.props.me}
@@ -173,7 +173,7 @@ export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
           winning={uid === zpy.winning}
           lead={zpy.lead}
           play={zpy.plays[uid] ?? null}
-        />
+        /> : null
       )}
       {this.renderTrumpIndicator()}
       {this.renderFriendIndicator()}

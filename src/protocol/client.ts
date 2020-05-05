@@ -229,10 +229,8 @@ export class GameClient<
 
       switch (pa.verb) {
         case 'user:join':
-          this.users.push(pa.who);
-          break;
         case 'user:rejoin':
-          // this does nothing because currently parts never occur
+          this.users.push(pa.who);
           break;
         case 'user:part':
           this.users = this.users.filter(u => u.id !== pa.id);

@@ -6,9 +6,7 @@
 
 - show "team point total" somewhere
 
-- support parts
-
-- reap dead games and clients
+- reap dead games
 
 ## wishlist
 

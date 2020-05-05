@@ -78,6 +78,17 @@ export interface Engine<
   // generate the initial engine state
   init: (options: Config) => State;
 
+  // convert a protocol action into an intent
+  //
+  // this is a generic mechanism for the server to transform protocol actions
+  // that it processes into game effects.  if this function returns null, it is
+  // ignored; if it returns non-null, the intent is passed to larp().
+  translate: (
+    state: State,
+    pa: P.ProtocolAction,
+    who: P.User,
+  ) => null | Intent;
+
   // listen, apply, redact_action, potato.
   //
   // lifts a client-generated intent into an action, applies that action to the

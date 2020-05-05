@@ -536,6 +536,25 @@ export const predict = (
   return null;
 };
 
+export const translate = (
+  state: State,
+  pa: P.ProtocolAction,
+  who: P.User,
+): null | Intent => {
+  switch (pa.verb) {
+    case 'user:join': break;
+    case 'user:rejoin': break;
+    case 'user:nick': break;
+    case 'user:part':
+      if (state.phase !== ZPY.Phase.INIT &&
+          state.phase !== ZPY.Phase.WAIT) {
+        return null;
+      }
+      return {kind: 'rm_player', args: [who.id]};
+  }
+  return null;
+};
+
 export const larp = (
   state: State,
   intent: Intent,
@@ -694,7 +713,7 @@ export const apply_client = (
         case 'user:part': return OK(state);
         case 'user:nick': return OK(state);
       }
-      return Err(new ZPY.Error('protocol actions not implemented'));
+      break;
     }
 
     case 'engine': {
@@ -794,8 +813,10 @@ export const apply_client = (
           return (result instanceof ZPY.Error) ? Err(result) : OK(state);
         }
       }
+      break;
     }
   }
+  assert(false);
 };
 
 export const redact = (state: State, who: P.User): ClientState => {
