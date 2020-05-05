@@ -254,9 +254,13 @@ export class Game extends React.Component<Game.Props, Game.State> {
 
   renderDoor() {
     const me = this.state.client.me.id;
-    const action = this.state.client.state.players.includes(me)
-      ? 'leave'
-      : 'join';
+    const zpy = this.state.client.state;
+
+    if (zpy.phase !== ZPY.Phase.INIT &&
+        zpy.phase !== ZPY.Phase.WAIT) {
+      return null;
+    }
+    const action = zpy.players.includes(me) ? 'leave' : 'join';
 
     return <div
       className={`door-wrapper ${action}`}
