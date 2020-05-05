@@ -24,7 +24,7 @@ describe('ZPY', () => {
   it('plays a whole game', () => {
     let zpy = new ZPY<PlayerID>({
       renege: ZPY.RenegeRule.FORBID,
-      rank: ZPY.RankSkipRule.PLAY_ONCE,
+      rank: ZPY.RankSkipRule.HOST_ONCE,
       kitty: ZPY.KittyMultiplierRule.EXP,
     });
     zpy.set_debug();

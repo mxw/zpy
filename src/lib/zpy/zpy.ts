@@ -278,11 +278,13 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
 
   /*
    * Phase.INIT : {Action,Effect}.set_decks
+   * Phase.INIT : {Action,Effect}.set_rule_mods
    *
-   * Set the number of decks.  Game owner only.
+   * Configure the game.  Game owner only.
    */
   set_decks(player: PlayerID, ndecks: number): ZPY.Result {
-    if (this.phase !== ZPY.Phase.INIT) {
+    if (this.phase !== ZPY.Phase.INIT &&
+        this.phase !== ZPY.Phase.WAIT) {
       return ZPY.BadPhaseError.from('set_decks', this.phase);
     }
     if (player !== this.owner) {
@@ -292,6 +294,16 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       return new ZPY.InvalidArgError('non-positive number of decks');
     }
     this.ndecks = ndecks;
+  }
+  set_rule_mods(player: PlayerID, rules: ZPY.RuleModifiers): ZPY.Result {
+    if (this.phase !== ZPY.Phase.INIT &&
+        this.phase !== ZPY.Phase.WAIT) {
+      return ZPY.BadPhaseError.from('set_rule_mods', this.phase);
+    }
+    if (player !== this.owner) {
+      return new ZPY.WrongPlayerError('game owner only');
+    }
+    this.rules = {...rules};
   }
 
   /*
@@ -1004,7 +1016,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
         if (this.rules.rank === ZPY.RankSkipRule.NO_PASS) {
           if (player !== this.host) return;
         }
-        if (this.rules.rank === ZPY.RankSkipRule.PLAY_ONCE) {
+        if (this.rules.rank === ZPY.RankSkipRule.HOST_ONCE) {
           if (meta.rank !== meta.last_host) return;
         }
       }
@@ -1282,7 +1294,7 @@ export namespace ZPY {
     UNDO_ONE, // allow players to undo their renege play before the trick ends
   }
   export enum RankSkipRule {
-    PLAY_ONCE, // must play 5,10,J,K,W once before ranking up
+    HOST_ONCE, // must host 5,10,J,K,W once before ranking up
     NO_SKIP,   // must stop at 5,10,J,K,W before passing
     NO_PASS,   // must win as host on 5,10,J,K,W to pass
     NO_RULE,   // no limits, freely skip any rank

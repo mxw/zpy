@@ -19,6 +19,7 @@ import * as ZPYEngine from 'lib/zpy/engine.ts'
 import { CardID, EngineCallbacks } from 'components/zpy/common.ts'
 import { CardImage } from 'components/zpy/CardImage.tsx'
 import { card_width, CardArea, EmptyArea } from 'components/zpy/CardArea.tsx'
+import { ConfigArea } from 'components/zpy/ConfigArea.tsx'
 import { FriendSelector } from 'components/zpy/FriendSelector.tsx'
 import { Instructions } from 'components/zpy/Instructions.tsx'
 
@@ -43,6 +44,7 @@ export class PlayArea extends React.Component<
     // player actions
     this.onSubmit = this.onSubmit.bind(this);
     this.onEffect = this.onEffect.bind(this);
+    this.onConfigChange = this.onConfigChange.bind(this);
     this.onClickDeck = this.onClickDeck.bind(this);
 
     // window event listeners
@@ -70,6 +72,10 @@ export class PlayArea extends React.Component<
       prev_stop: null,
       multidrag: null,
 
+      config: {
+        ndecks: this.props.zpy.ndecks,
+        ...this.props.zpy.rules,
+      },
       fr_select: array_fill(this.props.zpy.ndecks, () => ({})),
 
       keep_hand_sorted: false,
@@ -153,6 +159,7 @@ export class PlayArea extends React.Component<
       prev_stop: state.prev_stop,
       multidrag: state.multidrag,
 
+      config: {...state.config},
       fr_select: state.fr_select.map(fr => ({...fr})),
 
       keep_hand_sorted: state.keep_hand_sorted,
@@ -1124,7 +1131,7 @@ export class PlayArea extends React.Component<
     const opts = [keep_hand_sorted];
 
     switch (this.props.phase) {
-      case ZPY.Phase.INIT: break;
+      case ZPY.Phase.INIT: return null;
       case ZPY.Phase.DRAW: opts.push(auto_draw); break;
       case ZPY.Phase.PREPARE: break;
       case ZPY.Phase.KITTY: break;
@@ -1138,7 +1145,7 @@ export class PlayArea extends React.Component<
         }
         break;
       case ZPY.Phase.FINISH: break;
-      case ZPY.Phase.WAIT: break;
+      case ZPY.Phase.WAIT: return null;
     }
 
     return <div className="user-options">{opts}</div>;
@@ -1157,6 +1164,31 @@ export class PlayArea extends React.Component<
       multidrag={this.state.multidrag}
       onSelect={this.onSelect}
       onTeleport={this.onTeleport}
+    />;
+  }
+
+  onConfigChange<K extends ConfigArea.Key>(key: K, val: ConfigArea.T[K]) {
+    // XXX: this is... suboptimal, because if the user presses a lot of buttons
+    // and we don't render between all of them, we might send partially stale
+    // updates.  the correct time to do is from componentDidUpdate()
+    if (key === 'ndecks') {
+      this.attempt({kind: 'set_decks', args: [this.props.me.id, val]});
+    } else {
+      this.attempt({
+        kind: 'set_rule_mods',
+        args: [this.props.me.id, {...this.state.config, [key]: val}]
+      });
+    }
+    this.setState((state, props) => ({
+      config: {...state.config, [key]: val}
+    }));
+  }
+
+  renderConfigArea() {
+    return <ConfigArea
+      nplayers={this.props.zpy.players.length}
+      config={this.state.config}
+      onChange={this.onConfigChange}
     />;
   }
 
@@ -1261,6 +1293,8 @@ export class PlayArea extends React.Component<
   renderActionArea() {
     const component = (() => {
       switch (this.props.phase) {
+        case ZPY.Phase.INIT:
+          return this.renderConfigArea();
         case ZPY.Phase.DRAW:
         case ZPY.Phase.PREPARE:
           return this.renderDrawArea();
@@ -1271,6 +1305,8 @@ export class PlayArea extends React.Component<
         case ZPY.Phase.FLY:
         case ZPY.Phase.FOLLOW:
           return this.renderStagingArea();
+        case ZPY.Phase.WAIT:
+          return this.renderConfigArea();
         default: break;
       }
       return null;
@@ -1433,6 +1469,8 @@ export type State = {
     pile: CardBase[];
   };
 
+  // local config update state
+  config: ConfigArea.T;
   // selected card is in the friend selector
   fr_select: Record<string, [CardBase, number]>[];
 

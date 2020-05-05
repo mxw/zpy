@@ -315,6 +315,10 @@ export const set_decks = C.type({
   kind: C.literal('set_decks'),
   args: C.tuple(PlayerID, C.number),
 });
+export const set_rule_mods = C.type({
+  kind: C.literal('set_rule_mods'),
+  args: C.tuple(PlayerID, Config),
+});
 
 export const start_game = trivial('start_game');
 export const init_game = C.type({
@@ -389,6 +393,7 @@ export const next_round = trivial('next_round');
 const Intent_ = (tr: TrumpMeta) => C.sum('kind')({
   'add_player': A.add_player,
   'set_decks': A.set_decks,
+  'set_rule_mods': A.set_rule_mods,
   'start_game': A.start_game,
   'draw_card': A.draw_card,
   'bid_trump': A.bid_trump,
@@ -419,6 +424,7 @@ export type Action = Intent;
 const Effect_ = (tr: TrumpMeta) => C.sum('kind')({
   'add_player': A.add_player,
   'set_decks': A.set_decks,
+  'set_rule_mods': A.set_rule_mods,
   'init_game': A.init_game,
   'add_to_hand': A.add_to_hand,
   'secure_bid': A.secure_bid,
@@ -466,6 +472,12 @@ export const predict = (
         : OK({effect: intent, state});
     }
     case 'set_decks': {
+      const result = state[intent.kind](...intent.args);
+      return (result instanceof ZPY.Error)
+        ? Err(result)
+        : OK({effect: intent, state});
+    }
+    case 'set_rule_mods': {
       const result = state[intent.kind](...intent.args);
       return (result instanceof ZPY.Error)
         ? Err(result)
@@ -554,6 +566,11 @@ export const larp = (
       return OK([state, everyone(intent)]);
     }
     case 'set_decks': {
+      const result = state[intent.kind](...intent.args);
+      if (result instanceof ZPY.Error) return Err(result);
+      return OK([state, everyone(intent)]);
+    }
+    case 'set_rule_mods': {
       const result = state[intent.kind](...intent.args);
       if (result instanceof ZPY.Error) return Err(result);
       return OK([state, everyone(intent)]);
@@ -675,6 +692,10 @@ export const apply_client = (
           return (result instanceof ZPY.Error) ? Err(result) : OK(state);
         }
         case 'set_decks': {
+          const result = state[effect.kind](...effect.args);
+          return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+        }
+        case 'set_rule_mods': {
           const result = state[effect.kind](...effect.args);
           return (result instanceof ZPY.Error) ? Err(result) : OK(state);
         }

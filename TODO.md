@@ -45,4 +45,7 @@
 
 - SSBB doesn't beat 88JJ of diamonds
 
-- keep-hand-sorted should sort on teleports and resets
+- keep-hand-sorted should sort on teleports and resets (it should also uncheck
+  if you rearrange your hand manually)
+
+- don't forget error text for UI-invalidated plays

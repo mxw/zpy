@@ -233,6 +233,7 @@ body {
   right: 0;
 
   font-size: rhythm.rh(2);
+  user-select: none;
 }
 
 .friend-indicator-wrapper {
@@ -243,6 +244,8 @@ body {
   > .friend-indicator {
     @include flex.column;
     align-items: flex-end;
+
+    user-select: none;
 
     > .friend {
       color: darkgrey;
@@ -370,6 +373,71 @@ body {
 
 .card {
   @include flex.row-center;
+}
+
+/*
+ * config selector
+ */
+.config-container {
+  @include flex.column;
+  justify-content: center;
+  flex: 1;
+  text-align: center;
+}
+
+.config {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  grid-column-gap: 0.5rem;
+
+  margin: rhythm.rh(0.5);
+
+  > label {
+    @include flex.column;
+
+    @include rhythm.rh-border-full(0.25);
+    border-radius: rhythm.rh(0.25);
+    border-style: solid;
+    border-color: black;
+    background-color: rgba(255, 255, 255, 0.65);
+
+    > div {
+      padding: rhythm.rh(0.25);
+    }
+  }
+}
+
+.config-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  align-items: center;
+
+  > div {
+    @include flex.row-center;
+
+    min-width: rhythm.rh(1.25);
+    height: rhythm.rh(1.25);
+
+    padding: rhythm.rh(0.25);
+
+    text-align: center;
+    user-select: none;
+
+    > sup {
+      padding-bottom: rhythm.rh(0.5);
+    }
+  }
+
+  > div:not(.selected) {
+    cursor: default;
+    background-color: lightgrey;
+    color: grey;
+  }
+  > div.selected {
+    cursor: default;
+    background-color: skyblue;
+    color: black;
+  }
 }
 
 $-card-height-friend: card.height-for(card.$width-friend);
