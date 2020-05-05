@@ -468,8 +468,18 @@ export const predict = (
   me: P.User,
 ): null | Result<{effect: Effect, state: ClientState}, UpdateError> => {
   switch (intent.kind) {
-    case 'add_player': break;
-    case 'rm_player': break;
+    case 'add_player': {
+      const result = state[intent.kind](...intent.args);
+      return (result instanceof ZPY.Error)
+        ? Err(result)
+        : OK({effect: intent, state});
+    }
+    case 'rm_player': {
+      const result = state[intent.kind](...intent.args);
+      return (result instanceof ZPY.Error)
+        ? Err(result)
+        : OK({effect: intent, state});
+    }
     case 'set_decks': {
       const result = state[intent.kind](...intent.args);
       return (result instanceof ZPY.Error)
