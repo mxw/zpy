@@ -624,7 +624,8 @@ kbd {
   border-left: rhythm.$px solid rgb(187, 187, 187);
   border-bottom: rhythm.$px solid rgb(187, 187, 187);
 
-  background-color: rgba(42, 42, 42, 0.5);
+  //background-image: radial-gradient(circle at top right, rgba(240,240,240,.5), rgba(0,200,255,.5));
+  border-color: rgba(67, 166, 226);
 
   > .help-info {
     display: none;
