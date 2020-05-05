@@ -254,12 +254,13 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   /////////////////////////////////////////////////////////////////////////////
 
   /*
-   * Phase.INIT : {Action,Effect}.add_player
+   * Phase.{INIT,WAIT} : {Action,Effect}.add_player
    *
    * Add a player to the game.  The first player added is the game owner.
    */
   add_player(player: PlayerID): ZPY.Result {
-    if (this.phase !== ZPY.Phase.INIT) {
+    if (this.phase !== ZPY.Phase.INIT &&
+        this.phase !== ZPY.Phase.WAIT) {
       return ZPY.BadPhaseError.from('add_player', this.phase);
     }
     if (this.players.find(p => p === player)) {
@@ -274,11 +275,14 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       start: 2,
       last_host: null,
     }
+    if (this.phase === ZPY.Phase.WAIT) {
+      this.order[player] = this.players.length - 1;
+    }
   }
 
   /*
-   * Phase.INIT : {Action,Effect}.set_decks
-   * Phase.INIT : {Action,Effect}.set_rule_mods
+   * Phase.{INIT,WAIT} : {Action,Effect}.set_decks
+   * Phase.{INIT,WAIT} : {Action,Effect}.set_rule_mods
    *
    * Configure the game.  Game owner only.
    */
