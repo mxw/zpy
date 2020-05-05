@@ -78,6 +78,25 @@ export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
     super(props);
   }
 
+  renderTeamScore() {
+    const zpy = this.props.zpy;
+
+    if (zpy.phase === ZPY.Phase.INIT ||
+        zpy.phase === ZPY.Phase.FINISH ||
+        zpy.phase === ZPY.Phase.WAIT) {
+      return null;
+    }
+    if (zpy.joins !== zpy.nfriends) return null;
+
+    const points = zpy.team_point_total('attacking');
+    const thresh = zpy.ndecks * 20;
+
+    return <div className="team-score">
+      attacking team has {points} points. next threshold is
+      at {(Math.floor(points / thresh) + 1) * thresh} points.
+    </div>;
+  }
+
   renderTrumpIndicator() {
     const zpy = this.props.zpy;
     if (zpy.tr === null) return null;
@@ -141,42 +160,45 @@ export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
       ]
       : zpy.players;
 
-    return <div className="round">
-      {ordered.map(uid => uid in users ? // users and players may be desync'd
-        <Column
-          key={uid}
-          me={this.props.me}
-          gid={this.props.gid}
-          phase={zpy.phase}
-          user={users[uid]}
-          owner={uid === zpy.owner}
-          ready={zpy.consensus.has(uid)}
-          current={
-            zpy.is_current(uid) &&
-            // we maintain the current player across PREPARE and KITTY in the
-            // event of no-bid free-for-all draws, but we shouldn't display
-            // anyone as current during those phases
-            zpy.phase !== ZPY.Phase.PREPARE &&
-            zpy.phase !== ZPY.Phase.KITTY
-          }
-          tr={zpy.tr}
-          host={uid === zpy.host}
-          team={
-            zpy.host_team.has(uid) ? 'host' :
-            zpy.atk_team.has(uid) ? 'attacking' : null
-          }
-          rank_meta={zpy.ranks[uid]}
-          bids={zpy.bids.filter(({player}) => uid === player)}
-          bidder={uid === zpy.winning_bid()?.player}
-          points={zpy.points[uid] ?? null}
-          leader={uid === zpy.leader}
-          winning={uid === zpy.winning}
-          lead={zpy.lead}
-          play={zpy.plays[uid] ?? null}
-        /> : null
-      )}
-      {this.renderTrumpIndicator()}
-      {this.renderFriendIndicator()}
+    return <div className="round-container">
+      <div className="round">
+        {ordered.map(uid => uid in users ? // users and players may be desync'd
+          <Column
+            key={uid}
+            me={this.props.me}
+            gid={this.props.gid}
+            phase={zpy.phase}
+            user={users[uid]}
+            owner={uid === zpy.owner}
+            ready={zpy.consensus.has(uid)}
+            current={
+              zpy.is_current(uid) &&
+              // we maintain the current player across PREPARE and KITTY in the
+              // event of no-bid free-for-all draws, but we shouldn't display
+              // anyone as current during those phases
+              zpy.phase !== ZPY.Phase.PREPARE &&
+              zpy.phase !== ZPY.Phase.KITTY
+            }
+            tr={zpy.tr}
+            host={uid === zpy.host}
+            team={
+              zpy.host_team.has(uid) ? 'host' :
+              zpy.atk_team.has(uid) ? 'attacking' : null
+            }
+            rank_meta={zpy.ranks[uid]}
+            bids={zpy.bids.filter(({player}) => uid === player)}
+            bidder={uid === zpy.winning_bid()?.player}
+            points={zpy.points[uid] ?? null}
+            leader={uid === zpy.leader}
+            winning={uid === zpy.winning}
+            lead={zpy.lead}
+            play={zpy.plays[uid] ?? null}
+          /> : null
+        )}
+        {this.renderTrumpIndicator()}
+        {this.renderFriendIndicator()}
+      </div>
+      {this.renderTeamScore()}
     </div>;
   }
 }

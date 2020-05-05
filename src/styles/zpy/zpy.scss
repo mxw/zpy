@@ -19,6 +19,10 @@ body {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+.round-container {
+  @include flex.column;
+}
+
 .round {
   position: relative;
   @include flex.row-center;
@@ -211,6 +215,10 @@ body {
   }
 }
 
+.team-score {
+  padding: rhythm.rh(0.5);
+}
+
 .host, .indicator {
   width: rhythm.rh(2.25);
   height: rhythm.rh(2.25);
@@ -226,6 +234,8 @@ body {
   // https://stackoverflow.com/questions/5804256/image-inside-div-has-extra-space-below-the-image
   vertical-align: middle;
 }
+
+///////////////////////////////////////////////////////////////////////////////
 
 .trump-indicator-wrapper {
   position: absolute;

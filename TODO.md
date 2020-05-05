@@ -4,8 +4,6 @@
 
 - implement a homepage
 
-- show "team point total" somewhere
-
 - reap dead games
 
 ## wishlist
