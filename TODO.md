@@ -2,7 +2,9 @@
 
 ## public release
 
-- reap dead games
+- logging
+
+- persistence?
 
 ## wishlist
 
@@ -21,8 +23,6 @@
 ## notes
 
 - undo state for "readying"?  or make it more obvious you need to bid?
-
-- make it more clear when instruction test changes
 
 - use `identity` instead of `me` for all checks in UI
 

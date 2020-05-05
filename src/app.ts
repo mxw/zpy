@@ -65,8 +65,6 @@ app.post('/api/set_nick', (req, res) => {
 
 /*
  * start a new game
- *
- * XXX: take settings that aren't the default ones
  */
 app.post('/api/new_game', (req, res) => {
   const r = req as (typeof req & {session: Session.T});
@@ -81,4 +79,4 @@ app.post('/api/new_game', (req, res) => {
 
 server.listen(8080, () => {
   console.log("listening on port 8080");
-})
+});

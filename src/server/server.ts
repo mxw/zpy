@@ -12,6 +12,7 @@ import * as WebSocket from 'ws'
 import * as Http from 'http'
 import * as Uuid from 'uuid'
 
+import * as options from 'options.ts'
 import assert from 'utils/assert.ts'
 
 export type GameId = string;
@@ -67,6 +68,9 @@ class Game<
   // shared with GameServer
   participation: Record<Principal, GameId[]>;
 
+  // callback for when our last client leaves
+  destroy: () => void;
+
   /*
    * start a new game w/ no players
    *
@@ -79,12 +83,14 @@ class Game<
     config: Config,
     owner: Principal,
     participation: Record<Principal, GameId[]>,
+    destroy: () => void,
   ) {
     this.id = id;
     this.engine = engine;
     this.config = config;
     this.owner = owner;
     this.participation = participation;
+    this.destroy = destroy;
     this.state = this.engine.init(config);
   }
 
@@ -214,6 +220,9 @@ class Game<
       verb: "user:part",
       id: victim.user.id,
     });
+
+    // if our last client has left, tell the server we're finished (probably)
+    if (this.clients.length === 0) this.destroy();
   }
 
   /*
@@ -430,12 +439,23 @@ export class GameServer<
    */
   public begin_game(cfg: Config, owner: Principal): GameId {
     const id = Uuid.v4();
+
+    const cleanup = () => {
+      setTimeout(() => {
+        if (id in this.games &&
+            this.games[id].clients.length === 0) {
+          delete this.games[id];
+        }
+      }, options.game_expiry); // 30 minutes of inactivity
+    };
+
     this.games[id] = new Game(
       id,
       this.engine,
       cfg,
       owner,
-      this.participation
+      this.participation,
+      cleanup,
     );
     return id;
   }
