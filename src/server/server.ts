@@ -264,7 +264,7 @@ class Game<
     user.nick = nick;
 
     const source = this.clients.find(cl => cl.principal === principal);
-    if (source === null) return;
+    if (!source) return;
 
     this.broadcast(source, {
       verb: "user:nick",
