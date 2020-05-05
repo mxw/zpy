@@ -31,6 +31,9 @@ export function Help(props: {}) {
         this is a help section! it's very helpful.
       </p>
 
+      <h3>changing your nickname</h3>
+      double-click your nickname to edit it.  (you are the one with food.)
+
       <h3>playing cards</h3>
       <p>
         click or drag and drop cards to move them between your hand and the
