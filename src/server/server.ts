@@ -19,11 +19,45 @@ import log from 'utils/logger.ts'
 export type GameId = string;
 export type Principal = Session.Id;
 
-interface Client {
+const SOCKET_MAX_IDLE_MS = 30 * 1000;
+
+class Client {
+
   principal: Principal;
   user: P.User | null;
   sync: boolean;
   socket: WebSocket;
+  pingTimer: ReturnType<typeof setTimeout> | null;
+
+  constructor(
+    principal: Principal,
+    socket: WebSocket,
+  ) {
+    this.principal = principal;
+    this.user = null;
+    this.sync = false;
+    this.socket = socket;
+    this.resetPingTimer();
+  }
+
+  resetPingTimer(): void {
+    // reset the ping timer
+    if (this.pingTimer) {
+      clearTimeout(this.pingTimer);
+    }
+
+    this.pingTimer = setTimeout(() => this.sendPing(), SOCKET_MAX_IDLE_MS);
+  }
+
+  sendPing(): void {
+    this.socket.ping();
+    this.resetPingTimer();
+  }
+
+  send(msg: string): void {
+    this.socket.send(msg);
+    this.resetPingTimer();
+  }
 };
 
 function log_client(client: Client) {
@@ -126,7 +160,7 @@ class Game<
     }
     source.user = this.users[source.principal];
 
-    source.socket.send(JSON.stringify(
+    source.send(JSON.stringify(
       P.Hello.encode({
         verb: "hello",
         you: source.user,
@@ -160,7 +194,7 @@ class Game<
 
       const UpdateReject = P.UpdateReject(this.engine.UpdateError);
 
-      source.socket.send(JSON.stringify(
+      source.send(JSON.stringify(
         UpdateReject.encode({
           verb: "reject",
           tx: tx,
@@ -181,7 +215,7 @@ class Game<
 
       const Update = P.Update(this.engine.Effect(this.state));
 
-      client.socket.send(JSON.stringify(
+      client.send(JSON.stringify(
         Update.encode({
           verb: "update",
           tx: for_tx,
@@ -203,7 +237,7 @@ class Game<
 
     const Reset = P.Reset(this.engine.ClientState);
 
-    client.socket.send(JSON.stringify(
+    client.send(JSON.stringify(
       Reset.encode({
         verb: "reset",
         state: cs,
@@ -238,7 +272,7 @@ class Game<
    * process a bye request from a client: simply reply 'bye' and disconnect
    */
   bye(client: Client) {
-    client.socket.send(JSON.stringify(
+    client.send(JSON.stringify(
       P.Bye.encode({
         verb: "bye"
       })
@@ -291,7 +325,7 @@ class Game<
 
     for (let client of this.clients) {
       if (!client.sync) continue;
-      client.socket.send(update);
+      client.send(update);
     }
 
     // engine action follows protocol action
@@ -305,12 +339,7 @@ class Game<
    * the game takes ownership of the websocket at this point
    */
   connect(session: Session.T, sock: WebSocket) {
-    const client: Client = {
-      principal: session.id,
-      user: null,
-      sync: false,
-      socket: sock,
-    };
+    const client = new Client(session.id, sock);
 
     this.clients.push(client);
 
