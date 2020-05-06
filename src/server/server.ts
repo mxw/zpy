@@ -253,6 +253,8 @@ class Game<
     victim.socket.close();
     this.clients.splice(this.clients.indexOf(victim));
 
+    if (victim.user === null) return;
+
     // broadcast the part.  de-syncing the victim above prevents us from
     // attempting to send messages over the closed socket.
     this.broadcast(victim, {
