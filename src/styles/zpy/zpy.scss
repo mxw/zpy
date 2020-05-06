@@ -21,6 +21,7 @@ body {
 
 .round-container {
   @include flex.column;
+  min-height: rhythm.rh(20);
 }
 
 .round {
