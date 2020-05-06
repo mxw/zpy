@@ -19,10 +19,20 @@ let
     inherit (pkgs) fetchurl fetchgit;
     inherit nodeEnv;
   };
+  src = pkgs.lib.sourceByRegex ./. [
+    "^src.*"
+    "^test.*"
+    "^assets.*"
+    "^package.json"
+    "^tsconfig.json"
+    "^webpack.config.js"
+  ];
   build = nodeEnv.buildNodePackage (develPkgs.args // {
+    inherit src;
     postInstall = ''npx webpack'';
   });
   prodBuild = nodeEnv.buildNodePackage (prodPkgs.args // {
+    inherit src;
     dontNpmInstall = true;
     postInstall = ''
       cp -R ${build}/lib/node_modules/zhaopengyou/dist .

@@ -76,10 +76,13 @@ let frontend = Object.assign({
 let backend = Object.assign({
   entry: "./src/app.ts",
   target: "node",
-  externals: [externals()],
+  externals: [externals({
+    modulesFromFile: true,
+  })],
   output: {
     path: path.resolve(__dirname, "./dist/app")
   }
 }, common);
+
 
 module.exports = [frontend, backend];

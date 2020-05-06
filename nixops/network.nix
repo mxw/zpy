@@ -1,3 +1,8 @@
+{
+  acmeEmail
+  hostname
+}:
+
 let
 
 accessKeyId = "default";
@@ -7,10 +12,8 @@ in
 {
   webserver =
   { resources, config, pkgs, lib, ...}:
-  let
-    zpy = pkgs.callPackage ../default.nix {};
-  in
   {
+    imports = [ ./zpy.nix ];
     deployment = {
       targetEnv = "ec2";
       ec2 = {
@@ -22,36 +25,21 @@ in
     };
 
     boot.loader.grub.device = lib.mkForce "/dev/nvme0n1";
+    boot.kernel.sysctl = {
+      "net.ipv4.tcp_syncookies" = 1;
+    };
 
-    networking.hostName = lib.mkDefault "zpy-alt.jgriego.net";
-
+    networking.hostName = lib.mkDefault hostname;
     networking.firewall.allowedTCPPorts = [ 80 443 ];
-
     security.acme.acceptTerms = true;
-    security.acme.certs."zpy-alt.jgriego.net" = {
-      webroot = "/var/www";
-      email = "joseph.j.griego@gmail.com";
+
+    services.zpy = {
+      enable = true;
+      inherit hostname acmeEmail;
     };
 
-    services.nginx = {
+    services.fail2ban = {
       enable = true;
-      virtualHosts."zpy-alt.jgriego.net" = {
-        forceSSL = true;
-        enableACME = true;
-        acmeRoot = "/var/www";
-        locations."/" = {
-          proxyPass = "http://localhost:8080";
-          proxyWebsockets = true;
-        };
-      };
-    };
-
-    systemd.services.zpy = {
-      enable = true;
-      wantedBy = [ "multi-user.target" ];
-      script = ''
-        exec ${zpy.package}/bin/run.sh
-        '';
     };
   };
 
