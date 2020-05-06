@@ -19,37 +19,55 @@ let
     inherit (pkgs) fetchurl fetchgit;
     inherit nodeEnv;
   };
-  src = pkgs.lib.sourceByRegex ./. [
-    "^src.*"
-    "^test.*"
-    "^assets.*"
-    "^package.json"
-    "^tsconfig.json"
-    "^webpack.config.js"
-  ];
-  build = nodeEnv.buildNodePackage (develPkgs.args // {
-    inherit src;
-    postInstall = ''npx webpack'';
-  });
-  prodBuild = nodeEnv.buildNodePackage (prodPkgs.args // {
-    inherit src;
-    dontNpmInstall = true;
-    postInstall = ''
-      cp -R ${build}/lib/node_modules/zhaopengyou/dist .
-      rm -rf src test Makefile *.nix
-      mkdir -p $out/bin/
+
+  depsOnly = {args, type ? "prod"}: args // {
+    name = "${args.packageName}-${type}-deps";
+    src = pkgs.lib.sourceByRegex ./. ["^package.json"];
+  };
+
+  buildDeps = nodeEnv.buildNodePackage (
+    depsOnly {inherit (develPkgs) args; type = "build";}
+  );
+  prodDeps = nodeEnv.buildNodePackage (
+    depsOnly {inherit (prodPkgs) args; type = "prod";}
+  );
+
+  build = pkgs.stdenv.mkDerivation rec {
+    name = "${prodPkgs.args.packageName}-${version}";
+    version = prodPkgs.args.version;
+
+    src = pkgs.lib.sourceByRegex ./. [
+      "^src.*"
+      "^test.*"
+      "^assets.*"
+      "^package.json"
+      "^tsconfig.json"
+      "^webpack.config.js"
+    ];
+
+    buildInputs = [nodejs];
+
+    buildPhase = ''
+      ln -s "${buildDeps}/lib/node_modules/zhaopengyou/node_modules" .
+      npx webpack
+    '';
+
+    installPhase = ''
+      mkdir -p $out/bin;
+      cp -R dist $out
+      cp -R assets $out
 
       cat >$out/bin/run.sh <<eof
       #!/usr/bin/env sh
-      cd "$out/lib/node_modules/zhaopengyou/"
-      exec ${nodejs}/bin/node dist/app/main.js
+      cd $out
+      env NODE_PATH=${prodDeps}/lib/node_modules/zhaopengyou/node_modules ${nodejs}/bin/node dist/app/main.js
       eof
 
       chmod +x $out/bin/run.sh
     '';
-  });
+  };
 in
 {
   shell = nodeEnv.buildNodeShell develPkgs.args;
-  package = prodBuild;
+  package = build;
 }
