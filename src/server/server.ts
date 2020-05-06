@@ -19,15 +19,13 @@ import log from 'utils/logger.ts'
 export type GameId = string;
 export type Principal = Session.Id;
 
-const SOCKET_MAX_IDLE_MS = 30 * 1000;
 
 class Client {
-
   principal: Principal;
   user: P.User | null;
   sync: boolean;
   socket: WebSocket;
-  pingTimer: ReturnType<typeof setTimeout> | null;
+  pingTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     principal: Principal,
@@ -41,15 +39,13 @@ class Client {
   }
 
   resetPingTimer(): void {
-    // reset the ping timer
-    if (this.pingTimer) {
+    if (this.pingTimer !== null) {
       clearTimeout(this.pingTimer);
     }
-
-    this.pingTimer = setTimeout(() => this.sendPing(), SOCKET_MAX_IDLE_MS);
+    this.pingTimer = setTimeout(() => this.ping(), options.ping_interval);
   }
 
-  sendPing(): void {
+  ping(): void {
     this.socket.ping();
     this.resetPingTimer();
   }
