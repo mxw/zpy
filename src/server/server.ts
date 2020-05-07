@@ -251,7 +251,7 @@ class Game<
     // then remove the victim client
     victim.sync = false;
     victim.socket.close();
-    this.clients.splice(this.clients.indexOf(victim));
+    this.clients.splice(this.clients.indexOf(victim), 1);
 
     if (victim.user === null) return;
 
