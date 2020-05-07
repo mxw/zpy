@@ -5,7 +5,7 @@
 import * as React from "react"
 import axios from "axios"
 
-import * as Session from 'server/session.ts'
+import { SessionID } from 'server/types.ts'
 
 
 export class WithSession extends React.Component<
@@ -37,7 +37,7 @@ export type Props = {
 };
 
 export type State = {
-  session_id: null | Session.Id;
+  session_id: null | SessionID;
 };
 
 }

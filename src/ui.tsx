@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { withRouter, BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 
-import * as Session from 'server/session.ts';
+import { session_regex } from 'server/types.ts';
 
 import { WithSession } from 'components/zpy/WithSession.tsx';
 import { Home } from 'components/zpy/Home.tsx';
@@ -34,7 +34,7 @@ ReactDOM.render(
         </WithSession>
       </Route>
       <Route
-        path={`/zpy/:game_id(${escape_backslashes(Session.regex.source)})`}
+        path={`/zpy/:game_id(${escape_backslashes(session_regex.source)})`}
         render={({match}) =>
           <WithSession>
             <Game

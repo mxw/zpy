@@ -54,15 +54,15 @@ class Client {
     this.socket.send(msg);
     this.resetPingTimer();
   }
-};
 
-function log_client(client: Client) {
-  return {
-    session: client.principal,
-    uid: client.user?.id ?? null,
-    nick: client.user?.nick ?? '<unknown>',
-  };
-}
+  log_entry() {
+    return {
+      session: this.principal,
+      uid: this.user?.id ?? null,
+      nick: this.user?.nick ?? '<unknown>',
+    };
+  }
+};
 
 /*
  * the server-side protocol monkey
@@ -155,6 +155,12 @@ class Game<
       this.participation[source.principal].push(this.id);
     }
     source.user = this.users[source.principal];
+
+    log.info('client hello', {
+      ...source.log_entry(),
+      game: this.id,
+      rejoin: known,
+    });
 
     source.send(JSON.stringify(
       P.Hello.encode({
@@ -253,6 +259,11 @@ class Game<
     victim.socket.close();
     this.clients.splice(this.clients.indexOf(victim), 1);
 
+    log.info('client dispose', {
+      ...victim.log_entry(),
+      game: this.id,
+    });
+
     if (victim.user === null) return;
 
     // broadcast the part.  de-syncing the victim above prevents us from
@@ -282,7 +293,11 @@ class Game<
    * kick a naughty client by sending them 'bye' and disconnecting
    */
   kick(client: Client, reason: string) {
-    log.info('kick', {...log_client(client), reason});
+    log.info('kick', {
+      ...client.log_entry(),
+      game: this.id,
+      reason
+    });
     this.bye(client)
   }
 
@@ -354,7 +369,8 @@ class Game<
         }
       }, (e: any) => {
         log.error('failed to decode client message', {
-          ...log_client(client),
+          ...client.log_entry(),
+          game: this.id,
           msg: d,
           draw: P.draw_error(e),
         });

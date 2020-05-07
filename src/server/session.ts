@@ -1,26 +1,30 @@
 import * as Uuid from 'uuid'
 import * as Crypto from 'crypto'
 
-export type Id = string;
+import {
+  SessionID as Id,
+  Session as T,
+} from 'server/types.ts'
+export {
+  SessionID as Id,
+  Session as T,
+  session_regex as regex
+} from 'server/types.ts'
 
-export interface T {
-  id: Id;
-  token: string;
-}
+import assert from 'utils/assert.ts'
+import log from 'utils/logger.ts'
 
-const activeSessions: Record<Id, T> = {};
 
-export const regex =
-  /[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i;
+const active: Record<Id, T> = {};
 
 export function make(): T {
   const id = Uuid.v4();
   const token = Crypto.randomBytes(64).toString("hex");
-  return activeSessions[id] = {id, token};
+  return active[id] = {id, token};
 }
 
 export function get(id: Id): T | null {
-  return (id in activeSessions) ? activeSessions[id] : null;
+  return (id in active) ? active[id] : null;
 }
 
 export function middleware(req: any, res: any, next: any) {
@@ -29,6 +33,11 @@ export function middleware(req: any, res: any, next: any) {
     res.cookie("id", session.id);
     res.cookie("token", session.token);
     req.session = session;
+
+    log.info('issuing session', {
+      session: session.id,
+      ip: req.ip,
+    });
     next();
   };
 
