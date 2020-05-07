@@ -27,10 +27,6 @@ export class Board extends React.Component<Board.Props, Board.State> {
   render() {
     const zpy = this.props.zpy;
 
-    if (options.debug) {
-      console.log(ZPY.Phase[zpy.phase]);
-    }
-
     return (
       <div className="board">
         <RoundInfo

@@ -378,7 +378,10 @@ class Game<
       });
     });
 
-    sock.on('close', () => this.dispose(client));
+    sock.on('close', (code: number, reason: string) => {
+      log.info('socket close', {code, reason});
+      this.dispose(client);
+    });
   }
 }
 
@@ -498,12 +501,12 @@ export class GameServer<
     const id = Uuid.v4();
 
     const cleanup = () => {
-      log.info('queueing game for deletion', {game: id});
+      log.info('game queueing for deletion', {game: id});
 
       setTimeout(() => {
         if (id in this.games &&
             this.games[id].clients.length === 0) {
-          log.info('deleting game', {game: id});
+          log.info('game deletion', {game: id});
           delete this.games[id];
         }
       }, options.game_expiry); // 30 minutes of inactivity

@@ -287,6 +287,14 @@ export class Game extends React.Component<Game.Props, Game.State> {
     }
     if (client.state === null) return null;
 
+    if (options.debug) {
+      console.log({
+        ...client.me,
+        phase: ZPY.Phase[client.state.phase],
+        users: client.users,
+      });
+    }
+
     return <>
       <div className="sidebar">
         <Help />
