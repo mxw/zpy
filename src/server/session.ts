@@ -26,14 +26,8 @@ export function get(id: Id): T | null {
 export function middleware(req: any, res: any, next: any) {
   const bail = () => {
     const session = make();
-    res.cookie("id", session.id, {
-      httpOnly: true,
-      expires: 0,
-    });
-    res.cookie("token", session.token, {
-      httpOnly: true,
-      expires: 0,
-    });
+    res.cookie("id", session.id);
+    res.cookie("token", session.token);
     req.session = session;
     next();
   };
