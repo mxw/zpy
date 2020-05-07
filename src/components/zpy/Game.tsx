@@ -61,6 +61,7 @@ export class Game extends React.Component<Game.Props, Game.State> {
   }
 
   componentWillUnmount() {
+    console.log('game unmounted...');
     this.state.client.close();
   }
 
