@@ -52,7 +52,7 @@ in
     security.acme.certs.${cfg.hostname} =
       mkIf ((cfg.tlsSource == "acme") && cfg.enable) {
         webroot = "/var/www";
-        email = "joseph.j.griego@gmail.com";
+        email = cfg.acmeEmail;
       };
 
     services.nginx = {
