@@ -78,7 +78,7 @@ app.post('/api/new_game', (req, res) => {
     kitty: 0,
   }, r.session.id);
 
-  log.info('creating game', {
+  log.info('game creation', {
     game: game_id,
     owner: r.session.id,
   });

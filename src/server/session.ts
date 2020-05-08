@@ -34,7 +34,7 @@ export function middleware(req: any, res: any, next: any) {
     res.cookie("token", session.token);
     req.session = session;
 
-    log.info('issuing session', {
+    log.info('session issue', {
       session: session.id,
       ip: req.ip,
     });
