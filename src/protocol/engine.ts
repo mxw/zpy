@@ -121,4 +121,12 @@ export interface Engine<
 
   // redact a server state into a client-side state for the given recipient
   redact: (state: State, who: P.User) => ClientState;
+
+  // stringification for logging and messaging
+  describe_effect: (
+    effect: Effect,
+    state: State | ClientState,
+    users: P.User[],
+    options?: any
+  ) => string;
 };

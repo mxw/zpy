@@ -25,7 +25,9 @@ import {
 
 import { ZPY, Data as ZPYData } from 'lib/zpy/zpy.ts';
 
+import { array_fill } from 'utils/array.ts'
 import { Result, OK, Err } from 'utils/result.ts'
+import { nth_suffixed } from 'utils/string.ts'
 
 import * as C from 'io-ts/lib/Codec';
 import * as D from 'io-ts/lib/Decoder';
@@ -457,6 +459,87 @@ export const Effect = (
 ): C.Codec<Effect> => Effect_(cs?.tr ?? TrumpMeta.def());
 
 ///////////////////////////////////////////////////////////////////////////////
+/*
+ * stringification
+ */
+
+export const describe_effect = (
+  eff: Effect,
+  state: State | ClientState,
+  users: P.User[],
+  options?: {nick_only: boolean}
+): string => {
+  const name = (player: PlayerID) => {
+    const user = users[player];
+    return options?.nick_only ? user.nick : `${user.id} (${user.nick})`;
+  };
+  const agent = name(eff.args[0]);
+  const tr = state.tr;
+
+  switch (eff.kind) {
+    case 'add_player':
+      return `${agent} joined`;
+    case 'rm_player':
+      return `${agent} left`;
+    case 'set_decks':
+      return `${agent} set number of decks to ${eff.args[1]}`;
+    case 'set_rule_mods':
+      return `${agent} set rules to [${[
+        ZPY.KittyMultiplierRule[eff.args[1].kitty],
+        ZPY.RankSkipRule[eff.args[1].rank],
+        ZPY.RenegeRule[eff.args[1].renege],
+      ].map(s => s.toLowerCase()).join(',')}]`;
+    case 'init_game':
+      return 'game started';
+    case 'add_to_hand':
+      return `${agent} drew ${eff.args[1]?.toString() ?? ''}`.trim();
+    case 'secure_bid':
+      return `${agent} bid ${
+        array_fill(eff.args[2], eff.args[1].toString()).join('')
+      }`;
+    case 'redeal':
+      return `${agent} triggered a redeal`;
+    case 'ready':
+      return `${agent} is ready`;
+    case 'install_host':
+      return `${agent} begins their host`;
+    case 'replace_kitty':
+      return `${agent} discarded ${
+        eff.args[1].map(cb => cb.toString()).join('')
+      }`;
+    case 'seal_hand':
+      return `${agent} discarded their kitty`;
+    case 'call_friends':
+      return `${agent} called their friends: ${eff.args[1].map(
+        ([cb, n]) => `${nth_suffixed(n)} ${cb.toString()}`
+      ).join(', ')}`;
+    case 'lead_play':
+    case 'observe_lead':
+      return `${agent} led with ${eff.args[1].toString(tr)}`;
+    case 'reject_fly':
+      return `${agent} countered with ${
+        Play.extract(eff.args[1], tr).toString(tr)
+      }`;
+    case 'pass_contest':
+      return `${agent} passed`;
+    case 'follow_lead':
+    case 'observe_follow':
+      return `${agent} played ${eff.args[1].toString(tr)}`;
+    case 'collect_trick':
+      return `${agent} collected their trick`;
+    case 'finish':
+      return `${agent} ended the game`;
+    case 'next_ready':
+      return `${agent} is ready for the next round`;
+    case 'next_round':
+      return 'round started';
+  }
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/*
+ * engine API
+ */
 
 export const init = (options: Config): State => {
   return new ZPY<PlayerID>(options);
