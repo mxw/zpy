@@ -613,18 +613,9 @@ kbd {
 
 .sidebar-icons {
   @include flex.column;
-
-  > div {
-    padding: rhythm.rh(0.5);
-    border-left: rhythm.$px solid darkgrey;
-    border-bottom: rhythm.$px solid darkgrey;
-    backdrop-filter: blur(rhythm.rh(0.25));
-  }
 }
 
 .help-wrapper {
-  background-color: rgba(240, 240, 240, 0.5);
-
   > .help-info {
     display: none;
     opacity: 0;
@@ -636,6 +627,19 @@ kbd {
     display: block;
     opacity: 1;
   }
+}
+
+.help-icon-wrapper,
+.door-wrapper,
+.page-wrapper {
+  padding: rhythm.rh(0.5);
+  border-left: rhythm.$px solid darkgrey;
+  border-bottom: rhythm.$px solid darkgrey;
+  backdrop-filter: blur(rhythm.rh(0.25));
+}
+
+.help-icon-wrapper {
+  background-color: rgba(240, 240, 240, 0.5);
 }
 
 .door-wrapper {
