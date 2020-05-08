@@ -105,7 +105,7 @@ class Game<
   next_uid: number = 0;
 
   // shared with GameServer
-  participation: Record<Principal, GameId[]>;
+  participation: Record<Principal, Set<GameId>>;
 
   // callback for when our last client leaves
   destroy: () => void;
@@ -121,7 +121,7 @@ class Game<
     engine: Eng,
     config: Config,
     owner: Principal,
-    participation: Record<Principal, GameId[]>,
+    participation: Record<Principal, Set<GameId>>,
     destroy: () => void,
   ) {
     this.id = id;
@@ -151,8 +151,8 @@ class Game<
 
       // help the game server track the games each principal belongs to
       this.participation[source.principal] =
-        this.participation[source.principal] ?? [];
-      this.participation[source.principal].push(this.id);
+        this.participation[source.principal] ?? new Set();
+      this.participation[source.principal].add(this.id);
     }
     source.user = this.users[source.principal];
 
@@ -415,7 +415,7 @@ export class GameServer<
   > = {};
 
   // all the games a given principal is a part of
-  participation: Record<Principal, GameId[]> = {};
+  participation: Record<Principal, Set<GameId>> = {};
 
   /*
    * attach to the provided http server to handle upgrade requests
@@ -507,6 +507,10 @@ export class GameServer<
         if (id in this.games &&
             this.games[id].clients.length === 0) {
           log.info('game deletion', {game: id});
+
+          for (const principal in this.games[id].users) {
+            this.participation[principal].delete(id);
+          }
           delete this.games[id];
         }
       }, options.game_expiry); // 30 minutes of inactivity
@@ -527,7 +531,7 @@ export class GameServer<
    * propagate a nick change to all live games
    */
   public rename(principal: Principal, nick: string) {
-    const gids = this.participation[principal] ?? [];
+    const gids: Iterable<GameId> = this.participation[principal] ?? [];
 
     for (const gid of gids) {
       this.games[gid]?.rename(principal, nick);
