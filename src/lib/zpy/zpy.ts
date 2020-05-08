@@ -270,7 +270,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       this.owner = player;
     }
     this.players.push(player);
-    this.ranks[player] = {
+    this.ranks[player] = this.ranks[player] ?? {
       rank: 2,
       start: 2,
       last_host: null,
