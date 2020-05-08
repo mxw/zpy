@@ -349,8 +349,8 @@ export class Game extends React.Component<Game.Props, Game.State> {
       <div className="sidebar">
         <div className="sidebar-icons">
           <Help />
-          {this.renderDoor()}
           {this.renderLogToggle()}
+          {this.renderDoor()}
         </div>
         {this.renderGameLog()}
       </div>
