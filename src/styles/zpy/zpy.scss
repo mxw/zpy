@@ -608,6 +608,8 @@ kbd {
   right: 0;
   z-index: 5;
 
+  height: 100%;
+
   display: flex;
 }
 
@@ -702,12 +704,10 @@ kbd {
 }
 
 .log-container {
-  box-sizing: border-box;
+  position: relative;
+  width: 18rem;
 
-  width: 20rem;
-  height: 100vh;
-
-  padding: rhythm.rh(1);
+  padding: 0 rhythm.rh(1) rhythm.rh(1);
   border-left: rhythm.$px solid darkgrey;
   background-color: rgba(240, 240, 240, 0.8);
   backdrop-filter: blur(rhythm.rh(0.25));
@@ -720,18 +720,24 @@ kbd {
 }
 
 .log-title {
+  position: sticky;
+  top: 0;
+
+  padding-top: rhythm.rh(1);
   @include rhythm.rh-border('bottom');
   border-bottom-style: solid;
   border-bottom-color: darkgrey;
   margin-bottom: rhythm.rh(0.25);
+
+  background-color: rgb(243, 243, 243);
 
   text-align: center;
 }
 
 .log {
   font-size: rhythm.rh(0.875);
-
   > p {
-    @include rhythm.rh-margin-y(0.5);
+    margin: 0;
+    margin-top: rhythm.rh(0.5);
   }
 }
