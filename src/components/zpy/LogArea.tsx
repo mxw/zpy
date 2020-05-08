@@ -1,5 +1,5 @@
 /*
- * game message area
+ * game log area
  */
 import * as React from 'react'
 
@@ -14,24 +14,21 @@ import * as options from 'options.ts'
 import assert from 'utils/assert.ts'
 
 
-export class MessageArea extends React.Component<
-  MessageArea.Props,
-  MessageArea.State
-> {
-  constructor(props: MessageArea.Props) {
+export class LogArea extends React.Component<LogArea.Props, LogArea.State> {
+  constructor(props: LogArea.Props) {
     super(props);
 
     this.onUpdate = this.onUpdate.bind(this);
 
-    this.state = {messages: []};
+    this.state = {log: []};
 
     this.props.funcs.subscribeUpdate(this.onUpdate);
   }
 
   onUpdate(effect: ZPYEngine.Effect) {
     this.setState((state, props) => ({
-      messages: [
-        ...state.messages,
+      log: [
+        ...state.log,
         ZPYEngine.describe_effect(
           effect,
           props.zpy,
@@ -45,12 +42,12 @@ export class MessageArea extends React.Component<
   render() {
     const visibility = this.props.hidden ? 'hidden' : 'visible';
 
-    return <div className={`message-container ${visibility}`}>
-      <div className="message-title">
+    return <div className={`log-container ${visibility}`}>
+      <div className="log-title">
         game log
       </div>
-      <div className="messages">
-        {this.state.messages.map((msg, i) =>
+      <div className="log">
+        {this.state.log.map((msg, i) =>
           <p key={'' + i}>{msg}</p>
         )}
       </div>
@@ -58,7 +55,7 @@ export class MessageArea extends React.Component<
   }
 }
 
-export namespace MessageArea {
+export namespace LogArea {
 
 export type Props = {
   zpy: ZPYEngine.State;
@@ -69,7 +66,7 @@ export type Props = {
 };
 
 export type State = {
-  messages: string[];
+  log: string[];
 };
 
 }

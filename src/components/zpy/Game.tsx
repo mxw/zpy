@@ -17,7 +17,7 @@ import * as ZPYEngine from 'lib/zpy/engine.ts'
 import { Client, EngineCallbacks } from 'components/zpy/common.ts'
 import { Help } from 'components/zpy/Help.tsx'
 import { Board } from 'components/zpy/Board.tsx'
-import { MessageArea } from 'components/zpy/MessageArea.tsx'
+import { LogArea } from 'components/zpy/LogArea.tsx'
 import { Reveal } from 'components/zpy/Reveal.tsx'
 import { ErrorMessage } from 'components/zpy/ErrorMessage.tsx'
 
@@ -50,7 +50,7 @@ export class Game extends React.Component<Game.Props, Game.State> {
       next_err_id: 0,
       pending_error: null,
       reveal_effects: [],
-      messages_open: false,
+      log_open: false,
       reset_subs: [],
       update_subs: [],
     };
@@ -285,15 +285,15 @@ export class Game extends React.Component<Game.Props, Game.State> {
 
     ev.preventDefault();
 
-    this.setState((state, props) => ({messages_open: !state.messages_open}));
+    this.setState((state, props) => ({log_open: !state.log_open}));
   }
 
-  renderMessageToggle() {
-    const tooltip = this.state.messages_open
+  renderLogToggle() {
+    const tooltip = this.state.log_open
       ? 'hide game log'
       : 'show game log';
 
-    const icon = this.state.messages_open
+    const icon = this.state.log_open
       ? 'fast-forward-button'
       : 'fast-reverse-button';
 
@@ -310,12 +310,12 @@ export class Game extends React.Component<Game.Props, Game.State> {
     </div>;
   }
 
-  renderMessages() {
-    return <MessageArea
+  renderGameLog() {
+    return <LogArea
       key={this.state.client.state.round} // reset every round
       zpy={this.state.client.state}
       users={this.state.client.users}
-      hidden={!this.state.messages_open}
+      hidden={!this.state.log_open}
       funcs={{
         attempt: this.attempt,
         subscribeReset: this.subscribeReset,
@@ -350,9 +350,9 @@ export class Game extends React.Component<Game.Props, Game.State> {
         <div className="sidebar-icons">
           <Help />
           {this.renderDoor()}
-          {this.renderMessageToggle()}
+          {this.renderLogToggle()}
         </div>
-        {this.renderMessages()}
+        {this.renderGameLog()}
       </div>
       <Board
         gid={this.props.id}
@@ -389,7 +389,7 @@ export type State = {
     ue: ZPYEngine.UpdateError;
   };
   reveal_effects: ZPYEngine.Effect[];
-  messages_open: boolean;
+  log_open: boolean;
 
   reset_subs: ((state: ZPYEngine.ClientState) => void)[];
   update_subs: ((effect: ZPYEngine.Effect) => void)[];

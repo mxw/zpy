@@ -701,8 +701,10 @@ kbd {
   vertical-align: middle;
 }
 
-.message-container {
-  width: 18rem;
+.log-container {
+  box-sizing: border-box;
+
+  width: 20rem;
   height: 100vh;
 
   padding: rhythm.rh(1);
@@ -717,7 +719,7 @@ kbd {
   }
 }
 
-.message-title {
+.log-title {
   @include rhythm.rh-border('bottom');
   border-bottom-style: solid;
   border-bottom-color: darkgrey;
@@ -726,7 +728,7 @@ kbd {
   text-align: center;
 }
 
-.messages {
+.log {
   font-size: rhythm.rh(0.875);
 
   > p {
