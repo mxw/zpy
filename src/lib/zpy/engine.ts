@@ -488,7 +488,7 @@ export const describe_effect = (
         ZPY.KittyMultiplierRule[eff.args[1].kitty],
         ZPY.RankSkipRule[eff.args[1].rank],
         ZPY.RenegeRule[eff.args[1].renege],
-      ].map(s => s.toLowerCase()).join(',')}]`;
+      ].map(s => s.toLowerCase().replace('_', '-')).join(',')}]`;
     case 'init_game':
       return 'game started';
     case 'add_to_hand':
