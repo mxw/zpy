@@ -608,12 +608,17 @@ kbd {
   right: 0;
   z-index: 5;
 
+  display: flex;
+}
+
+.sidebar-icons {
   @include flex.column;
 
   > div {
     padding: rhythm.rh(0.5);
     border-left: rhythm.$px solid darkgrey;
     border-bottom: rhythm.$px solid darkgrey;
+    backdrop-filter: blur(rhythm.rh(0.25));
   }
 }
 
@@ -642,7 +647,11 @@ kbd {
   }
 }
 
-.help-icon, .door-icon {
+.page-wrapper {
+  background-color: rgba(240, 240, 240, 0.5);
+}
+
+.help-icon, .door-icon, .page-icon {
   width: rhythm.rh(2);
   height: rhythm.rh(2);
   vertical-align: middle;
@@ -660,7 +669,7 @@ kbd {
   border-color: black;
   border-radius: rhythm.rh(1);
 
-  background-color: rgba(255, 255, 255, 0.75);
+  background-color: rgba(255, 255, 255, 0.5);
   backdrop-filter: blur(rhythm.rh(0.25));
 
   user-select: none;
@@ -686,4 +695,37 @@ kbd {
   width: rhythm.rh(1.125);
   height: rhythm.rh(1.125);
   vertical-align: middle;
+}
+
+.message-container {
+  width: 18rem;
+  height: 100vh;
+
+  padding: rhythm.rh(1);
+  border-left: rhythm.$px solid darkgrey;
+  background-color: rgba(240, 240, 240, 0.8);
+  backdrop-filter: blur(rhythm.rh(0.25));
+
+  overflow: scroll;
+
+  &.hidden {
+    display: none;
+  }
+}
+
+.message-title {
+  @include rhythm.rh-border('bottom');
+  border-bottom-style: solid;
+  border-bottom-color: darkgrey;
+  margin-bottom: rhythm.rh(0.25);
+
+  text-align: center;
+}
+
+.messages {
+  font-size: rhythm.rh(0.875);
+
+  > p {
+    @include rhythm.rh-margin-y(0.5);
+  }
 }
