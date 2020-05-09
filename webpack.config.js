@@ -1,8 +1,8 @@
-let path = require('path');
-let process = require('process');
-let externals = require('webpack-node-externals');
+const path = require('path');
+const process = require('process');
+const externals = require('webpack-node-externals');
 
-let resolve_path = (() => {
+const resolve_path = (() => {
   if (process.env.NODE_PATH === undefined) {
     return [
       'node_modules',
@@ -17,8 +17,7 @@ let resolve_path = (() => {
   }
 })();
 
-let common = {
-  mode: "production",
+const common = {
   devtool: "source-map",
 
   resolve: {
@@ -62,7 +61,8 @@ let common = {
   },
 };
 
-let frontend = Object.assign({
+const frontend = {
+  mode: "production",
   entry: "./src/ui.tsx",
   externals: {
     "react": "React",
@@ -70,10 +70,12 @@ let frontend = Object.assign({
   },
   output: {
     path: path.resolve(__dirname, "./dist/ui")
-  }
-}, common);
+  },
+  ...common
+};
 
-let backend = Object.assign({
+const backend = {
+  mode: "production",
   entry: "./src/app.ts",
   target: "node",
   externals: [externals({
@@ -81,8 +83,22 @@ let backend = Object.assign({
   })],
   output: {
     path: path.resolve(__dirname, "./dist/app")
-  }
-}, common);
+  },
+  ...common
+};
+
+const dev = {
+  mode: "development",
+  entry: "./src/app.ts",
+  target: "node",
+  externals: [externals({
+    modulesFromFile: true,
+  })],
+  output: {
+    path: path.resolve(__dirname, "./dist/dev")
+  },
+  ...common
+};
 
 
-module.exports = [frontend, backend];
+module.exports = [frontend, backend, dev];
