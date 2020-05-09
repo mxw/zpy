@@ -72,7 +72,8 @@ export class Instructions extends React.Component<Instructions.Props, {}> {
           case ZPY.Phase.FOLLOW: return zpy.cur_idx !== null
             ? <>
                 waiting for the next player to play.
-                you can stage your play above while you wait.
+                you can stage your play above while you wait and
+                press {enter} to auto-play it on your turn.
               </>
             : <>waiting for the winner to collect the trick</>;
           case ZPY.Phase.FINISH:
