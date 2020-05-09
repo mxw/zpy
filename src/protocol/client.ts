@@ -230,11 +230,13 @@ export class GameClient<
 
       switch (pa.verb) {
         case 'user:join':
-        case 'user:rejoin':
           this.users.push(pa.who);
           break;
+        case 'user:rejoin':
         case 'user:part':
-          this.users = this.users.filter(u => u.id !== pa.id);
+          // like the server, we treat the list of users as all users we've
+          // seen, not necessarily the ones that are currently connected and
+          // participating in the game
           break;
         case 'user:nick':
           const user = this.users.find(u => u.id === pa.who.id);
