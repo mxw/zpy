@@ -3,6 +3,7 @@ import {isOK, isErr} from 'utils/result.ts'
 import * as P from 'protocol/protocol.ts'
 import {Engine} from 'protocol/engine.ts'
 
+import * as options from 'options.ts'
 import assert from 'utils/assert.ts'
 
 export class GameClient<
@@ -30,7 +31,7 @@ export class GameClient<
   readonly sock_url: string;
 
   // exponential backoff delay for reconnecting the websocket; in milliseconds
-  reconnect_delay: number = 500;
+  reconnect_delay: number = options.reconnect_delay;
 
   // whether we are synchronized w/ the server.
   //
@@ -167,7 +168,7 @@ export class GameClient<
             break
 
           case "reset":
-            this.reconnect_delay = 125;
+            this.reconnect_delay = options.reconnect_delay;
             this.state = msg.state;
             this.users = msg.who;
             this.status = "sync";

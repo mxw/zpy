@@ -21,3 +21,8 @@ export const game_expiry: number = 1000 * 60 * 30;
  * server websocket ping interval, in ms
  */
 export const ping_interval: number = 1000 * 30;
+
+/*
+ * client initial reconnect delay, in ms
+ */
+export const reconnect_delay: number = 500;
