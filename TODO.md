@@ -1,11 +1,5 @@
 # TODO
 
-## public release
-
-- logging
-
-- persistence?
-
 ## wishlist
 
 - dynamically size the cards in ActionInfo
