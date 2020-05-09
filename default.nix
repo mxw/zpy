@@ -62,7 +62,7 @@ let
       cat >$out/bin/run.sh <<eof
       #!/usr/bin/env sh
       cd $out
-      env NODE_PATH=${prodDeps}/lib/node_modules/zhaopengyou/node_modules ${nodejs}/bin/node dist/app/main.js
+      exec env NODE_PATH=${prodDeps}/lib/node_modules/zhaopengyou/node_modules ${nodejs}/bin/node dist/app/main.js
       eof
 
       chmod +x $out/bin/run.sh

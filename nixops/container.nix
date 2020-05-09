@@ -17,6 +17,24 @@
       services.zpy = {
         enable = true;
         hostname = config.networking.hostName;
+        database = {
+          host = "/run/postgresql";
+          user = config.services.zpy.user;
+          db = config.services.zpy.user;
+        };
+      };
+
+      services.postgresql = {
+        enable = true;
+        authentication = lib.mkForce "local all all peer";
+        ensureDatabases = [ config.services.zpy.user];
+        ensureUsers = [{
+          name = config.services.zpy.user;
+          ensurePermissions = {
+            "DATABASE ${config.services.zpy.user}" = "ALL PRIVILEGES";
+          };
+        }];
+        enableTCPIP = false;
       };
     };
 
