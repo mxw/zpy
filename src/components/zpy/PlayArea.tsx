@@ -44,6 +44,7 @@ export class PlayArea extends React.Component<
     // player actions
     this.onSubmit = this.onSubmit.bind(this);
     this.onEffect = this.onEffect.bind(this);
+    this.onPlayEffect = this.onEffect.bind(this);
     this.onConfigChange = this.onConfigChange.bind(this);
     this.onClickDeck = this.onClickDeck.bind(this);
 
@@ -53,6 +54,7 @@ export class PlayArea extends React.Component<
 
     // drag/drop/select handlers
     this.onClickCard = this.onClickCard.bind(this);
+    this.onTeleport = this.onClickCard.bind(this);
     this.onFriendSelect = this.onFriendSelect.bind(this);
     this.onDragStart = this.onDragStart.bind(this);
     this.onDragEnd = this.onDragEnd.bind(this);
@@ -172,108 +174,6 @@ export class PlayArea extends React.Component<
   }
 
   /*
-   * account for new/removed cards from a server reset
-   */
-  onReset(zpy: ZPYEngine.ClientState) {
-    const hand = zpy.hand(this.props.me.id);
-
-    this.setState((state, props) => {
-      const all_cards = PlayArea.filter(state);
-      const {
-        left: to_add,
-        right: to_rm
-      } = card_delta(hand, all_cards, zpy.tr);
-
-      if (to_add.length > 0) {
-        state = PlayArea.withCardsAdded(state, props, to_add, 0);
-      }
-      if (to_rm.length > 0) {
-        state = PlayArea.withCardsRemoved(state, props, to_rm);
-      }
-      return state;
-    });
-
-  }
-
-  /*
-   * account for state changes from a server update
-   */
-  onUpdate(effect: ZPYEngine.Effect) {
-    const me = this.props.me.id;
-    const zpy = this.props.zpy;
-
-    switch (effect.kind) {
-      case 'set_decks': {
-        this.setState({
-          fr_select: array_fill(zpy.ndecks, () => ({}))
-        });
-        break;
-      }
-      case 'add_to_hand': {
-        // if it's our turn and auto-draw is on, draw a card
-        if (this.state.auto_draw &&
-            this.props.phase === ZPY.Phase.DRAW &&
-            zpy.is_current(me)) {
-          setTimeout(() => this.submitDrawCard(), 250);
-        }
-        break;
-      }
-      case 'secure_bid': {
-        if (this.state.keep_hand_sorted) {
-          this.setState((state, props) => PlayArea.withHandSorted(state, props));
-        }
-        break;
-      }
-      case 'install_host': {
-        const kitty = effect.args[1];
-        if (me === zpy.host && kitty.length > 0) {
-          this.setState((state, props) =>
-            PlayArea.withCardsAdded(state, props, kitty, 1)
-          );
-        }
-        break;
-      }
-      case 'reject_fly': {
-        if (me === zpy.leader) {
-          // our fly was rejected, so remove our forced play from our hand
-          this.setState((state, props) => {
-            const to_rm = card_delta(
-              effect.args[2].gen_cards(zpy.tr),
-              state.pending_cards,
-              zpy.tr
-            ).both;
-            return {
-              ...PlayArea.withCardsRemoved(state, props, to_rm),
-              pending_cards: [],
-            };
-          });
-        }
-        break;
-      }
-      case 'pass_contest': {
-        if (me === zpy.leader && zpy.phase === ZPY.Phase.FOLLOW) {
-          // our fly passed, so remove the cards from our hand
-          this.setState((state, props) => ({
-            ...PlayArea.withCardsRemoved(state, props, state.pending_cards),
-            pending_cards: [],
-          }));
-        }
-        break;
-      }
-      case 'observe_follow': {
-        if (this.state.auto_play &&
-            this.props.phase === ZPY.Phase.FOLLOW &&
-            zpy.is_current(me) &&
-            !zpy.trick_over()) {
-          this.submitFollowLead();
-        }
-        break;
-      }
-      default: break;
-    }
-  }
-
-  /*
    * return a copy of `state` with `to_add` added to area `adx`
    *
    * we treat `cards` as never-before-seen objects, and assign them id's
@@ -388,6 +288,113 @@ export class PlayArea extends React.Component<
     return state.areas.flatMap(
       area => filt ? area.ordered.filter(filt) : area.ordered
     );
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  /*
+   * server message reactivity
+   */
+
+  /*
+   * account for new/removed cards from a server reset
+   */
+  onReset(zpy: ZPYEngine.ClientState) {
+    const hand = zpy.hand(this.props.me.id);
+
+    this.setState((state, props) => {
+      const all_cards = PlayArea.filter(state);
+      const {
+        left: to_add,
+        right: to_rm
+      } = card_delta(hand, all_cards, zpy.tr);
+
+      if (to_add.length > 0) {
+        state = PlayArea.withCardsAdded(state, props, to_add, 0);
+      }
+      if (to_rm.length > 0) {
+        state = PlayArea.withCardsRemoved(state, props, to_rm);
+      }
+      return state;
+    });
+
+  }
+
+  /*
+   * account for state changes from a server update
+   */
+  onUpdate(effect: ZPYEngine.Effect) {
+    const me = this.props.me.id;
+    const zpy = this.props.zpy;
+
+    switch (effect.kind) {
+      case 'set_decks': {
+        this.setState({
+          fr_select: array_fill(zpy.ndecks, () => ({}))
+        });
+        break;
+      }
+      case 'add_to_hand': {
+        // if it's our turn and auto-draw is on, draw a card
+        if (this.state.auto_draw &&
+            this.props.phase === ZPY.Phase.DRAW &&
+            zpy.is_current(me)) {
+          setTimeout(() => this.submitDrawCard(), 250);
+        }
+        break;
+      }
+      case 'secure_bid': {
+        if (this.state.keep_hand_sorted) {
+          this.setState((state, props) => PlayArea.withHandSorted(state, props));
+        }
+        break;
+      }
+      case 'install_host': {
+        const kitty = effect.args[1];
+        if (me === zpy.host && kitty.length > 0) {
+          this.setState((state, props) =>
+            PlayArea.withCardsAdded(state, props, kitty, 1)
+          );
+        }
+        break;
+      }
+      case 'reject_fly': {
+        if (me === zpy.leader) {
+          // our fly was rejected, so remove our forced play from our hand
+          this.setState((state, props) => {
+            const to_rm = card_delta(
+              effect.args[2].gen_cards(zpy.tr),
+              state.pending_cards,
+              zpy.tr
+            ).both;
+            return {
+              ...PlayArea.withCardsRemoved(state, props, to_rm),
+              pending_cards: [],
+            };
+          });
+        }
+        break;
+      }
+      case 'pass_contest': {
+        if (me === zpy.leader && zpy.phase === ZPY.Phase.FOLLOW) {
+          // our fly passed, so remove the cards from our hand
+          this.setState((state, props) => ({
+            ...PlayArea.withCardsRemoved(state, props, state.pending_cards),
+            pending_cards: [],
+          }));
+        }
+        break;
+      }
+      case 'observe_follow': {
+        if (this.state.auto_play &&
+            this.props.phase === ZPY.Phase.FOLLOW &&
+            zpy.is_current(me) &&
+            !zpy.trick_over()) {
+          this.submitFollowLead();
+        }
+        break;
+      }
+      default: break;
+    }
   }
 
   /////////////////////////////////////////////////////////////////////////////
