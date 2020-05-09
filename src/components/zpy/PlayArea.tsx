@@ -79,7 +79,7 @@ export class PlayArea extends React.Component<
       },
       fr_select: array_fill(this.props.zpy.ndecks, () => ({})),
 
-      keep_hand_sorted: false,
+      auto_sort: false,
       auto_draw: false,
       auto_play: false,
       full_control: false,
@@ -163,7 +163,7 @@ export class PlayArea extends React.Component<
       config: {...state.config},
       fr_select: state.fr_select.map(fr => ({...fr})),
 
-      keep_hand_sorted: state.keep_hand_sorted,
+      auto_sort: state.auto_sort,
       auto_draw: state.auto_draw,
       auto_play: state.auto_play,
       full_control: state.full_control,
@@ -214,7 +214,7 @@ export class PlayArea extends React.Component<
       state.areas[adx].ordered.push(c);
       state.id_to_area[c.id] = adx;
     }
-    return state.keep_hand_sorted
+    return state.auto_sort
       ? PlayArea.withHandSorted(state, props)
       : state;
   }
@@ -296,7 +296,8 @@ export class PlayArea extends React.Component<
    */
 
   /*
-   * account for new/removed cards from a server reset
+   * account for new/removed cards from a server reset and trigger automatic
+   * responses
    */
   onReset(zpy: ZPYEngine.ClientState) {
     const hand = zpy.hand(this.props.me.id);
@@ -317,6 +318,10 @@ export class PlayArea extends React.Component<
       return state;
     });
 
+    // if this is a reconnect, apply all the auto options
+    this.tryAutoSort();
+    this.tryAutoDraw();
+    this.tryAutoPlay();
   }
 
   /*
@@ -327,27 +332,22 @@ export class PlayArea extends React.Component<
     const zpy = this.props.zpy;
 
     switch (effect.kind) {
-      case 'set_decks': {
+      case 'set_decks':
         this.setState({
           fr_select: array_fill(zpy.ndecks, () => ({}))
         });
         break;
-      }
-      case 'add_to_hand': {
-        // if it's our turn and auto-draw is on, draw a card
-        if (this.state.auto_draw &&
-            this.props.phase === ZPY.Phase.DRAW &&
-            zpy.is_current(me)) {
-          setTimeout(() => this.submitDrawCard(), 250);
-        }
+
+      case 'add_to_hand':
+        this.tryAutoDraw();
         break;
-      }
-      case 'secure_bid': {
-        if (this.state.keep_hand_sorted) {
-          this.setState((state, props) => PlayArea.withHandSorted(state, props));
-        }
+      case 'secure_bid':
+        this.tryAutoSort();
         break;
-      }
+      case 'observe_follow':
+        this.tryAutoPlay();
+        break;
+
       case 'install_host': {
         const kitty = effect.args[1];
         if (me === zpy.host && kitty.length > 0) {
@@ -384,16 +384,37 @@ export class PlayArea extends React.Component<
         }
         break;
       }
-      case 'observe_follow': {
-        if (this.state.auto_play &&
-            this.props.phase === ZPY.Phase.FOLLOW &&
-            zpy.is_current(me) &&
-            !zpy.trick_over()) {
-          this.submitFollowLead();
-        }
-        break;
-      }
+
       default: break;
+    }
+  }
+
+  tryAutoSort() {
+    if (this.state.auto_sort) {
+      this.setState((state, props) => PlayArea.withHandSorted(state, props));
+    }
+  }
+
+  tryAutoDraw() {
+    const me = this.props.me.id;
+    const zpy = this.props.zpy;
+
+    if (this.state.auto_draw &&
+        this.props.phase === ZPY.Phase.DRAW &&
+        zpy.is_current(me)) {
+      setTimeout(() => this.submitDrawCard(), 250);
+    }
+  }
+
+  tryAutoPlay() {
+    const me = this.props.me.id;
+    const zpy = this.props.zpy;
+
+    if (this.state.auto_play &&
+        this.props.phase === ZPY.Phase.FOLLOW &&
+        zpy.is_current(me) &&
+        !zpy.trick_over()) {
+      this.submitFollowLead();
     }
   }
 
@@ -1007,7 +1028,7 @@ export class PlayArea extends React.Component<
         id_to_area: id_to_cns(hand_ordered, 0),
       }, props);
 
-      return state.keep_hand_sorted
+      return state.auto_sort
         ? PlayArea.withHandSorted(state, props)
         : state;
     });
@@ -1091,9 +1112,9 @@ export class PlayArea extends React.Component<
         },
       }, props));
 
-      if (state.keep_hand_sorted) {
+      if (state.auto_sort) {
         if (dst_adx === 0 && affected_areas.has(0)) {
-          state = {...state, keep_hand_sorted: false};
+          state = {...state, auto_sort: false};
         } else {
           state = PlayArea.withHandSorted(state, props);
         }
@@ -1146,9 +1167,9 @@ export class PlayArea extends React.Component<
   }
 
   renderUserOptions() {
-    const keep_hand_sorted = this.renderToggleButton(
+    const auto_sort = this.renderToggleButton(
       'keep hand sorted',
-      'keep_hand_sorted',
+      'auto_sort',
       'sort by rank order, alternating suits, with trumps last',
       checked => { if (checked) this.sortHand(); }
     );
@@ -1190,7 +1211,7 @@ export class PlayArea extends React.Component<
       checked => { if (!checked) this.resetPlays(); }
     );
 
-    const opts = [keep_hand_sorted];
+    const opts = [auto_sort];
 
     switch (this.props.phase) {
       case ZPY.Phase.INIT: return null;
@@ -1482,7 +1503,7 @@ type Area = {
 };
 
 export type UserOptions = {
-  keep_hand_sorted: boolean;
+  auto_sort: boolean;
   auto_draw: boolean;
   auto_play: boolean;
   full_control: boolean;
