@@ -1,6 +1,7 @@
 import * as ZPYEngine from 'lib/zpy/engine.ts'
 
 import { GameServer, GameId } from 'server/server.ts'
+import * as db from 'server/db.ts'
 import * as Session from 'server/session.ts'
 
 import { escape_backslashes } from 'utils/string.ts';
@@ -9,6 +10,7 @@ import CookieParser from 'cookie-parser'
 import express from 'express'
 import * as HTTP from 'http'
 import * as WebSocket from 'ws'
+import * as os from 'os'
 
 import * as options from 'options.ts'
 import assert from 'utils/assert.ts'
@@ -85,6 +87,31 @@ app.post('/api/new_game', (req, res) => {
   res.send(game_id);
 });
 
-server.listen(8080, () => {
+server.listen(8080, async () => {
+  await db.ensure_init();
   log.info('listening on port 8080');
 });
+
+///////////////////////////////////////////////////////////////////////////////
+
+/*
+ * graceful shutdown: snapshot all games
+ */
+async function shutdown() {
+  log.info('server going down');
+
+  await Promise.all(Object.values(gs.games).map(
+    game => game.snapshot()
+  ));
+  log.info('server snapshot complete');
+}
+
+async function signal_handler(signal: NodeJS.Signals) {
+  log.info('signal handled', {signal});
+  await shutdown();
+
+  process.exit(0);
+}
+
+process.on('SIGINT', signal_handler);
+process.on('SIGTERM', signal_handler);

@@ -2,11 +2,14 @@
  * Webserver implementation, wrapped around a generic game engine.
  */
 
-import {isOK, isErr} from 'utils/result.ts'
-
 import {Engine} from 'protocol/engine.ts'
 import * as P from 'protocol/protocol.ts'
+
+import * as db from 'server/db.ts'
 import * as Session from 'server/session.ts'
+
+import { o_map } from 'utils/array.ts'
+import {isOK, isErr} from 'utils/result.ts'
 
 import * as WebSocket from 'ws'
 import * as Http from 'http'
@@ -123,6 +126,8 @@ class Game<
     owner: Principal,
     participation: Record<Principal, Set<GameId>>,
     destroy: () => void,
+    state?: State,
+    users?: Record<Principal, P.User>,
   ) {
     this.id = id;
     this.engine = engine;
@@ -130,7 +135,8 @@ class Game<
     this.owner = owner;
     this.participation = participation;
     this.destroy = destroy;
-    this.state = this.engine.init(config);
+    this.state = state ?? this.engine.init(config);
+    this.users = users ?? {};
   }
 
   /*
@@ -140,21 +146,30 @@ class Game<
    * updates until they ask for a reset
    */
   hello(source: Client, nick: string): void {
-    const known = source.principal in this.users;
+    const sid = source.principal;
+    const known = sid in this.users;
 
     if (!known) {
       // new principal; conjure a user object for them
-      this.users[source.principal] = {
+      this.users[sid] = {
         id: this.next_uid++,
         nick: nick,
       };
-
-      // help the game server track the games each principal belongs to
-      this.participation[source.principal] =
-        this.participation[source.principal] ?? new Set();
-      this.participation[source.principal].add(this.id);
     }
-    source.user = this.users[source.principal];
+    // this is relevant if either (a) the user changed their nick in another
+    // game before they reconnected, or (b) this game was freshly loaded from a
+    // snapshot
+    this.users[sid].nick = nick;
+
+    source.user = this.users[sid];
+
+    // help the game server track the games each principal belongs to
+    //
+    // we do this unconditionally because the known users might have been
+    // retrieved from a snapshot, and this might be the first time the client
+    // has said hello in this instance of the server
+    this.participation[sid] = this.participation[sid] ?? new Set();
+    this.participation[sid].add(this.id);
 
     log.info('client hello', {
       ...source.log_entry(),
@@ -383,6 +398,44 @@ class Game<
       this.dispose(client);
     });
   }
+
+  /*
+   * write state into persistent storage
+   */
+  async snapshot() {
+    const config = this.engine.Config.encode(this.config);
+    const state = this.engine.State.encode(this.state);
+
+    try {
+      await db.pool.query(
+        'INSERT INTO games (id, config, owner, state, ts) ' +
+        'VALUES ($1, $2, $3, $4, NOW()) ' +
+        'ON CONFLICT (id) DO ' +
+        'UPDATE SET config = $2, owner = $3, state = $4, ts = NOW()',
+        [this.id, config, this.owner, state]
+      );
+    } catch (err) {
+      log.error('snapshot failed (games): ', err);
+      return;
+    }
+
+    try {
+      const user_rows = o_map(
+        this.users,
+        (principal, user) => [this.id, principal, user.id, user.nick]
+      );
+      if (user_rows.length > 0) {
+        await db.pool.query(db.format(
+          'INSERT INTO participation (game, principal, uid, nick) VALUES %L ' +
+          'ON CONFLICT DO NOTHING',
+          user_rows,
+        ));
+      }
+    } catch (err) {
+      log.error('snapshot failed (participation): ', err);
+      return;
+    }
+  }
 }
 
 /*
@@ -442,10 +495,10 @@ export class GameServer<
 
       // is the game a real thing
       const game_id = matches[1];
-      if (!(game_id in this.games)) {
+      const game = await this.fetch_game(game_id);
+      if (game === null) {
         return bail(`no such game: ${game_id}`, {game: game_id});
       }
-      const game = this.games[game_id];
 
       // is this someone we know about
       let id: string | null = null;
@@ -467,7 +520,7 @@ export class GameServer<
         return bail("no principal provided (log in first)");
       }
 
-      const session = Session.get(id);
+      const session = await Session.get(id);
       if (session === null) {
         return bail(`no such session: ${id}`, {id});
       }
@@ -497,23 +550,16 @@ export class GameServer<
    *
    * returns the game id
    */
-  public begin_game(cfg: Config, owner: Principal): GameId {
+  begin_game(cfg: Config, owner: Principal): GameId {
     const id = Uuid.v4();
 
     const cleanup = () => {
       log.info('game queueing for deletion', {game: id});
 
-      setTimeout(() => {
-        if (id in this.games &&
-            this.games[id].clients.length === 0) {
-          log.info('game deletion', {game: id});
-
-          for (const principal in this.games[id].users) {
-            this.participation[principal].delete(id);
-          }
-          delete this.games[id];
-        }
-      }, options.game_expiry); // 30 minutes of inactivity
+      setTimeout(
+        async () => { await this.delete_game(id) },
+        options.game_expiry // 30 minutes of inactivity
+      );
     };
 
     this.games[id] = new Game(
@@ -528,9 +574,123 @@ export class GameServer<
   }
 
   /*
+   * obtain a game, possibly deserializing it from a snapshot
+   */
+  async fetch_game(id: GameId): Promise<null | Game<
+    Config, Intent, State, Action,
+    ClientState, Effect, UpdateError, Eng
+  >> {
+    if (id in this.games) return this.games[id];
+
+    const games_res = await (async () => {
+      try {
+        return await db.pool.query('SELECT * FROM games WHERE id = $1', [id]);
+      } catch (err) {
+        log.error('snapshot retrieval failed (games): ', err);
+      }
+      return null;
+    })();
+    if (games_res === null) return null;
+
+    if (games_res.rows.length !== 1) return null;
+    const row = games_res.rows[0];
+
+    const config = P.on_decode(
+      this.engine.Config, row.config,
+      (config: Config) => config,
+      (e: any) => {
+        log.error('snapshot decode failed', {
+          game: id,
+          draw: P.draw_error(e),
+          column: 'config',
+        });
+        return null;
+      }
+    );
+    if (config === null) return null;
+
+    const state = P.on_decode(
+      this.engine.State, row.state,
+      (state: State) => state,
+      (e: any) => {
+        log.error('snapshot decode failed', {
+          game: id,
+          draw: P.draw_error(e),
+          column: 'state',
+        });
+        return null;
+      }
+    );
+    if (state === null) return null;
+
+    const prtc_res = await (async() => {
+      try {
+        return await db.pool.query(
+          'SELECT * FROM participation WHERE game = $1',
+          [id]
+        );
+      } catch (err) {
+        log.error('snapshot retrieval failed (participation): ', err);
+      }
+    })();
+    if (prtc_res === null) return null;
+
+    const users: Record<Principal, P.User> = Object.fromEntries(
+      prtc_res.rows.map(
+        ({principal, uid, nick}) => [principal, {id: uid, nick}]
+      )
+    );
+    log.info('snapshot decode succeeded', {game: id});
+
+    const cleanup = () => {
+      log.info('game queueing for deletion', {game: id});
+
+      setTimeout(
+        async () => { await this.delete_game(id) },
+        options.game_expiry // 30 minutes of inactivity
+      );
+    };
+
+    return this.games[id] = new Game(
+      id,
+      this.engine,
+      config,
+      row.owner,
+      this.participation,
+      cleanup,
+      state,
+      users,
+    );
+  }
+
+  /*
+   * delete all data for a game
+   *
+   * includes all persistent snapshots, user participation, and the game object
+   * itself from this.games
+   */
+  async delete_game(id: GameId) {
+    if (!(id in this.games)) return;
+    if (this.games[id].clients.length > 0) return;
+
+    log.info('game deletion', {game: id});
+
+    try {
+      await db.pool.query('DELETE FROM games WHERE id = $1', [id]);
+    } catch (err) {
+      log.error('snapshot deletion failed: ', err);
+    }
+
+    for (const principal in this.games[id].users) {
+      this.participation[principal].delete(id);
+    }
+    delete this.games[id];
+  }
+
+  /*
    * propagate a nick change to all live games
    */
-  public rename(principal: Principal, nick: string) {
+  rename(principal: Principal, nick: string) {
     const gids: Iterable<GameId> = this.participation[principal] ?? [];
 
     for (const gid of gids) {
