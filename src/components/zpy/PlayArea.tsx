@@ -44,7 +44,7 @@ export class PlayArea extends React.Component<
     // player actions
     this.onSubmit = this.onSubmit.bind(this);
     this.onEffect = this.onEffect.bind(this);
-    this.onPlayEffect = this.onEffect.bind(this);
+    this.onPlayEffect = this.onPlayEffect.bind(this);
     this.onConfigChange = this.onConfigChange.bind(this);
     this.onClickDeck = this.onClickDeck.bind(this);
 
@@ -54,7 +54,7 @@ export class PlayArea extends React.Component<
 
     // drag/drop/select handlers
     this.onClickCard = this.onClickCard.bind(this);
-    this.onTeleport = this.onClickCard.bind(this);
+    this.onTeleport = this.onTeleport.bind(this);
     this.onFriendSelect = this.onFriendSelect.bind(this);
     this.onDragStart = this.onDragStart.bind(this);
     this.onDragEnd = this.onDragEnd.bind(this);

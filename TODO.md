@@ -23,3 +23,6 @@
 - make clubs and spades more distinct
 
 - trigger renege when someone fails to contest a fly
+
+- refreshing causes people to flicker in and out; iterate players array instead
+  of users array
