@@ -521,6 +521,19 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       return new ZPY.InvalidPlayError(`invalid trump bid for rank ${tr_rank}`);
     }
 
+    if (card.rank > Rank.A) {
+      if (this.bids.length === 0) {
+        return new ZPY.InvalidPlayError(
+          'jokers can only overturn pre-existing bids'
+        );
+      }
+      if (n < 2) {
+        return new ZPY.InvalidPlayError(
+          'must use at least two jokers to overturn'
+        );
+      }
+    }
+
     const commit_bid = () => {
       this.secure_bid(player, card, n);
       return [card, n]
