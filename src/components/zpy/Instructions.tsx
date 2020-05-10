@@ -69,13 +69,16 @@ export class Instructions extends React.Component<Instructions.Props, {}> {
             return <>waiting for the trick leader to play</>;
           case ZPY.Phase.FLY:
             return <>waiting on others to see if the play flies</>;
-          case ZPY.Phase.FOLLOW: return zpy.cur_idx !== null
-            ? <>
-                waiting for the next player to play.
-                you can stage your play above while you wait and
-                press {enter} to auto-play it on your turn.
-              </>
-            : <>waiting for the winner to collect the trick</>;
+          case ZPY.Phase.FOLLOW: return zpy.cur_idx === null
+            ? <>waiting for the winner to collect the trick</>
+            : (me in zpy.plays
+              ? <>waiting for the next player to play</>
+              : <>
+                  waiting for the next player to play.
+                  you can stage your play above while you wait and
+                  press {enter} to auto-play it on your turn.
+                </>
+            );
           case ZPY.Phase.FINISH:
             return <>waiting for the host to end the round</>;
           case ZPY.Phase.WAIT: return me === zpy.host
@@ -94,12 +97,12 @@ export class Instructions extends React.Component<Instructions.Props, {}> {
         case ZPY.Phase.DRAW:
           return <>
             click the deck to draw;
-            drag cards above and press {enter} to submit a trump bid
+            place cards above and press {enter} to submit a trump bid
           </>;
         case ZPY.Phase.PREPARE:
           return <>
-            press {enter} to indicate you are ready,
-            or drag cards above first to submit a trump bid.
+            press {enter} to indicate you have no more trump bids,
+            or place cards above and press {enter} to make one.
           </>;
         case ZPY.Phase.KITTY:
           return <>
@@ -113,17 +116,17 @@ export class Instructions extends React.Component<Instructions.Props, {}> {
           </>;
         case ZPY.Phase.LEAD:
           return <>
-            drag cards above and press {enter} to submit your lead
+            place cards above and press {enter} to submit your lead
           </>;
         case ZPY.Phase.FLY:
           return <>
             press {enter} if the play flies;
-            or drag a card, tuple, or tractor above
+            or place a card, tuple, or tractor above
             and press {enter} to contest the play
           </>;
         case ZPY.Phase.FOLLOW: return zpy.cur_idx !== null
           ? <>
-              drag cards above and press {enter} to submit your play
+              place cards above and press {enter} to submit your play
             </>
           : <>you won the trick; press {enter} to collect it</>;
         case ZPY.Phase.FINISH:
