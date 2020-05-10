@@ -79,11 +79,11 @@ export class ConfigArea extends React.Component<ConfigArea.Props, {}> {
             )}
             {this.renderOption(
               'hide play', 'info', ZPY.HiddenInfoRule.HIDE_PLAY,
-              'hide plays from the game log',
+              'hide play history from the game log',
             )}
             {this.renderOption(
               'hide all', 'info', ZPY.HiddenInfoRule.HIDE_ALL,
-              'hide host team points and game log plays',
+              'hide host team points and play history',
             )}
           </div>
         </label>
