@@ -527,6 +527,7 @@ export class PlayArea extends React.Component<
   }
 
   submitCollectTrick(): boolean {
+    if (this.props.me.id !== this.props.zpy.winning) return false;
     return this.attempt({kind: 'collect_trick', args: [this.props.me.id]});
   }
 
