@@ -22,11 +22,7 @@ describe('ZPY', () => {
   type PlayerID = string;
 
   it('plays a whole game', () => {
-    let zpy = new ZPY<PlayerID>({
-      renege: ZPY.RenegeRule.FORBID,
-      rank: ZPY.RankSkipRule.HOST_ONCE,
-      kitty: ZPY.KittyMultiplierRule.EXP,
-    });
+    let zpy = new ZPY<PlayerID>();
     zpy.set_debug();
 
     let a = 'aberdeen';

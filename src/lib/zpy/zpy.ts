@@ -100,9 +100,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   // debugging determinism flag
   debug: boolean = false;
 
-  constructor(rules: ZPY.RuleModifiers) {
+  constructor(rules: ZPY.RuleModifiers = ZPY.default_rules) {
     super();
-    this.rules = rules;
+    this.rules = {...rules};
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -981,19 +981,19 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
 
     if (!follows) {
       switch (this.rules.renege) {
-        case ZPY.RenegeRule.ACCUSE: {
-          // TODO: implement this
-        }
         case ZPY.RenegeRule.FORBID: {
           this.hands[player].undo(play_pile, undo_chain);
           return new ZPY.InvalidPlayError('invalid follow');
+          break;
+        }
+        case ZPY.RenegeRule.ACCUSE: {
+          // TODO: implement this
+          break;
         }
         case ZPY.RenegeRule.AUTOLOSE: {
           // TODO: implement this
           this.phase = ZPY.Phase.FINISH;
-        }
-        case ZPY.RenegeRule.UNDO_ONE: {
-          // TODO: implement this
+          break;
         }
       }
     }
@@ -1333,10 +1333,9 @@ ${p}'s hand: ${hand_pile.size > 0 ? '\n' + hand_pile.toString(color) : ''}`;
 
 export namespace ZPY {
   export enum RenegeRule {
-    ACCUSE,   // reneges are tracked, but must be called out by other players
     FORBID,   // disallow plays that would result in a renege
+    ACCUSE,   // reneges are tracked, but must be called out by other players
     AUTOLOSE, // reneges immediately cause players to lose
-    UNDO_ONE, // allow players to undo their renege play before the trick ends
   }
   export enum RankSkipRule {
     HOST_ONCE, // must host 5,10,J,K,W once before ranking up
@@ -1345,14 +1344,40 @@ export namespace ZPY {
     NO_RULE,   // no limits, freely skip any rank
   }
   export enum KittyMultiplierRule {
-    EXP,  // 2^n multiplier
-    MULT, // 2*n multiplier
+    EXP,  // 2^n multiplier for biggest component
+    MULT, // 2*n multiplier for whole slide
+  }
+  export enum HiddenInfoRule {
+    PUBLIC,     // all information public
+    HIDE_PTS,   // hide host points
+    HIDE_PLAY,  // hide played cards
+    HIDE_ALL,   // hide both host points and played cards
+  }
+  export enum UndoPlayRule {
+    NO_UNDO,    // no undos allowed
+    UNDO_ONE,   // can undo the most recent play
+  }
+  export enum TrashKittyRule {
+    NO,   // no overturns once kitty is picked up
+    YES,  // trash kitty: overturn gives you the discarded kitty
   }
   export type RuleModifiers = {
     renege: RenegeRule;
     rank: RankSkipRule;
     kitty: KittyMultiplierRule;
+    info: HiddenInfoRule;
+    undo: UndoPlayRule;
+    trash: TrashKittyRule;
   }
+
+  export const default_rules: RuleModifiers = {
+    renege: 0,
+    rank: 0,
+    kitty: 0,
+    info: 0,
+    undo: 0,
+    trash: 0,
+  };
 
   export enum Phase {
     INIT,    // assembling players

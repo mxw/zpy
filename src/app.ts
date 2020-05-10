@@ -4,6 +4,8 @@ import { GameServer, GameId } from 'server/server.ts'
 import * as db from 'server/db.ts'
 import * as Session from 'server/session.ts'
 
+import { ZPY } from 'lib/zpy/zpy.ts'
+
 import { escape_backslashes } from 'utils/string.ts';
 
 import CookieParser from 'cookie-parser'
@@ -74,11 +76,7 @@ app.post('/api/set_nick', (req, res) => {
  */
 app.post('/api/new_game', (req, res) => {
   const r = req as (typeof req & {session: Session.T});
-  const game_id = gs.begin_game({
-    renege: 0,
-    rank: 0,
-    kitty: 0,
-  }, r.session.id);
+  const game_id = gs.begin_game(ZPY.default_rules, r.session.id);
 
   log.info('game creation', {
     game: game_id,

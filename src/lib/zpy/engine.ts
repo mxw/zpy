@@ -39,11 +39,22 @@ import assert from 'utils/assert.ts'
  * config and error codecs.
  */
 
-export const Config = C.type({
+const cd_PartialConfig = C.type({
   renege: P.Enum<ZPY.RenegeRule>(ZPY.RenegeRule),
   rank: P.Enum<ZPY.RankSkipRule>(ZPY.RankSkipRule),
   kitty: P.Enum<ZPY.KittyMultiplierRule>(ZPY.KittyMultiplierRule),
+  info: P.Enum<ZPY.HiddenInfoRule>(ZPY.HiddenInfoRule),
+  undo: P.Enum<ZPY.UndoPlayRule>(ZPY.UndoPlayRule),
+  trash: P.Enum<ZPY.TrashKittyRule>(ZPY.TrashKittyRule),
 });
+export const Config: C.Codec<ZPY.RuleModifiers> = C.make(
+  D.parse(
+    cd_PartialConfig,
+    partial => P.success({...ZPY.default_rules, ...partial})
+  ),
+  {encode: (cfg: ZPY.RuleModifiers) => cd_PartialConfig.encode(cfg)}
+);
+
 export type Config = ZPY.RuleModifiers;
 
 export type UpdateError = ZPY.Error;
