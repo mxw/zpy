@@ -315,7 +315,7 @@ export class PlayArea extends React.Component<
       if (to_rm.length > 0) {
         state = PlayArea.withCardsRemoved(state, props, to_rm);
       }
-      return state;
+      return {...state, action_pending: false};
     });
 
     // if this is a reconnect, apply all the auto options
