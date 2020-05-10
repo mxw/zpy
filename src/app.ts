@@ -65,7 +65,10 @@ app.post('/api/set_nick', (req, res) => {
     res.send(false);
     return;
   }
-  res.cookie("nick", nick, {secure: true});
+  res.cookie("nick", nick, {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: options.session_expiry,
+  });
   gs.rename(r.session.id, nick);
 
   res.send(true);

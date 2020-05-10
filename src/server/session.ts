@@ -13,6 +13,7 @@ export {
 
 import * as db from 'server/db.ts'
 
+import * as options from 'options.ts'
 import assert from 'utils/assert.ts'
 import log from 'utils/logger.ts'
 
@@ -55,11 +56,20 @@ export async function get(id: Id): Promise<T | null> {
 }
 
 export async function middleware(req: any, res: any, next: any) {
+  const commit = (session: T) => {
+    const opts = {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      maxAge: options.session_expiry,
+    };
+    res.cookie("id", session.id, opts);
+    res.cookie("token", session.token, opts);
+    req.session = session;
+  };
+
   const bail = async () => {
     const session = await make();
-    res.cookie("id", session.id, {secure: true});
-    res.cookie("token", session.token, {secure: true});
-    req.session = session;
+    commit(session);
 
     log.info('session issue', {
       session: session.id,
@@ -77,6 +87,6 @@ export async function middleware(req: any, res: any, next: any) {
 
   if (session.token !== token) return bail();
 
-  req.session = session;
+  commit(session);
   next();
 }
