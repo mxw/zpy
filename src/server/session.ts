@@ -57,8 +57,8 @@ export async function get(id: Id): Promise<T | null> {
 export async function middleware(req: any, res: any, next: any) {
   const bail = async () => {
     const session = await make();
-    res.cookie("id", session.id);
-    res.cookie("token", session.token);
+    res.cookie("id", session.id, {secure: true});
+    res.cookie("token", session.token, {secure: true});
     req.session = session;
 
     log.info('session issue', {

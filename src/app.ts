@@ -63,7 +63,7 @@ app.post('/api/set_nick', (req, res) => {
     res.send(false);
     return;
   }
-  res.cookie("nick", nick);
+  res.cookie("nick", nick, {secure: true});
   gs.rename(r.session.id, nick);
 
   res.send(true);
