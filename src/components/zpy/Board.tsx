@@ -35,6 +35,7 @@ export class Board extends React.Component<Board.Props, Board.State> {
           me={this.props.me}
           zpy={zpy}
           users={this.props.users}
+          funcs={this.props.funcs}
         />
         <PlayArea
           key={zpy.round} // reset on every round

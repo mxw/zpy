@@ -239,6 +239,15 @@ export class Game extends React.Component<Game.Props, Game.State> {
     }));
   }
 
+  funcs(): EngineCallbacks<any> {
+    return {
+      attempt: this.attempt,
+      subscribeReset: this.subscribeReset,
+      subscribeUpdate: this.subscribeUpdate,
+      queueError: this.queueError,
+    };
+  }
+
   /////////////////////////////////////////////////////////////////////////////
 
   onClickDoor(ev: React.MouseEvent | React.TouchEvent) {
@@ -316,12 +325,7 @@ export class Game extends React.Component<Game.Props, Game.State> {
       zpy={this.state.client.state}
       users={this.state.client.users}
       hidden={!this.state.log_open}
-      funcs={{
-        attempt: this.attempt,
-        subscribeReset: this.subscribeReset,
-        subscribeUpdate: this.subscribeUpdate,
-        queueError: this.queueError,
-      }}
+      funcs={this.funcs()}
     />;
   }
 
@@ -359,12 +363,7 @@ export class Game extends React.Component<Game.Props, Game.State> {
         me={client.me}
         zpy={client.state}
         users={client.users}
-        funcs={{
-          attempt: this.attempt,
-          subscribeReset: this.subscribeReset,
-          subscribeUpdate: this.subscribeUpdate,
-          queueError: this.queueError,
-        }}
+        funcs={this.funcs()}
       />
       {this.renderReveal()}
       {this.renderError()}

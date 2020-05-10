@@ -10,6 +10,7 @@ import { CardBase, Suit } from 'lib/zpy/cards.ts'
 import { ZPY } from 'lib/zpy/zpy.ts'
 import { State as Z } from 'lib/zpy/engine.ts'
 
+import { EngineCallbacks } from 'components/zpy/common.ts'
 import { ActionInfo } from 'components/zpy/ActionInfo.tsx'
 import { PlayerInfo } from 'components/zpy/PlayerInfo.tsx'
 import { ScoreInfo } from 'components/zpy/ScoreInfo.tsx'
@@ -30,7 +31,6 @@ class Column extends React.Component<Column.Props, {}> {
 
     return <div className={classes.join(' ')}>
       <PlayerInfo
-        key="player"
         me={pr.me}
         gid={pr.gid}
         phase={pr.phase}
@@ -42,7 +42,6 @@ class Column extends React.Component<Column.Props, {}> {
         team={pr.team}
       />
       <ActionInfo
-        key="action"
         phase={pr.phase}
         user={pr.user}
         tr={pr.tr}
@@ -55,12 +54,13 @@ class Column extends React.Component<Column.Props, {}> {
         lead={pr.lead}
       />
       <ScoreInfo
-        key="score"
+        me={pr.me}
         phase={pr.phase}
         user={pr.user}
         rank_meta={pr.rank_meta}
         points={pr.points}
         hide_pts={pr.hide_pts}
+        funcs={pr.funcs}
       />
     </div>;
   }
@@ -198,6 +198,7 @@ export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
               zpy.host_team.has(uid) &&
               !!(zpy.rules.info & ZPY.HiddenInfoRule.HIDE_PTS)
             }
+            funcs={this.props.funcs}
           /> : null
         )}
         {this.renderTrumpIndicator()}
@@ -215,6 +216,8 @@ export type Props = {
   me: P.User;
   zpy: Z;
   users: P.User[];
+
+  funcs: EngineCallbacks<any>;
 };
 
 }

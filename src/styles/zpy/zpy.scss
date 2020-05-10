@@ -193,13 +193,15 @@ body {
   > .rank {
     display: grid;
     grid-auto-flow: column;
-    grid-column-gap: rhythm.rh(1);
     justify-content: center;
     justify-items: center;
 
-    padding: rhythm.rh(0.5);
-
     font-size: rhythm.rh(0.875);
+
+    > div {
+      display: flex;
+      padding: rhythm.rh(0.5);
+    }
   }
 
   > .points {
@@ -215,6 +217,17 @@ body {
       padding-bottom: card.container-padding(0.5, card.height-for(card.$width-score));
     }
   }
+}
+
+.rank-value-edit {
+  border-width: rhythm.rh(0.125);
+  border-style: inset;
+  border-color: initial;
+
+  padding: rhythm.rh(0.125);
+  margin: rhythm.rh(-0.25);
+
+  font: inherit;
 }
 
 .team-score {

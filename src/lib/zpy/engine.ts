@@ -333,6 +333,10 @@ export const set_rule_mods = C.type({
   kind: C.literal('set_rule_mods'),
   args: C.tuple(PlayerID, Config),
 });
+export const set_rank = C.type({
+  kind: C.literal('set_rank'),
+  args: C.tuple(PlayerID, P.Enum<Rank>(Rank)),
+});
 
 export const start_game = trivial('start_game');
 export const init_game = C.type({
@@ -409,6 +413,7 @@ const Intent_ = (tr: TrumpMeta) => C.sum('kind')({
   'rm_player': A.rm_player,
   'set_decks': A.set_decks,
   'set_rule_mods': A.set_rule_mods,
+  'set_rank': A.set_rank,
   'start_game': A.start_game,
   'draw_card': A.draw_card,
   'bid_trump': A.bid_trump,
@@ -441,6 +446,7 @@ const Effect_ = (tr: TrumpMeta) => C.sum('kind')({
   'rm_player': A.rm_player,
   'set_decks': A.set_decks,
   'set_rule_mods': A.set_rule_mods,
+  'set_rank': A.set_rank,
   'init_game': A.init_game,
   'add_to_hand': A.add_to_hand,
   'secure_bid': A.secure_bid,
@@ -496,10 +502,13 @@ export const describe_effect = (
       return `${agent} set number of decks to ${eff.args[1]}`;
     case 'set_rule_mods':
       return `${agent} set rules to [${[
+        ZPY.HiddenInfoRule[eff.args[1].info],
         ZPY.KittyMultiplierRule[eff.args[1].kitty],
         ZPY.RankSkipRule[eff.args[1].rank],
         ZPY.RenegeRule[eff.args[1].renege],
       ].map(s => s.toLowerCase().replace('_', '-')).join(',')}]`;
+    case 'set_rank':
+      return `${agent} changed their rank to ${rank_to_string(eff.args[1])}`;
     case 'init_game':
       return 'game started';
     case 'add_to_hand':
@@ -581,6 +590,12 @@ export const predict = (
         : OK({effect: intent, state});
     }
     case 'set_rule_mods': {
+      const result = state[intent.kind](...intent.args);
+      return (result instanceof ZPY.Error)
+        ? Err(result)
+        : OK({effect: intent, state});
+    }
+    case 'set_rank': {
       const result = state[intent.kind](...intent.args);
       return (result instanceof ZPY.Error)
         ? Err(result)
@@ -698,6 +713,11 @@ export const larp = (
       return OK([state, everyone(intent)]);
     }
     case 'set_rule_mods': {
+      const result = state[intent.kind](...intent.args);
+      if (result instanceof ZPY.Error) return Err(result);
+      return OK([state, everyone(intent)]);
+    }
+    case 'set_rank': {
       const result = state[intent.kind](...intent.args);
       if (result instanceof ZPY.Error) return Err(result);
       return OK([state, everyone(intent)]);
@@ -827,6 +847,10 @@ export const apply_client = (
           return (result instanceof ZPY.Error) ? Err(result) : OK(state);
         }
         case 'set_rule_mods': {
+          const result = state[effect.kind](...effect.args);
+          return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+        }
+        case 'set_rank': {
           const result = state[effect.kind](...effect.args);
           return (result instanceof ZPY.Error) ? Err(result) : OK(state);
         }

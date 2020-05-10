@@ -339,6 +339,27 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   }
 
   /*
+   * Phase.{INIT,WAIT} : {Action,Effect}.set_rank
+   *
+   * Adjust a player's rank.
+   */
+  set_rank(player: PlayerID, rank: Rank): ZPY.Result {
+    if (this.phase !== ZPY.Phase.INIT &&
+        this.phase !== ZPY.Phase.WAIT) {
+      return ZPY.BadPhaseError.from('set_rank', this.phase);
+    }
+    const rank_meta = this.ranks[player];
+
+    if (!rank_meta) {
+      return new ZPY.WrongPlayerError('invalid player');
+    }
+    if (rank < 2 || (rank > Rank.A && rank !== Rank.B)) {
+      return new ZPY.InvalidArgError(`invalid rank ${rank}`);
+    }
+    rank_meta.rank = rank;
+  }
+
+  /*
    * Shuffle `n` standard decks together.
    */
   private shuffled_deck(n: number): CardBase[] {

@@ -9,6 +9,8 @@ import { Rank, rank_to_string } from 'lib/zpy/cards.ts'
 import { ZPY } from 'lib/zpy/zpy.ts'
 import { State as Z } from 'lib/zpy/engine.ts'
 
+import { Editable } from 'components/common/Editable.tsx'
+import { EngineCallbacks } from 'components/zpy/common.ts'
 import { Card } from 'components/zpy/Card.tsx'
 
 import assert from 'utils/assert.ts'
@@ -17,21 +19,81 @@ import assert from 'utils/assert.ts'
 const card_width = 48;
 const clip_pct = 0.25;
 
-export class ScoreInfo extends React.Component<ScoreInfo.Props, {}> {
+export class ScoreInfo extends React.Component<
+  ScoreInfo.Props,
+  ScoreInfo.State
+> {
   constructor(props: ScoreInfo.Props) {
     super(props);
+
+    this.onSubmit = this.onSubmit.bind(this);
+
+    this.state = {rank: props.rank_meta.rank}
   }
 
-  renderRank() {
-    if (this.props.phase === ZPY.Phase.INIT) return null;
+  /////////////////////////////////////////////////////////////////////////////
 
+  rank(): Rank {
+    return this.props.me.id === this.props.user.id
+      ? this.state.rank
+      : this.props.rank_meta.rank;
+  }
+
+  renderRankValue() {
+    if (this.props.me.id !== this.props.user.id) {
+      return <div className="rank-value">
+        {rank_to_string(this.rank())}
+      </div>;
+    }
+    return <Editable
+      init={rank_to_string(this.rank())}
+      className="rank-value"
+      onSubmit={this.onSubmit}
+    />;
+  }
+
+  onSubmit(rank_str: string): string {
+    rank_str = rank_str.trim().toUpperCase();
+
+    const rank = ((): Rank => {
+      switch (rank_str) {
+        case '1': return Rank.A;
+
+        case '2': case '3': case '4':
+        case '5': case '6': case '7':
+        case '8': case '9': case '10':
+          return parseInt(rank_str);
+
+        case 'j': case 'J': return Rank.J;
+        case 'q': case 'Q': return Rank.Q;
+        case 'k': case 'K': return Rank.K;
+        case 'a': case 'A': return Rank.A;
+        case 'w': case 'W': return Rank.B;
+
+        default: break;
+      }
+      return null;
+    })();
+    if (rank === null) return rank_to_string(this.rank());
+
+    this.props.funcs.attempt(
+      {kind: 'set_rank', args: [this.props.me.id, rank]},
+      null, null
+    );
+    this.setState({rank});
+    return rank_str;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+
+  renderRank() {
     const r = this.props.rank_meta;
 
     return <div className="rank">
-      <div key="rank">
-        rank: {rank_to_string(r.rank)}
+      <div>
+        rank:&nbsp;{this.renderRankValue()}
       </div>
-      <div key="last-host">
+      <div>
         last host: {r.last_host !== null ? rank_to_string(r.last_host) : "∅"}
       </div>
     </div>;
@@ -83,12 +145,19 @@ export class ScoreInfo extends React.Component<ScoreInfo.Props, {}> {
 export namespace ScoreInfo {
 
 export type Props = {
+  me: P.User;
   phase: ZPY.Phase;
   user: P.User;
 
   rank_meta: Z['ranks'][P.UserID];
   points: null | Z['points'][P.UserID];
   hide_pts: boolean;
+
+  funcs: EngineCallbacks<any>;
+};
+
+export type State = {
+  rank: Rank;
 };
 
 }

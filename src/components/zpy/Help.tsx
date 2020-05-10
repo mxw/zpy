@@ -31,8 +31,16 @@ export function Help(props: {}) {
         this is a help section! it's very helpful.
       </p>
 
-      <h3>changing your nickname</h3>
-      double-click your nickname to edit it.  (you are the one with food.)
+      <h3>changing your name</h3>
+      <p>
+        double-click your nickname to edit it.
+        (your player icon is the one with food.)
+      </p>
+      <p>
+        you can also change your current rank by double-clicking it, if your
+        group wants to continue a previous game or skip certain ranks.
+        (use <b>J</b> for jack and <b>W</b> for joker.)
+      </p>
 
       <h3>playing cards</h3>
       <p>
