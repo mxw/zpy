@@ -26,6 +26,7 @@ import { Instructions } from 'components/zpy/Instructions.tsx'
 import { isWindows } from 'components/utils/platform.ts'
 
 import { array_fill } from 'utils/array.ts'
+import * as cookie from 'utils/cookie.ts'
 
 import assert from 'utils/assert.ts'
 
@@ -79,8 +80,8 @@ export class PlayArea extends React.Component<
       },
       fr_select: array_fill(this.props.zpy.ndecks, () => ({})),
 
-      auto_sort: false,
-      auto_draw: false,
+      auto_sort: cookie.parse(document.cookie).auto_sort === 'true',
+      auto_draw: cookie.parse(document.cookie).auto_draw === 'true',
       auto_play: false,
       full_control: false,
 
@@ -1172,7 +1173,10 @@ export class PlayArea extends React.Component<
       'keep hand sorted',
       'auto_sort',
       'sort by rank order, alternating suits, with trumps last',
-      checked => { if (checked) this.sortHand(); }
+      checked => {
+        if (checked) this.sortHand();
+        document.cookie = `auto_sort=${checked}`;
+      }
     );
 
     const auto_draw = this.renderToggleButton(
@@ -1185,6 +1189,7 @@ export class PlayArea extends React.Component<
             this.props.zpy.is_current(this.props.me.id)) {
           this.submitDrawCard();
         }
+        document.cookie = `auto_draw=${checked}`;
       }
     );
 
