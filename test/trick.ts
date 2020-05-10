@@ -1009,4 +1009,66 @@ describe('Hand#follow_with', () => {
       expect(lead.beats(Play.extract([...play.gen_cards()], tr))).to.be.true;
     }
   });
+
+  it('handles off-suit natural trumps', () => {
+    const cards = [
+      new CardBase(Suit.DIAMONDS, 5),
+      new CardBase(Suit.DIAMONDS, 6),
+      new CardBase(Suit.DIAMONDS, 6),
+      new CardBase(Suit.HEARTS, 3),
+      new CardBase(Suit.HEARTS, 3),
+      new CardBase(Suit.HEARTS, Rank.Q),
+      new CardBase(Suit.HEARTS, Rank.Q),
+
+      new CardBase(Suit.DIAMONDS, 2),
+      new CardBase(Suit.DIAMONDS, 2),
+      new CardBase(Suit.HEARTS, 2),
+      new CardBase(Suit.HEARTS, 2),
+
+      new CardBase(Suit.TRUMP, Rank.B),
+      new CardBase(Suit.TRUMP, Rank.B),
+    ];
+
+    { // osnt tuples
+      const tr = new TrumpMeta(Suit.SPADES, 2);
+      const lead = Play.extract([
+        new Card(Suit.SPADES, 10, tr),
+        new Card(Suit.SPADES, 10, tr),
+      ], tr).fl();
+
+      expect(lead.toString(tr)).to.equal('10♠10♠');
+
+      const hand = new Hand(new CardPile(cards, tr));
+      const play = new CardPile([
+        new Card(Suit.DIAMONDS, 2, tr),
+        new Card(Suit.DIAMONDS, 2, tr),
+      ], tr);
+
+      const {follows, undo_chain, parses} = hand.follow_with(lead, play);
+      expect(follows).to.be.true;
+    }
+
+    { // osnt tractors
+      const tr = new TrumpMeta(Suit.HEARTS, 2);
+      const lead = Play.extract([
+        new Card(Suit.HEARTS, 10, tr),
+        new Card(Suit.HEARTS, 10, tr),
+        new Card(Suit.HEARTS, Rank.J, tr),
+        new Card(Suit.HEARTS, Rank.J, tr),
+      ], tr).fl();
+
+      expect(lead.toString(tr)).to.equal('10♥10♥J♥J♥');
+
+      const hand = new Hand(new CardPile(cards, tr));
+      const play = new CardPile([
+        new Card(Suit.DIAMONDS, 2, tr),
+        new Card(Suit.DIAMONDS, 2, tr),
+        new Card(Suit.HEARTS, 2, tr),
+        new Card(Suit.HEARTS, 2, tr),
+      ], tr);
+
+      const {follows, undo_chain, parses} = hand.follow_with(lead, play);
+      expect(follows).to.be.true;
+    }
+  });
 });

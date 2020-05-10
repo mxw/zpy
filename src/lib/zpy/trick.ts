@@ -593,7 +593,7 @@ export class Hand {
     const remaining = this.pile.count(c) - n;
     assert(remaining >= 0);
 
-    const I_p = this.I(c.v_suit, c.v_rank, c.suit);
+    const I = this.I(c.v_suit, c.v_rank, c.suit);
 
     const invalidate = function invalidate(node: Hand.Node) {
       if (!node.valid) return;
@@ -605,7 +605,7 @@ export class Hand {
       node.invalidate();
     };
 
-    for (let node of I_p) {
+    for (let node of I) {
       if (node.n > remaining) invalidate(node);
     }
     this.pile.remove(c, n);
@@ -787,7 +787,8 @@ export class Hand {
           }
           assert(
             !node.valid, // should be invalidated by the remove
-            'Hand#follow_with: remove error'
+            'Hand#follow_with: remove error',
+            node
           );
 
           const m = shape.len - node.shape.len;
@@ -905,7 +906,8 @@ export class Hand {
         }
         assert(
           !node.valid, // should be invalidated by the remove
-          'Hand#follow_with: remove error'
+          'Hand#follow_with: remove error',
+          node
         );
 
         cur_path.push(node);
@@ -1058,7 +1060,7 @@ export namespace Hand {
    * reflected in K.
    */
   export class Node extends Tractor {
-    #valid: boolean = false;
+    private _valid: boolean = false;
     // pointers to (m+1,n) Nodes.  there are multiple because of branching
     // paths through osnt's.
     readonly next: Node[] = [];
@@ -1072,7 +1074,7 @@ export namespace Hand {
       osnt_suit?: Suit // participating osnt suit
     ) {
       super(shape, card, osnt_suit);
-      this.#valid = true;
+      this._valid = true;
     }
 
     /*
@@ -1092,11 +1094,11 @@ export namespace Hand {
       return next;
     }
 
-    get valid() { return this.#valid; }
+    get valid() { return this._valid; }
     get m() { return this.shape.len; }
     get n() { return this.shape.arity; }
 
-    revive() { this.#valid = true; }
-    invalidate() { this.#valid = false; }
+    revive() { this._valid = true; }
+    invalidate() { this._valid = false; }
   }
 }

@@ -414,6 +414,9 @@ export class CardPile {
    */
   count(cb: CardBase): number {
     const c = Card.from(cb, this.#tr);
+    if (c.v_rank === Rank.N_off) {
+      return this.#counts_osnt[c.suit];
+    }
     return this.#counts[CardPile.index_of(c.v_suit, c.v_rank)];
   }
   insert(cb: CardBase, n: number = 1): void {
