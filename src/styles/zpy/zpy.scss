@@ -101,24 +101,24 @@ body {
     @include rhythm.rh-padding-x(0.5);
   }
 
-  > .nick {
-    @include rhythm.rh-padding-x(0.25);
-  }
-
-  > .nick-edit {
-    border-width: rhythm.rh(0.125);
-    border-style: inset;
-    border-color: initial;
-
-    @include rhythm.rh-padding-x(1/16);
-    @include rhythm.rh-margin-x(1/16);
-
-    font: inherit;
-  }
-
   > .team-wrapper {
     @include rhythm.rh-padding-x(0.25);
   }
+}
+
+.nick {
+  @include rhythm.rh-padding-x(0.25);
+}
+
+.nick-edit {
+  border-width: rhythm.rh(0.125);
+  border-style: inset;
+  border-color: initial;
+
+  @include rhythm.rh-padding-x(1/16);
+  @include rhythm.rh-margin-x(1/16);
+
+  font: inherit;
 }
 
 @keyframes pulse-current {

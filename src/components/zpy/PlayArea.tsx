@@ -752,8 +752,8 @@ export class PlayArea extends React.Component<
   onKeyDown(ev: React.KeyboardEvent | KeyboardEvent) {
     if (ev.defaultPrevented) return;
 
-    const ev_ = ev as (typeof ev & {preventPlayArea: boolean});
-    if (ev_.preventPlayArea) return;
+    const ev_ = ev as (typeof ev & {editableCaptured: boolean});
+    if (ev_.editableCaptured) return;
 
     const metaKey = isWindows() ? ev.ctrlKey : ev.metaKey;
 
