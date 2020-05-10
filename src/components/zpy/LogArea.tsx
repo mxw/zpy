@@ -26,6 +26,14 @@ export class LogArea extends React.Component<LogArea.Props, LogArea.State> {
   }
 
   onUpdate(effect: ZPYEngine.Effect) {
+    if (
+      !!(this.props.zpy.rules.info & ZPY.HiddenInfoRule.HIDE_PLAY) && (
+        effect.kind === 'observe_lead' ||
+        effect.kind === 'observe_follow'
+      )
+    ) {
+      return;
+    }
     this.setState((state, props) => ({
       log: [
         ...state.log,

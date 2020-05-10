@@ -397,9 +397,8 @@ body {
 }
 
 .config {
-  display: grid;
-  grid-template-columns: auto auto auto;
-  grid-column-gap: 0.5rem;
+  display: flex;
+  justify-content: center;
 
   margin: rhythm.rh(0.5);
 
@@ -407,6 +406,7 @@ body {
     @include flex.column;
 
     @include rhythm.rh-border-full(0.25);
+    @include rhythm.rh-margin-x(0.25);
     border-radius: rhythm.rh(0.25);
     border-style: solid;
     border-color: black;

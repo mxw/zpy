@@ -60,6 +60,7 @@ class Column extends React.Component<Column.Props, {}> {
         user={pr.user}
         rank_meta={pr.rank_meta}
         points={pr.points}
+        hide_pts={pr.hide_pts}
       />
     </div>;
   }
@@ -193,6 +194,10 @@ export class RoundInfo extends React.Component<RoundInfo.Props, {}> {
             winning={uid === zpy.winning}
             lead={zpy.lead}
             play={zpy.plays[uid] ?? null}
+            hide_pts={
+              zpy.host_team.has(uid) &&
+              !!(zpy.rules.info & ZPY.HiddenInfoRule.HIDE_PTS)
+            }
           /> : null
         )}
         {this.renderTrumpIndicator()}

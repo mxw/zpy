@@ -1350,10 +1350,10 @@ export namespace ZPY {
     MULT, // 2*n multiplier for whole slide
   }
   export enum HiddenInfoRule {
-    PUBLIC,     // all information public
-    HIDE_PTS,   // hide host points
-    HIDE_PLAY,  // hide played cards
-    HIDE_ALL,   // hide both host points and played cards
+    VISIBLE   = 0,      // all visible information visible
+    HIDE_PTS  = 1,      // hide host points
+    HIDE_PLAY = 2,      // hide played cards
+    HIDE_ALL  = 1 | 2,  // hide both host points and played cards
   }
   export enum UndoPlayRule {
     NO_UNDO,    // no undos allowed

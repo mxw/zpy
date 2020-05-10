@@ -42,10 +42,9 @@ export class ScoreInfo extends React.Component<ScoreInfo.Props, {}> {
         this.props.points === null) {
       return null;
     }
-    const total = this.props.points.reduce(
-      (total, cb) => total + cb.point_value(),
-      0
-    );
+    const total = !this.props.hide_pts
+      ? this.props.points.reduce((total, cb) => total + cb.point_value(), 0)
+      : '?';
 
     return <div
       className="points"
@@ -60,7 +59,7 @@ export class ScoreInfo extends React.Component<ScoreInfo.Props, {}> {
           className="point-column"
           key={'' + rank}
         >
-          {points.map(
+          {this.props.hide_pts ? null : points.map(
             (cb, i) => <Card
               key={'' + i}
               card={cb}
@@ -89,6 +88,7 @@ export type Props = {
 
   rank_meta: Z['ranks'][P.UserID];
   points: null | Z['points'][P.UserID];
+  hide_pts: boolean;
 };
 
 }

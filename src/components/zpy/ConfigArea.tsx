@@ -66,6 +66,27 @@ export class ConfigArea extends React.Component<ConfigArea.Props, {}> {
             )}
           </div>
         </label>
+        <label className="hidden-info">
+          <div>hidden info</div>
+          <div className="config-options">
+            {this.renderOption(
+              'visible', 'info', ZPY.HiddenInfoRule.VISIBLE,
+              'all public information is visible',
+            )}
+            {this.renderOption(
+              'hide pts', 'info', ZPY.HiddenInfoRule.HIDE_PTS,
+              'hide host team\'s points',
+            )}
+            {this.renderOption(
+              'hide play', 'info', ZPY.HiddenInfoRule.HIDE_PLAY,
+              'hide plays from the game log',
+            )}
+            {this.renderOption(
+              'hide all', 'info', ZPY.HiddenInfoRule.HIDE_ALL,
+              'hide host team points and game log plays',
+            )}
+          </div>
+        </label>
         <label className="rank-skip">
           <div>rank up</div>
           <div className="config-options">
