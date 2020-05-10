@@ -299,9 +299,8 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     for (let i = 0; i < this.nplayers; ++i) {
       this.order[this.players[i]] = i;
     }
-    delete this.ranks[player];
-
-    // we don't need to reset anything else; reset_round() takes care of it
+    // we don't clear this.ranks in case the user rejoins.  we also don't need
+    // to reset anything else; reset_round() will take care of it.
 
     if (player === this.owner) {
       // need a new owner; it doesn't really matter who
