@@ -21,6 +21,7 @@ export class ConfigArea extends React.Component<ConfigArea.Props, {}> {
     key: K,
     val: ConfigArea.T[K],
     tooltip?: string,
+    tooltip_props?: Record<string, any>,
   ) {
     const classes = [key as string];
     if (val === this.props.config[key]) classes.push('selected');
@@ -32,6 +33,7 @@ export class ConfigArea extends React.Component<ConfigArea.Props, {}> {
         aria-label={tooltip}
         data-balloon-pos="up"
         onClick={ev => this.props.onChange(key, val)}
+        {...tooltip_props}
       >
         {label}
       </div>;
@@ -87,22 +89,21 @@ export class ConfigArea extends React.Component<ConfigArea.Props, {}> {
         </label>
         <label className="kitty-mult">
           <div>kitty</div>
-          <div
-            className="config-options"
-            aria-label={
-              "multiplier for points in the kitty, based on n = " +
-              "size of the attacking team's winning play"
-            }
-            data-balloon-pos="up"
-            data-balloon-length="large"
-          >
+          <div className="config-options">
             {this.renderOption(
               <>2<sup><i>n</i></sup></>,
-              'kitty', ZPY.KittyMultiplierRule.EXP
+              'kitty', ZPY.KittyMultiplierRule.EXP,
+              'multiply kitty points by 2 to the power of ' +
+              'the size of the biggest tractor/tuple in the ' +
+              'attacking team\'s winning play',
+              {'data-balloon-length': 'large'},
             )}
             {this.renderOption(
               <>2<i>n</i></>,
-              'kitty', ZPY.KittyMultiplierRule.MULT
+              'kitty', ZPY.KittyMultiplierRule.MULT,
+              'multiply kitty points by twice the size of the ' +
+              'attacking team\'s winning play',
+              {'data-balloon-length': 'large'},
             )}
           </div>
         </label>

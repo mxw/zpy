@@ -1142,13 +1142,15 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
 
       // score the kitty to the attacking team
       const kitty_points = kitty.reduce((n, c) => n + c.point_value(), 0);
-      const multiplier = Math.max(
-        ...this.plays[this.winning].fl()!.tractors.map(t => t.count)
-      );
+
       return kitty_points * (() => {
+        const winning_fl = this.plays[this.winning].fl()
+
         switch (this.rules.kitty) {
-          case ZPY.KittyMultiplierRule.EXP: return 2 ** multiplier;
-          case ZPY.KittyMultiplierRule.MULT: return 2 * multiplier;
+          case ZPY.KittyMultiplierRule.EXP:
+            return 2 ** Math.max(...winning_fl!.tractors.map(t => t.count));
+          case ZPY.KittyMultiplierRule.MULT:
+            return 2 * winning_fl!.count;
         }
         assert(false, 'ZPY: invalid kitty rules');
       })();
