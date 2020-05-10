@@ -242,7 +242,7 @@ export class GameClient<
           const user = this.users.find(u => u.id === pa.who.id);
           if (user) {
             if (this.me.id === user.id) {
-              this.nick = pa.who.nick;
+              this.nick = this.me.nick = pa.who.nick;
             }
             user.nick = pa.who.nick;
           }
