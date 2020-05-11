@@ -339,6 +339,7 @@ export class PlayArea extends React.Component<
         });
         break;
 
+      case 'init_game':
       case 'add_to_hand':
         this.tryAutoDraw();
         break;
