@@ -47,10 +47,13 @@ export class Game extends React.Component<Game.Props, Game.State> {
 
     this.state = {
       client: null,
+      established: false,
+
       next_err_id: 0,
       pending_error: null,
       reveal_effects: [],
       log_open: false,
+
       reset_subs: [],
       update_subs: [],
     };
@@ -157,7 +160,7 @@ export class Game extends React.Component<Game.Props, Game.State> {
         args: [client.me.id],
       });
     }
-    this.setState({client});
+    this.setState({client, established: true});
 
     for (let callback of this.state.reset_subs) {
       callback(client.state);
@@ -334,12 +337,15 @@ export class Game extends React.Component<Game.Props, Game.State> {
   render() {
     const client = this.state.client;
 
-    if (client === null) {
+    if (client === null || client.state === null) {
+      if (!this.state.established) return null;
+
+      // we only get an onClose and reset the client if the server sent a
+      // "bye", which means the game expired or we were kicked
       return <div className="done">
-        the game has ended
+        this game has ended
       </div>;
     }
-    if (client.state === null) return null;
 
     if (options.debug) {
       console.log({
@@ -381,6 +387,8 @@ export type Props = {
 
 export type State = {
   client: null | Client;
+  // whether we successfully connected to the server at least once
+  established: boolean;
 
   next_err_id: number; // for tracking error message timeouts
   pending_error: null | {

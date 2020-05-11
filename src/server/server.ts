@@ -58,6 +58,10 @@ class Client {
     this.resetPingTimer();
   }
 
+  close(): void {
+    this.socket.close(4242);
+  }
+
   log_entry() {
     return {
       session: this.principal,
@@ -110,8 +114,12 @@ class Game<
   // shared with GameServer
   participation: Record<Principal, Set<GameId>>;
 
-  // callback for when our last client leaves
-  destroy: () => void;
+  // setTimeout() result for expiring this game
+  expiry_timer: null | ReturnType<typeof setTimeout> = null;
+
+  // true if destruction has been triggered and this game is no longer
+  // responding to clients
+  zombie: boolean = false;
 
   /*
    * start a new game w/ no players
@@ -125,7 +133,7 @@ class Game<
     config: Config,
     owner: Principal,
     participation: Record<Principal, Set<GameId>>,
-    destroy: () => void,
+    destroy: () => Promise<void>,
     state?: State,
     users?: Record<Principal, P.User>,
   ) {
@@ -134,10 +142,24 @@ class Game<
     this.config = config;
     this.owner = owner;
     this.participation = participation;
-    this.destroy = destroy;
+    this.destroy = this.destroy.bind(this, destroy);
     this.state = state ?? this.engine.init(config);
     this.users = users ?? {};
+
+    this.reset_expiry();
   }
+
+  /*
+   * mark a new update and reset the expiry timer
+   */
+  private reset_expiry() {
+    if (this.expiry_timer !== null) {
+      clearTimeout(this.expiry_timer);
+    }
+    this.expiry_timer = setTimeout(this.destroy, options.game_expiry);
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
 
   /*
    * process a hello message from a client
@@ -223,6 +245,7 @@ class Game<
     const [state, effects] = result.ok;
 
     this.state = state;
+    this.reset_expiry();
 
     for (let client of this.clients) {
       if (!client.sync) continue;
@@ -271,7 +294,7 @@ class Game<
   dispose(victim: Client) {
     // then remove the victim client
     victim.sync = false;
-    victim.socket.close();
+    victim.close();
     this.clients.splice(this.clients.indexOf(victim), 1);
 
     log.info('client dispose', {
@@ -287,9 +310,6 @@ class Game<
       verb: "user:part",
       id: victim.user.id,
     });
-
-    // if our last client has left, tell the server we're finished (probably)
-    if (this.clients.length === 0) this.destroy();
   }
 
   /*
@@ -367,8 +387,9 @@ class Game<
    * the game takes ownership of the websocket at this point
    */
   connect(session: Session.T, sock: WebSocket) {
-    const client = new Client(session.id, sock);
+    if (this.zombie) return;
 
+    const client = new Client(session.id, sock);
     this.clients.push(client);
 
     sock.on('message', (data: string) => {
@@ -394,8 +415,8 @@ class Game<
     });
 
     sock.on('close', (code: number, reason: string) => {
-      log.info('socket close', {code, reason});
-      this.dispose(client);
+      log.info('socket close', {code, reason, ...client.log_entry()});
+      if (code !== 4242) this.dispose(client);
     });
   }
 
@@ -435,6 +456,23 @@ class Game<
       log.error('snapshot failed (participation): ', err);
       return;
     }
+  }
+
+  /*
+   * terminate this game
+   */
+  async destroy(callback: () => Promise<void>) {
+    this.zombie = true;
+
+    if (this.expiry_timer !== null) {
+      clearTimeout(this.expiry_timer);
+    }
+    while (this.clients.length > 0) {
+      // we can't just iterate this.clients because client disposal involves
+      // removing the client from the array
+      this.bye(this.clients[0]);
+    }
+    return callback();
   }
 }
 
@@ -553,22 +591,13 @@ export class GameServer<
   begin_game(cfg: Config, owner: Principal): GameId {
     const id = Uuid.v4();
 
-    const cleanup = () => {
-      log.info('game queueing for deletion', {game: id});
-
-      setTimeout(
-        async () => { await this.delete_game(id) },
-        options.game_expiry // 30 minutes of inactivity
-      );
-    };
-
     this.games[id] = new Game(
       id,
       this.engine,
       cfg,
       owner,
       this.participation,
-      cleanup,
+      async () => await this.delete_game(id),
     );
     return id;
   }
@@ -642,22 +671,13 @@ export class GameServer<
     );
     log.info('snapshot decode succeeded', {game: id});
 
-    const cleanup = () => {
-      log.info('game queueing for deletion', {game: id});
-
-      setTimeout(
-        async () => { await this.delete_game(id) },
-        options.game_expiry // 30 minutes of inactivity
-      );
-    };
-
     return this.games[id] = new Game(
       id,
       this.engine,
       config,
       row.owner,
       this.participation,
-      cleanup,
+      async () => await this.delete_game(id),
       state,
       users,
     );

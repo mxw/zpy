@@ -131,7 +131,7 @@ export class GameClient<
       this.users = null;
       this.me = null;
 
-      if (e.code === 1000) return;
+      if (e.code === 4242) return;
 
       setTimeout(() => {
         // exponential backoff
@@ -163,7 +163,7 @@ export class GameClient<
             break;
 
           case "bye":
-            this.socket.close();
+            this.close();
             this.onClose?.(this);
             break
 
@@ -210,7 +210,7 @@ export class GameClient<
   }
 
   close() {
-    this.socket.close(1000);
+    this.socket.close(4242);
   }
 
   /*
