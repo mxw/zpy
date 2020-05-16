@@ -82,13 +82,13 @@ export async function middleware(req: any, res: any, next: any) {
   };
 
   const {id = null, token = null} = req.cookies;
-  if (id === null) return bail();
-  if (token === null) return bail();
+  if (id === null) return await bail();
+  if (token === null) return await bail();
 
   const session = await get(id);
-  if (session === null) return bail();
+  if (session === null) return await bail();
 
-  if (session.token !== token) return bail();
+  if (session.token !== token) return await bail();
 
   commit(session);
   next();
