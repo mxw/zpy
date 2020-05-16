@@ -24,6 +24,9 @@ export async function make(): Promise<T> {
   const id = Uuid.v4();
   const token = Crypto.randomBytes(64).toString("hex");
 
+  // must register the session before awaiting the DB insert
+  active[id] = {id, token};
+
   try {
     await db.pool.query(
       'INSERT INTO sessions (id, token) VALUES ($1, $2)',
@@ -33,7 +36,7 @@ export async function make(): Promise<T> {
     log.error('session write failed: ', err);
   }
 
-  return active[id] = {id, token};
+  return active[id];
 }
 
 export async function get(id: Id): Promise<T | null> {
