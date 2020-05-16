@@ -33,6 +33,13 @@ export class ScoreInfo extends React.Component<
 
   /////////////////////////////////////////////////////////////////////////////
 
+  componentDidUpdate() {
+    if (this.props.phase === ZPY.Phase.DRAW &&
+        this.state.rank !== this.props.rank_meta.rank) {
+      this.setState({rank: this.props.rank_meta.rank});
+    }
+  }
+
   rank(): Rank {
     return this.props.me.id === this.props.user.id
       ? this.state.rank
@@ -40,7 +47,12 @@ export class ScoreInfo extends React.Component<
   }
 
   renderRankValue() {
-    if (this.props.me.id !== this.props.user.id) {
+    if (
+      this.props.me.id !== this.props.user.id || (
+        this.props.phase !== ZPY.Phase.INIT &&
+        this.props.phase !== ZPY.Phase.WAIT
+      )
+    ) {
       return <div className="rank-value">
         {rank_to_string(this.rank())}
       </div>;
