@@ -27,6 +27,8 @@ import assert from 'utils/assert.ts'
 import 'styles/zpy/zpy.scss'
 
 
+const err_duration_ms = 5000;
+
 ReactModal.setAppElement('#zpy');
 
 export class Game extends React.Component<Game.Props, Game.State> {
@@ -141,9 +143,13 @@ export class Game extends React.Component<Game.Props, Game.State> {
           return {pending_error: null};
         }
       });
-    }, 5000);
+    }, err_duration_ms);
 
-    return <ErrorMessage key={error.id} error={error.ue} timeout={5000} />;
+    return <ErrorMessage
+      key={error.id}
+      error={error.ue}
+      timeout={err_duration_ms}
+    />;
   }
 
   /////////////////////////////////////////////////////////////////////////////
