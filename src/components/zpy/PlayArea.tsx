@@ -1176,7 +1176,7 @@ export class PlayArea extends React.Component<
       'sort by rank order, alternating suits, with trumps last',
       checked => {
         if (checked) this.sortHand();
-        document.cookie = `auto_sort=${checked}`;
+        document.cookie = `auto_sort=${checked};secure`;
       }
     );
 
@@ -1190,7 +1190,7 @@ export class PlayArea extends React.Component<
             this.props.zpy.is_current(this.props.me.id)) {
           this.submitDrawCard();
         }
-        document.cookie = `auto_draw=${checked}`;
+        document.cookie = `auto_draw=${checked};secure`;
       }
     );
 
