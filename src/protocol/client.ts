@@ -48,7 +48,11 @@ export class GameClient<
   //        v            |              |
   //  pending-reset --> sync <--> pending-update --> disconnect
   //
-  status: "pending-reset" | "sync" | "pending-update" | "disconnect";
+  status:
+    | 'pending-reset'
+    | 'sync'
+    | 'pending-update'
+    | 'disconnect';
 
   // the client engine state; null iff status is "pending-reset"
   state: null | ClientState = null;
@@ -126,18 +130,17 @@ export class GameClient<
     };
 
     this.socket.onclose = (e: CloseEvent) => {
-      this.status = "pending-reset";
       this.state = null;
       this.users = null;
       this.me = null;
 
-      if (e.code === 4242) return;
+      if (e.code === 4242 || this.status === 'disconnect') return;
 
-      setTimeout(() => {
-        // exponential backoff
-        this.reconnect_delay *= 2;
-        this.connect();
-      }, this.reconnect_delay);
+      this.status = 'pending-reset';
+
+      // reconnect with exponential backoff
+      setTimeout(() => this.connect(), this.reconnect_delay);
+      this.reconnect_delay *= 2;
     };
 
     this.socket.onmessage = (ev: MessageEvent) => {
@@ -211,6 +214,7 @@ export class GameClient<
 
   close() {
     this.socket.close(4242);
+    this.status = 'disconnect';
   }
 
   /*

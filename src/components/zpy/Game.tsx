@@ -64,9 +64,6 @@ export class Game extends React.Component<Game.Props, Game.State> {
   componentDidMount() {
     this.ensureClient();
   }
-  componentDidUpdate() {
-    this.ensureClient();
-  }
 
   componentWillUnmount() {
     console.log('game unmounted...');
