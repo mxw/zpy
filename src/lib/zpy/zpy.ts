@@ -1437,6 +1437,7 @@ export namespace ZPY {
     DRAW,    // drawing cards; bidding on trump
     PREPARE, // last chance to bid or request a redeal
     KITTY,   // host discarding a new kitty
+    TRASH,   // optional trash kitty steal
     FRIEND,  // host naming friends
     LEAD,    // player leading a trick
     FLY,     // waiting to see if a lead flies
