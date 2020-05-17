@@ -31,3 +31,8 @@ export const ping_interval: number = 1000 * 30; // 30 seconds
  * client initial reconnect delay, in ms
  */
 export const reconnect_delay: number = 500; // 0.5 seconds
+
+/*
+ * maximum number of players a game can support
+ */
+export const max_players: number = 14;

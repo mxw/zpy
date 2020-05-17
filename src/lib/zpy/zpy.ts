@@ -15,6 +15,7 @@ import { plural } from 'utils/string.ts';
 
 import { UserID } from 'protocol/protocol.ts'
 
+import * as options from 'options.ts'
 import assert from 'utils/assert.ts'
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -115,6 +116,16 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
    */
   get nplayers(): number { return this.players.length; }
   static get min_players(): number { return 4; }
+
+  /*
+   * Deck limits.
+   */
+  static min_ndecks(nplayers: number): number {
+    return Math.floor(0.4 * Math.max(nplayers, ZPY.min_players));
+  }
+  static max_ndecks(nplayers: number): number {
+    return Math.floor(0.8 * Math.max(nplayers, ZPY.min_players));
+  }
 
   /*
    * Size of the host team given the number of players.
@@ -266,6 +277,11 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (this.players.find(p => p === player)) {
       return new ZPY.DuplicateActionError('already joined game');
     }
+    if (this.nplayers >= options.max_players) {
+      return new ZPY.InvalidPlayError(
+        `player limit reached (max ${options.max_players})`
+      );
+    }
     if (this.nplayers === 0) {
       this.owner = player;
     }
@@ -324,6 +340,20 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     }
     if (ndecks <= 0) {
       return new ZPY.InvalidArgError('non-positive number of decks');
+    }
+
+    const min_ndecks = ZPY.min_ndecks(this.nplayers);
+    const max_ndecks = ZPY.max_ndecks(this.nplayers);
+
+    if (ndecks < min_ndecks) {
+      return new ZPY.InvalidArgError(
+        `cannot have fewer than ${min_ndecks} deck${plural(min_ndecks)}`
+      );
+    }
+    if (ndecks > max_ndecks) {
+      return new ZPY.InvalidArgError(
+        `cannot have more than ${max_ndecks} deck${plural(max_ndecks)}`
+      );
     }
     this.ndecks = ndecks;
   }

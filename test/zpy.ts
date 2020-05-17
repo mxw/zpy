@@ -43,6 +43,16 @@ describe('ZPY', () => {
     expect_err(zpy.set_decks(b, 6), ZPY.WrongPlayerError);
     expect_err(zpy.start_game(c), ZPY.WrongPlayerError);
 
+    expect_err(
+      zpy.set_decks(a, 1),
+      ZPY.InvalidArgError,
+      'cannot have fewer than 2 decks'
+    );
+    expect_err(
+      zpy.set_decks(a, 5),
+      ZPY.InvalidArgError,
+      'cannot have more than 4 decks'
+    );
     expect_ok(zpy.set_decks(a, 2));
     expect_ok(zpy.start_game(a));
 

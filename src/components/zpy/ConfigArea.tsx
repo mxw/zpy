@@ -50,7 +50,6 @@ export class ConfigArea extends React.Component<ConfigArea.Props, {}> {
 
   render() {
     const pr = this.props;
-    const nplayers = pr.nplayers >= 4 ? pr.nplayers : 4;
 
     return <div className="config-container">
       game settings
@@ -59,8 +58,8 @@ export class ConfigArea extends React.Component<ConfigArea.Props, {}> {
           <div># decks</div>
           <div className="config-options">
             {[...range(
-              Math.floor(0.4 * nplayers),
-              Math.floor(0.8 * nplayers) + 1,
+              ZPY.min_ndecks(pr.nplayers),
+              ZPY.max_ndecks(pr.nplayers) + 1,
             )].map(
               i => this.renderOption(i, 'ndecks', i)
             )}
