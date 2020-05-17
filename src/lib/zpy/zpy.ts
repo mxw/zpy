@@ -126,6 +126,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   static max_ndecks(nplayers: number): number {
     return Math.floor(0.8 * Math.max(nplayers, ZPY.min_players));
   }
+  static def_ndecks(nplayers: number): number {
+    return Math.ceil(Math.max(nplayers, ZPY.min_players) / 2);
+  }
 
   /*
    * Size of the host team given the number of players.
@@ -493,7 +496,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       this.order[this.players[i]] = i;
     }
     if (this.ndecks === 0) {
-      this.ndecks = Math.ceil(this.nplayers / 2);
+      this.ndecks = ZPY.def_ndecks(this.nplayers);
     }
     this.reset_round(this.owner, false);
     this.phase = ZPY.Phase.DRAW;

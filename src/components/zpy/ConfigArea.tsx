@@ -26,6 +26,13 @@ export class ConfigArea extends React.Component<ConfigArea.Props, {}> {
     const classes = [key as string];
     if (val === this.props.config[key]) classes.push('selected');
 
+    if (key === 'ndecks' &&
+        this.props.config[key] === 0 &&
+        val === ZPY.def_ndecks(this.props.nplayers)) {
+      // mark the default ndecks value
+      classes.push('selected');
+    }
+
     if (tooltip) {
       return <div
         key={'' + val}
