@@ -730,7 +730,7 @@ kbd {
   background-color: rgba(240, 240, 240, 0.8);
   backdrop-filter: blur(rhythm.rh(0.25));
 
-  overflow: scroll;
+  overflow: auto;
 
   &.hidden {
     display: none;
