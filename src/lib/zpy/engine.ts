@@ -39,7 +39,7 @@ import assert from 'utils/assert.ts'
  * config and error codecs.
  */
 
-const cd_PartialConfig = C.type({
+const cd_PartialConfig = C.partial({
   renege: P.Enum<ZPY.RenegeRule>(ZPY.RenegeRule),
   rank: P.Enum<ZPY.RankSkipRule>(ZPY.RankSkipRule),
   kitty: P.Enum<ZPY.KittyMultiplierRule>(ZPY.KittyMultiplierRule),
