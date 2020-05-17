@@ -75,8 +75,13 @@ export function Help(props: {}) {
       </div>
 
       <h3>credits</h3>
-      made with love
-      by <a href="https://github.com/mxw">https://github.com/mxw</a>
+      <p>
+        made with love
+        by <a href="https://github.com/mxw">https://github.com/mxw</a>
+      </p>
+      <p>
+        emoji set from facebook messenger
+      </p>
     </div>
   </div>;
 }
