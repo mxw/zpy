@@ -1101,14 +1101,16 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
 
   /*
    * Bump a player's rank.
-   *
-   * A delta of -1 indicates that the player was J'd.
    */
   private rank_up(player: PlayerID, delta: number): void {
     const meta = this.ranks[player];
 
+    const special = this.rules.hook !== ZPY.JackHookRule.NO_HOOK
+      ? [5, 10, Rank.J, Rank.K, Rank.B]
+      : [5, 10, Rank.K, Rank.B];
+
     for (let i = 0; i < delta; ++i) {
-      if ([5,10,Rank.J,Rank.K,Rank.B].includes(meta.rank)) {
+      if (special.includes(meta.rank)) {
         if (this.rules.rank === ZPY.RankSkipRule.NO_PASS) {
           if (player !== this.host) return;
         }
@@ -1129,7 +1131,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
         ++meta.rank;
       }
 
-      if ([5,10,Rank.J,Rank.K,Rank.B].includes(meta.rank)) {
+      if (special.includes(meta.rank)) {
         if (this.rules.rank === ZPY.RankSkipRule.NO_SKIP) {
           return;
         }
@@ -1161,6 +1163,25 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     for (let player of this.team(winner).values()) {
       this.rank_up(player, Math.abs(delta));
     }
+
+    (() => {
+      // handle J-to-bottom rank update
+      if (this.rules.hook === ZPY.JackHookRule.NO_HOOK) return;
+      if (this.tr.rank !== Rank.J) return;
+      if (winner !== 'attacking') return;
+
+      const winning_fl = this.plays[this.winning].fl();
+      const component = [...winning_fl!.tractors[0].gen_cards(this.tr)];
+      const biggest = component[component.length - 1];
+
+      if (biggest.rank !== Rank.J) return;
+
+      for (let p of this.team('host').values()) {
+        this.ranks[p].rank = biggest.v_rank === Rank.N_on
+          ? this.ranks[p].start
+          : Math.floor((this.ranks[p].rank + this.ranks[p].start) / 2);
+      }
+    })();
 
     // choose the next host
     let next_idx = this.next_player_idx(this.order[this.host]);
@@ -1195,7 +1216,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       const kitty_points = kitty.reduce((n, c) => n + c.point_value(), 0);
 
       return kitty_points * (() => {
-        const winning_fl = this.plays[this.winning].fl()
+        const winning_fl = this.plays[this.winning].fl();
 
         switch (this.rules.kitty) {
           case ZPY.KittyMultiplierRule.EXP:
@@ -1400,6 +1421,10 @@ export namespace ZPY {
     EXP,  // 2^n multiplier for biggest component
     MULT, // 2*n multiplier for whole slide
   }
+  export enum JackHookRule {
+    WIN_HOOK, // hook to 2 for on-suit J, halfway to 2 for off-suit
+    NO_HOOK,  // no special rank rules for J
+  }
   export enum HiddenInfoRule {
     VISIBLE   = 0,      // all visible information visible
     HIDE_PTS  = 1,      // hide host points
@@ -1418,6 +1443,7 @@ export namespace ZPY {
     renege: RenegeRule;
     rank: RankSkipRule;
     kitty: KittyMultiplierRule;
+    hook: JackHookRule;
     info: HiddenInfoRule;
     undo: UndoPlayRule;
     trash: TrashKittyRule;
@@ -1427,6 +1453,7 @@ export namespace ZPY {
     renege: 0,
     rank: 0,
     kitty: 0,
+    hook: 0,
     info: 0,
     undo: 0,
     trash: 0,

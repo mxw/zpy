@@ -43,6 +43,7 @@ const cd_PartialConfig = C.type({
   renege: P.Enum<ZPY.RenegeRule>(ZPY.RenegeRule),
   rank: P.Enum<ZPY.RankSkipRule>(ZPY.RankSkipRule),
   kitty: P.Enum<ZPY.KittyMultiplierRule>(ZPY.KittyMultiplierRule),
+  hook: P.Enum<ZPY.JackHookRule>(ZPY.JackHookRule),
   info: P.Enum<ZPY.HiddenInfoRule>(ZPY.HiddenInfoRule),
   undo: P.Enum<ZPY.UndoPlayRule>(ZPY.UndoPlayRule),
   trash: P.Enum<ZPY.TrashKittyRule>(ZPY.TrashKittyRule),
@@ -503,9 +504,9 @@ export const describe_effect = (
     case 'set_rule_mods':
       return `${agent} set rules to [${[
         ZPY.HiddenInfoRule[eff.args[1].info],
-        ZPY.KittyMultiplierRule[eff.args[1].kitty],
         ZPY.RankSkipRule[eff.args[1].rank],
-        ZPY.RenegeRule[eff.args[1].renege],
+        ZPY.KittyMultiplierRule[eff.args[1].kitty],
+        ZPY.JackHookRule[eff.args[1].hook],
       ].map(s => s.toLowerCase().replace('_', '-')).join(',')}]`;
     case 'set_rank':
       return `${agent} changed their rank to ${rank_to_string(eff.args[1])}`;

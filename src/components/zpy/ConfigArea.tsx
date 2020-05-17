@@ -107,6 +107,21 @@ export class ConfigArea extends React.Component<ConfigArea.Props, {}> {
             )}
           </div>
         </label>
+        <label className="hook">
+          <div>hook</div>
+          <div className="config-options">
+            {this.renderOption(
+              'j-hook', 'hook', ZPY.JackHookRule.WIN_HOOK,
+              'attacking team hooks host team to 2 if they win a J round ' +
+              'with an on-suit J (or halfway with an off-suit J)',
+              {'data-balloon-length': 'large'},
+            )}
+            {this.renderOption(
+              'no hook', 'hook', ZPY.JackHookRule.NO_HOOK,
+              'no special rules for J rounds',
+            )}
+          </div>
+        </label>
         <label className="kitty-mult">
           <div>kitty</div>
           <div className="config-options">
