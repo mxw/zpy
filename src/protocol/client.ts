@@ -233,16 +233,23 @@ export class GameClient<
       const pa: P.ProtocolAction = command.effect;
 
       switch (pa.verb) {
-        case 'user:join':
+        case 'user:join': {
           this.users.push(pa.who);
           break;
-        case 'user:rejoin':
-        case 'user:part':
+        }
+        case 'user:rejoin': {
+          // the user's nick may have changed
+          const user = this.users.find(u => u.id === pa.who.id);
+          if (user) user.nick = pa.who.nick;
+          break;
+        }
+        case 'user:part': {
           // like the server, we treat the list of users as all users we've
           // seen, not necessarily the ones that are currently connected and
           // participating in the game
           break;
-        case 'user:nick':
+        }
+        case 'user:nick': {
           const user = this.users.find(u => u.id === pa.who.id);
           if (user) {
             if (this.me.id === user.id) {
@@ -251,6 +258,7 @@ export class GameClient<
             user.nick = pa.who.nick;
           }
           break;
+        }
       }
     }
 
