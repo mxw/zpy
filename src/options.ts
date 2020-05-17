@@ -36,3 +36,8 @@ export const reconnect_delay: number = 500; // 0.5 seconds
  * maximum number of players a game can support
  */
 export const max_players: number = 14;
+
+/*
+ * maximum number of games a user can be in
+ */
+export const max_games: number = 8;

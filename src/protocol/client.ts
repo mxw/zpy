@@ -93,7 +93,7 @@ export class GameClient<
   }> = {};
 
   // callbacks for react
-  onClose: null | ((cl: this) => void);
+  onClose: null | ((cl: this, reason?: null | string) => void);
   onReset: null | ((cl: this) => void);
   onUpdate: null | ((cl: this, cm: P.Command<Effect>) => void);
 
@@ -167,7 +167,7 @@ export class GameClient<
 
           case "bye":
             this.close();
-            this.onClose?.(this);
+            this.onClose?.(this, msg.reason);
             break
 
           case "reset":

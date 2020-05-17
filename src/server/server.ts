@@ -187,9 +187,11 @@ class Game<
 
     // help the game server track the games each principal belongs to
     //
-    // we do this unconditionally because the known users might have been
+    // we do this unconditionally because (a) the known users might have been
     // retrieved from a snapshot, and this might be the first time the client
-    // has said hello in this instance of the server
+    // has said hello in this instance of the server, and (b) we remove users
+    // when their last client disconnects, so we potentially need to add them
+    // back.
     this.participation[sid] = this.participation[sid] ?? new Set();
     this.participation[sid].add(this.id);
 
@@ -292,7 +294,9 @@ class Game<
    * them from the list of clients, and notify all clients appropriately
    */
   dispose(victim: Client) {
-    // then remove the victim client
+    const sid = victim.principal;
+
+    // remove the victim client
     victim.sync = false;
     victim.close();
     this.clients.splice(this.clients.indexOf(victim), 1);
@@ -302,6 +306,13 @@ class Game<
       game: this.id,
     });
 
+    // if `victim` was the last client for a principal, mark that they're no
+    // longer participating in this game
+    if (!this.clients.find(cl => cl.principal === sid)) {
+      this.participation[sid].delete(this.id);
+    }
+
+    // if no user was assigned yet, there's no reason to broadcast a part
     if (victim.user === null) return;
 
     // broadcast the part.  de-syncing the victim above prevents us from
@@ -315,10 +326,11 @@ class Game<
   /*
    * process a bye request from a client: simply reply 'bye' and disconnect
    */
-  bye(client: Client) {
+  bye(client: Client, reason: null | string = null) {
     client.send(JSON.stringify(
       P.Bye.encode({
-        verb: "bye"
+        verb: "bye",
+        reason,
       })
     ));
     this.dispose(client);
@@ -333,7 +345,7 @@ class Game<
       game: this.id,
       reason
     });
-    this.bye(client)
+    this.bye(client, reason);
   }
 
   /*
@@ -391,6 +403,16 @@ class Game<
 
     const client = new Client(session.id, sock);
     this.clients.push(client);
+
+    // check the active games limit.  we do this after setting up the client
+    // because this.kick() assumes the client has been materialized in our data
+    // structures.
+    if (this.participation[session.id]?.size >= options.max_games) {
+      return this.kick(
+        client,
+        `limit ${options.max_games} concurrent games`,
+      );
+    }
 
     sock.on('message', (data: string) => {
       const d = JSON.parse(data);

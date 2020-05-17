@@ -49,7 +49,7 @@ export class Game extends React.Component<Game.Props, Game.State> {
 
     this.state = {
       client: null,
-      established: false,
+      done_reason: null,
 
       next_err_id: 0,
       pending_error: null,
@@ -151,8 +151,13 @@ export class Game extends React.Component<Game.Props, Game.State> {
 
   /////////////////////////////////////////////////////////////////////////////
 
-  onClose(client: Client) {
-    this.setState({client: null});
+  onClose(client: Client, reason: null | string) {
+    if (reason !== null) {
+      // non-null reason means we were booted
+      this.setState({client: null, done_reason: `kicked: ${reason}`});
+    } else {
+      this.setState({client: null});
+    }
   }
 
   onReset(client: Client) {
@@ -163,7 +168,7 @@ export class Game extends React.Component<Game.Props, Game.State> {
         args: [client.me.id],
       });
     }
-    this.setState({client, established: true});
+    this.setState({client, done_reason: 'the game has ended'});
 
     for (let callback of this.state.reset_subs) {
       callback(client.state);
@@ -341,13 +346,12 @@ export class Game extends React.Component<Game.Props, Game.State> {
     const client = this.state.client;
 
     if (client === null || client.state === null) {
-      if (!this.state.established) return null;
+      // null done_reason means we're trying to connect for the first time
+      if (this.state.done_reason === null) return null;
 
       // we only get an onClose and reset the client if the server sent a
       // "bye", which means the game expired or we were kicked
-      return <div className="done">
-        this game has ended
-      </div>;
+      return <div className="done">{this.state.done_reason}</div>;
     }
 
     if (options.debug) {
@@ -390,8 +394,8 @@ export type Props = {
 
 export type State = {
   client: null | Client;
-  // whether we successfully connected to the server at least once
-  established: boolean;
+  // message to display on disconnect; null if connection was never established
+  done_reason: null | string;
 
   next_err_id: number; // for tracking error message timeouts
   pending_error: null | {

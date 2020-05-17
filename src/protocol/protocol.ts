@@ -114,6 +114,7 @@ export type RequestBye = TypeOf<typeof RequestBye>;
 
 export const Bye = C.type({
   verb: C.literal("bye"),
+  reason: C.nullable(C.string),
 });
 export type Bye = TypeOf<typeof Bye>;
 
