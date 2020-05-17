@@ -1,0 +1,19 @@
+[Unit]
+Description=ZPY game server
+After=network.target
+
+[Service]
+User=zpy
+ExecStart=/usr/bin/node /usr/local/lib/zpy/dist/app/main.js
+WorkingDirectory=/usr/local/lib/zpy
+
+Restart=always
+TimeoutStopSec=60
+KillMode=mixed
+
+Environment="NODE_PATH=/usr/local/lib/zpy/node_modules"
+Environment="PGHOST=/var/run/postgresql"
+Environment="PGDATABASE=zpydb"
+
+[Install]
+WantedBy=multi-user.target
