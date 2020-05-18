@@ -1,8 +1,10 @@
 import {
   Suit, Rank, TrumpMeta, CardBase, Card, CardPile
-} from 'lib/zpy/cards.ts';
+} from 'lib/zpy/cards.ts'
 
-import {expect} from 'chai';
+import * as c from 'test/common.ts'
+
+import {expect} from 'chai'
 
 describe('Card', () => {
   it('canonicalizes correctly', () => {
@@ -69,29 +71,15 @@ describe('CardPile', () => {
     let tr = new TrumpMeta(Suit.SPADES, 7);
 
     let pile = new CardPile([
-      new CardBase(Suit.CLUBS, Rank.K),
-      new CardBase(Suit.CLUBS, Rank.K),
-      new CardBase(Suit.CLUBS, 3),
-      new CardBase(Suit.CLUBS, 7),
-      new CardBase(Suit.CLUBS, 7),
-      new CardBase(Suit.DIAMONDS, Rank.J),
-      new CardBase(Suit.DIAMONDS, Rank.A),
-      new CardBase(Suit.DIAMONDS, 2),
-      new CardBase(Suit.SPADES, 2),
-      new CardBase(Suit.SPADES, 2),
-      new CardBase(Suit.SPADES, Rank.A),
-      new CardBase(Suit.DIAMONDS, 7),
-      new CardBase(Suit.DIAMONDS, 7),
-      new CardBase(Suit.DIAMONDS, 7),
-      new CardBase(Suit.HEARTS, 2),
-      new CardBase(Suit.HEARTS, 10),
-      new CardBase(Suit.HEARTS, 9),
-      new CardBase(Suit.HEARTS, Rank.A),
-      new CardBase(Suit.SPADES, 7),
-      new CardBase(Suit.HEARTS, 8),
-      new CardBase(Suit.TRUMP, Rank.B),
-      new CardBase(Suit.TRUMP, Rank.S),
-      new CardBase(Suit.TRUMP, Rank.B),
+      c.C_K, c.C_K, c.C_3,
+      c.C_7, c.C_7,
+      c.D_J, c.D_A, c.D_2,
+      c.S_2, c.S_2, c.S_A,
+      c.D_7, c.D_7, c.D_7,
+      c.H_2, c.H_10, c.H_9, c.H_A,
+      c.S_7,
+      c.H_8,
+      c.J_B, c.J_S, c.J_B,
     ], tr);
 
     expect('' + pile).to.equal(`
@@ -124,16 +112,10 @@ describe('CardPile', () => {
     expect(pile.count_suit(Suit.TRUMP)).to.equal(12);
 
     let subpile = new CardPile([
-      new CardBase(Suit.CLUBS, Rank.K),
-      new CardBase(Suit.CLUBS, 7),
-      new CardBase(Suit.DIAMONDS, Rank.J),
-      new CardBase(Suit.DIAMONDS, 7),
-      new CardBase(Suit.DIAMONDS, 7),
-      new CardBase(Suit.DIAMONDS, 7),
-      new CardBase(Suit.HEARTS, 2),
-      new CardBase(Suit.HEARTS, 10),
-      new CardBase(Suit.TRUMP, Rank.S),
-      new CardBase(Suit.TRUMP, Rank.B),
+      c.C_K, c.C_7, c.D_J,
+      c.D_7, c.D_7, c.D_7,
+      c.H_2, c.H_10,
+      c.J_S, c.J_B,
     ], tr);
 
     expect(pile.contains(subpile.gen_counts())).to.be.true;

@@ -1,72 +1,39 @@
 import {
   Suit, Rank, TrumpMeta, CardBase, Card, CardPile
-} from 'lib/zpy/cards.ts';
+} from 'lib/zpy/cards.ts'
 import {
   CardTuple, Tractor, Flight, Play, Hand
-} from 'lib/zpy/trick.ts';
+} from 'lib/zpy/trick.ts'
 
-import {expect} from 'chai';
+import * as c from 'test/common.ts'
+
+import {expect} from 'chai'
+
+const cvt = (cs: CardBase[], tr: TrumpMeta) => cs.map(c => Card.from(c, tr));
 
 describe('new Hand', () => {
   it('doesn\'t crash or whatever', () => {
     let tr = new TrumpMeta(Suit.CLUBS, 2);
 
     let pile = new CardPile([
-      new CardBase(Suit.DIAMONDS, 4),
-      new CardBase(Suit.DIAMONDS, 7),
-      new CardBase(Suit.DIAMONDS, 7),
-      new CardBase(Suit.DIAMONDS, 10),
-      new CardBase(Suit.DIAMONDS, Rank.J),
-      new CardBase(Suit.DIAMONDS, Rank.K),
-      new CardBase(Suit.DIAMONDS, Rank.A),
-      new CardBase(Suit.SPADES, 3),
-      new CardBase(Suit.SPADES, 4),
-      new CardBase(Suit.SPADES, 4),
-      new CardBase(Suit.SPADES, 6),
-      new CardBase(Suit.SPADES, 7),
-      new CardBase(Suit.SPADES, 9),
-      new CardBase(Suit.HEARTS, 5),
-      new CardBase(Suit.HEARTS, Rank.K),
-      new CardBase(Suit.CLUBS, 10),
-      new CardBase(Suit.CLUBS, Rank.J),
-      new CardBase(Suit.SPADES, 2),
-      new CardBase(Suit.SPADES, 2),
-      new CardBase(Suit.HEARTS, 2),
-      new CardBase(Suit.CLUBS, 2),
-      new CardBase(Suit.CLUBS, 2),
-      new CardBase(Suit.TRUMP, Rank.S),
-      new CardBase(Suit.TRUMP, Rank.B),
+      c.D_4, c.D_7, c.D_7, c.D_10, c.D_J, c.D_K, c.D_A,
+      c.S_3, c.S_4, c.S_4, c.S_6, c.S_7, c.S_9,
+      c.H_5, c.H_K,
+      c.C_10, c.C_J,
+
+      c.S_2, c.S_2, c.H_2, c.C_2, c.C_2,
+      c.J_S, c.J_B,
     ], tr);
     let hand = new Hand(pile);
 
     tr = new TrumpMeta(Suit.TRUMP, Rank.B);
 
     pile = new CardPile([
-      new CardBase(Suit.CLUBS, 5),
-      new CardBase(Suit.CLUBS, 6),
-      new CardBase(Suit.CLUBS, 7),
-      new CardBase(Suit.CLUBS, 8),
-      new CardBase(Suit.CLUBS, 8),
-      new CardBase(Suit.CLUBS, 9),
-      new CardBase(Suit.CLUBS, 10),
-      new CardBase(Suit.CLUBS, Rank.J),
-      new CardBase(Suit.DIAMONDS, Rank.A),
-      new CardBase(Suit.SPADES, 7),
-      new CardBase(Suit.SPADES, 7),
-      new CardBase(Suit.SPADES, 8),
-      new CardBase(Suit.SPADES, 9),
-      new CardBase(Suit.SPADES, 10),
-      new CardBase(Suit.SPADES, Rank.J),
-      new CardBase(Suit.SPADES, Rank.K),
-      new CardBase(Suit.HEARTS, 5),
-      new CardBase(Suit.HEARTS, 6),
-      new CardBase(Suit.HEARTS, 6),
-      new CardBase(Suit.HEARTS, 10),
-      new CardBase(Suit.HEARTS, Rank.Q),
-      new CardBase(Suit.HEARTS, 2),
-      new CardBase(Suit.TRUMP, Rank.S),
-      new CardBase(Suit.TRUMP, Rank.B),
-      new CardBase(Suit.TRUMP, Rank.B),
+      c.C_5, c.C_6, c.C_7, c.C_8, c.C_8, c.C_9, c.C_10, c.C_J,
+      c.D_A,
+      c.S_7, c.S_7, c.S_8, c.S_9, c.S_10, c.S_J, c.S_K,
+      c.H_5, c.H_6, c.H_6, c.H_10, c.H_Q, c.H_2,
+      c.J_S, c.J_B, c.J_B,
     ], tr);
     hand = new Hand(pile);
 
@@ -77,10 +44,7 @@ describe('new Hand', () => {
 describe('Play#extract', () => {
   it('extracts structure from a tiny pile of cards', () => {
     let tr = new TrumpMeta(Suit.CLUBS, Rank.Q);
-    let cards = [
-      new Card(Suit.SPADES, Rank.K, tr),
-      new Card(Suit.SPADES, Rank.K, tr),
-    ];
+    let cards = [c.S_K, c.S_K];
     let play = Play.extract(cards, tr);
 
     expect(play.toString(tr)).to.equal(
@@ -92,15 +56,10 @@ describe('Play#extract', () => {
   it('extracts structure from a pile of cards', () => {
     let tr = new TrumpMeta(Suit.DIAMONDS, Rank.Q);
     let cards = [
-      new Card(Suit.CLUBS, 2, tr),
-      new Card(Suit.CLUBS, 2, tr),
-      new Card(Suit.CLUBS, 3, tr),
-      new Card(Suit.CLUBS, 3, tr),
-      new Card(Suit.CLUBS, 3, tr),
-      new Card(Suit.CLUBS, 3, tr),
-      new Card(Suit.CLUBS, 4, tr),
-      new Card(Suit.CLUBS, 4, tr),
-      new Card(Suit.CLUBS, Rank.A, tr),
+      c.C_2, c.C_2,
+      c.C_3, c.C_3, c.C_3, c.C_3,
+      c.C_4, c.C_4,
+      c.C_A,
     ];
     let play = Play.extract(cards, tr);
 
@@ -113,20 +72,11 @@ describe('Play#extract', () => {
   it('extracts structure from a more complicated pile of cards', () => {
     let tr = new TrumpMeta(Suit.SPADES, Rank.Q);
     let cards = [
-      new Card(Suit.DIAMONDS, 5, tr),
-      new Card(Suit.DIAMONDS, 5, tr),
-      new Card(Suit.DIAMONDS, 6, tr),
-      new Card(Suit.DIAMONDS, 6, tr),
-      new Card(Suit.DIAMONDS, 6, tr),
-      new Card(Suit.DIAMONDS, 6, tr),
-      new Card(Suit.DIAMONDS, 7, tr),
-      new Card(Suit.DIAMONDS, 7, tr),
-      new Card(Suit.DIAMONDS, 7, tr),
-      new Card(Suit.DIAMONDS, 7, tr),
-      new Card(Suit.DIAMONDS, 8, tr),
-      new Card(Suit.DIAMONDS, 8, tr),
-      new Card(Suit.DIAMONDS, 9, tr),
-      new Card(Suit.DIAMONDS, 9, tr),
+      c.D_5, c.D_5,
+      c.D_6, c.D_6, c.D_6, c.D_6,
+      c.D_7, c.D_7, c.D_7, c.D_7,
+      c.D_8, c.D_8,
+      c.D_9, c.D_9,
     ];
     let play = Play.extract(cards, tr);
 
@@ -139,25 +89,13 @@ describe('Play#extract', () => {
   it('extracts structure from discontiguous chunks with thicc tail', () => {
     let tr = new TrumpMeta(Suit.TRUMP, Rank.B);
     let cards = [
-      new Card(Suit.SPADES, 3, tr),
-      new Card(Suit.SPADES, 3, tr),
-      new Card(Suit.SPADES, 4, tr),
-      new Card(Suit.SPADES, 4, tr),
-      new Card(Suit.SPADES, 6, tr),
-      new Card(Suit.SPADES, 9, tr),
-      new Card(Suit.SPADES, 9, tr),
-      new Card(Suit.SPADES, 9, tr),
-      new Card(Suit.SPADES, 10, tr),
-      new Card(Suit.SPADES, 10, tr),
-      new Card(Suit.SPADES, 10, tr),
-      new Card(Suit.SPADES, Rank.J, tr),
-      new Card(Suit.SPADES, Rank.J, tr),
-      new Card(Suit.SPADES, Rank.J, tr),
-      new Card(Suit.SPADES, Rank.J, tr),
-      new Card(Suit.SPADES, Rank.Q, tr),
-      new Card(Suit.SPADES, Rank.Q, tr),
-      new Card(Suit.SPADES, Rank.Q, tr),
-      new Card(Suit.SPADES, Rank.Q, tr),
+      c.S_3, c.S_3,
+      c.S_4, c.S_4,
+      c.S_6,
+      c.S_9, c.S_9, c.S_9,
+      c.S_10, c.S_10, c.S_10,
+      c.S_J, c.S_J, c.S_J, c.S_J,
+      c.S_Q, c.S_Q, c.S_Q, c.S_Q,
     ];
     let play = Play.extract(cards, tr);
 
@@ -170,15 +108,11 @@ describe('Play#extract', () => {
   it('extracts structure from natural trump tractors', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
     let cards = [
-      new Card(Suit.HEARTS, Rank.Q, tr),
-      new Card(Suit.HEARTS, Rank.A, tr),
-      new Card(Suit.HEARTS, Rank.A, tr),
-      new Card(Suit.CLUBS,  Rank.J, tr),
-      new Card(Suit.CLUBS,  Rank.J, tr),
-      new Card(Suit.HEARTS, Rank.J, tr),
-      new Card(Suit.HEARTS, Rank.J, tr),
-      new Card(Suit.TRUMP,  Rank.B, tr),
-      new Card(Suit.TRUMP,  Rank.B, tr),
+      c.H_Q,
+      c.H_A, c.H_A,
+      c.C_J, c.C_J,
+      c.H_J, c.H_J,
+      c.J_B, c.J_B,
     ];
     let play = Play.extract(cards, tr);
 
@@ -192,24 +126,13 @@ describe('Play#extract', () => {
     // XXX: this behavior is currently pretty shitty
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
     let cards = [
-      new Card(Suit.HEARTS, Rank.A, tr),
-      new Card(Suit.HEARTS, Rank.A, tr),
-      new Card(Suit.HEARTS, Rank.A, tr),
-      new Card(Suit.CLUBS,  Rank.J, tr),
-      new Card(Suit.CLUBS,  Rank.J, tr),
-      new Card(Suit.CLUBS,  Rank.J, tr),
-      new Card(Suit.DIAMONDS,  Rank.J, tr),
-      new Card(Suit.SPADES,  Rank.J, tr),
-      new Card(Suit.SPADES,  Rank.J, tr),
-      new Card(Suit.HEARTS, Rank.J, tr),
-      new Card(Suit.HEARTS, Rank.J, tr),
-      new Card(Suit.HEARTS, Rank.J, tr),
-      new Card(Suit.TRUMP,  Rank.S, tr),
-      new Card(Suit.TRUMP,  Rank.S, tr),
-      new Card(Suit.TRUMP,  Rank.S, tr),
-      new Card(Suit.TRUMP,  Rank.B, tr),
-      new Card(Suit.TRUMP,  Rank.B, tr),
-      new Card(Suit.TRUMP,  Rank.B, tr),
+      c.H_A, c.H_A, c.H_A,
+      c.C_J, c.C_J, c.C_J,
+      c.D_J,
+      c.S_J, c.S_J,
+      c.H_J, c.H_J, c.H_J,
+      c.J_S, c.J_S, c.J_S,
+      c.J_B, c.J_B, c.J_B,
     ];
     let play = Play.extract(cards, tr);
 
@@ -223,36 +146,24 @@ describe('Play#extract', () => {
 describe('Flight#beats', () => {
   it('handles singleton tricks', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
-    let me = Play.extract([
-      new Card(Suit.CLUBS, 10, tr),
-    ], tr).fl();
-    let you = Play.extract([
-      new Card(Suit.CLUBS, Rank.Q, tr),
-    ], tr);
+    let me = Play.extract([c.C_10], tr).fl();
+    let you = Play.extract([c.C_Q], tr);
     expect(me.beats(you)).to.be.false;
     expect(you.beats(me)).to.be.true;
   });
 
   it('handles suit mismatches', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
-    let me = Play.extract([
-      new Card(Suit.CLUBS, Rank.K, tr),
-    ], tr).fl();
-    let you = Play.extract([
-      new Card(Suit.DIAMONDS, Rank.Q, tr),
-    ], tr);
+    let me = Play.extract([c.C_K], tr).fl();
+    let you = Play.extract([c.D_Q], tr);
     expect(me.beats(you)).to.be.true;
     expect(you.beats(me)).to.be.true;
   });
 
   it('handles trumping', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
-    let me = Play.extract([
-      new Card(Suit.HEARTS, 4, tr),
-    ], tr).fl();
-    let you = Play.extract([
-      new Card(Suit.SPADES, Rank.A, tr),
-    ], tr);
+    let me = Play.extract([c.H_4], tr).fl();
+    let you = Play.extract([c.S_A], tr);
 
     expect(me.beats(you)).to.be.true;
     expect(you.beats(me)).to.be.false;
@@ -260,14 +171,8 @@ describe('Flight#beats', () => {
 
   it('handles tuple vs. tuple', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
-    let me = Play.extract([
-      new Card(Suit.DIAMONDS, 7, tr),
-      new Card(Suit.DIAMONDS, 7, tr),
-    ], tr).fl();
-    let you = Play.extract([
-      new Card(Suit.DIAMONDS, 9, tr),
-      new Card(Suit.DIAMONDS, 9, tr),
-    ], tr);
+    let me = Play.extract([c.D_7, c.D_7], tr).fl();
+    let you = Play.extract([c.D_9, c.D_9], tr);
 
     expect(me.beats(you)).to.be.false;
     expect(you.beats(me)).to.be.true;
@@ -275,16 +180,8 @@ describe('Flight#beats', () => {
 
   it('handles tuple vs. non-tuple', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
-    let me = Play.extract([
-      new Card(Suit.DIAMONDS, 7, tr),
-      new Card(Suit.DIAMONDS, 7, tr),
-      new Card(Suit.DIAMONDS, 7, tr),
-    ], tr).fl();
-    let you = Play.extract([
-      new Card(Suit.DIAMONDS, 9, tr),
-      new Card(Suit.DIAMONDS, 9, tr),
-      new Card(Suit.DIAMONDS, Rank.A, tr),
-    ], tr);
+    let me = Play.extract([c.D_7, c.D_7, c.D_7], tr).fl();
+    let you = Play.extract([c.D_9, c.D_9, c.D_A], tr);
 
     expect(me.beats(you)).to.be.true;
     expect(you.beats(me)).to.be.true;
@@ -292,18 +189,8 @@ describe('Flight#beats', () => {
 
   it('handles tractor vs. tractor', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
-    let me = Play.extract([
-      new Card(Suit.DIAMONDS, 7, tr),
-      new Card(Suit.DIAMONDS, 7, tr),
-      new Card(Suit.DIAMONDS, 8, tr),
-      new Card(Suit.DIAMONDS, 8, tr),
-    ], tr).fl();
-    let you = Play.extract([
-      new Card(Suit.DIAMONDS, 8, tr),
-      new Card(Suit.DIAMONDS, 8, tr),
-      new Card(Suit.DIAMONDS, 9, tr),
-      new Card(Suit.DIAMONDS, 9, tr),
-    ], tr);
+    let me = Play.extract([c.D_7, c.D_7, c.D_8, c.D_8], tr).fl();
+    let you = Play.extract([c.D_8, c.D_8, c.D_9, c.D_9], tr);
 
     expect(me.beats(you)).to.be.false;
     expect(you.beats(me)).to.be.true;
@@ -312,20 +199,13 @@ describe('Flight#beats', () => {
   it('handles tractor vs. different tractor', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
     let me = Play.extract([
-      new Card(Suit.DIAMONDS, 7, tr),
-      new Card(Suit.DIAMONDS, 7, tr),
-      new Card(Suit.DIAMONDS, 8, tr),
-      new Card(Suit.DIAMONDS, 8, tr),
-      new Card(Suit.DIAMONDS, 9, tr),
-      new Card(Suit.DIAMONDS, 9, tr),
+      c.D_7, c.D_7,
+      c.D_8, c.D_8,
+      c.D_9, c.D_9
     ], tr).fl();
     let you = Play.extract([
-      new Card(Suit.DIAMONDS, 8, tr),
-      new Card(Suit.DIAMONDS, 8, tr),
-      new Card(Suit.DIAMONDS, 8, tr),
-      new Card(Suit.DIAMONDS, 9, tr),
-      new Card(Suit.DIAMONDS, 9, tr),
-      new Card(Suit.DIAMONDS, 9, tr),
+      c.D_8, c.D_8, c.D_8,
+      c.D_9, c.D_9, c.D_9
     ], tr);
 
     expect(me.beats(you)).to.be.true;
@@ -335,32 +215,18 @@ describe('Flight#beats', () => {
   it('handles flight vs. flight', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
     let me = Play.extract([
-      new Card(Suit.DIAMONDS, 2, tr),
-      new Card(Suit.DIAMONDS, 2, tr),
-      new Card(Suit.DIAMONDS, 2, tr),
-      new Card(Suit.DIAMONDS, 3, tr),
-      new Card(Suit.DIAMONDS, 3, tr),
-      new Card(Suit.DIAMONDS, 3, tr),
-      new Card(Suit.DIAMONDS, 7, tr),
-      new Card(Suit.DIAMONDS, 7, tr),
-      new Card(Suit.DIAMONDS, 8, tr),
-      new Card(Suit.DIAMONDS, 8, tr),
-      new Card(Suit.DIAMONDS, 9, tr),
-      new Card(Suit.DIAMONDS, 9, tr),
+      c.D_2, c.D_2, c.D_2,
+      c.D_3, c.D_3, c.D_3,
+      c.D_7, c.D_7,
+      c.D_8, c.D_8,
+      c.D_9, c.D_9,
     ], tr).fl();
     let you = Play.extract([
-      new Card(Suit.DIAMONDS, 4, tr),
-      new Card(Suit.DIAMONDS, 4, tr),
-      new Card(Suit.DIAMONDS, 4, tr),
-      new Card(Suit.DIAMONDS, 5, tr),
-      new Card(Suit.DIAMONDS, 5, tr),
-      new Card(Suit.DIAMONDS, 5, tr),
-      new Card(Suit.DIAMONDS, 10, tr),
-      new Card(Suit.DIAMONDS, 10, tr),
-      new Card(Suit.DIAMONDS, Rank.Q, tr),
-      new Card(Suit.DIAMONDS, Rank.Q, tr),
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-      new Card(Suit.DIAMONDS, Rank.K, tr),
+      c.D_4, c.D_4, c.D_4,
+      c.D_5, c.D_5, c.D_5,
+      c.D_10, c.D_10,
+      c.D_Q, c.D_Q,
+      c.D_K, c.D_K,
     ], tr);
 
     expect(me.beats(you)).to.be.false;
@@ -370,32 +236,17 @@ describe('Flight#beats', () => {
   it('handles flight vs. different flight', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
     let me = Play.extract([
-      new Card(Suit.DIAMONDS, 2, tr),
-      new Card(Suit.DIAMONDS, 2, tr),
-      new Card(Suit.DIAMONDS, 2, tr),
-      new Card(Suit.DIAMONDS, 3, tr),
-      new Card(Suit.DIAMONDS, 3, tr),
-      new Card(Suit.DIAMONDS, 3, tr),
-      new Card(Suit.DIAMONDS, 7, tr),
-      new Card(Suit.DIAMONDS, 7, tr),
-      new Card(Suit.DIAMONDS, 8, tr),
-      new Card(Suit.DIAMONDS, 8, tr),
-      new Card(Suit.DIAMONDS, 9, tr),
-      new Card(Suit.DIAMONDS, 9, tr),
+      c.D_2, c.D_2, c.D_2,
+      c.D_3, c.D_3, c.D_3,
+      c.D_7, c.D_7,
+      c.D_8, c.D_8,
+      c.D_9, c.D_9,
     ], tr).fl();
     let you = Play.extract([
-      new Card(Suit.DIAMONDS, 4, tr),
-      new Card(Suit.DIAMONDS, 4, tr),
-      new Card(Suit.DIAMONDS, 4, tr),
-      new Card(Suit.DIAMONDS, 5, tr),
-      new Card(Suit.DIAMONDS, 5, tr),
-      new Card(Suit.DIAMONDS, 5, tr),
-      new Card(Suit.DIAMONDS, Rank.Q, tr),
-      new Card(Suit.DIAMONDS, Rank.Q, tr),
-      new Card(Suit.DIAMONDS, Rank.Q, tr),
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-      new Card(Suit.DIAMONDS, Rank.K, tr),
+      c.D_4, c.D_4, c.D_4,
+      c.D_5, c.D_5, c.D_5,
+      c.D_Q, c.D_Q, c.D_Q,
+      c.D_K, c.D_K, c.D_K,
     ], tr);
 
     expect(me.beats(you)).to.be.true;
@@ -405,32 +256,18 @@ describe('Flight#beats', () => {
   it('handles flight vs. trump flight', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
     let me = Play.extract([
-      new Card(Suit.HEARTS, 2, tr),
-      new Card(Suit.HEARTS, 2, tr),
-      new Card(Suit.HEARTS, 2, tr),
-      new Card(Suit.HEARTS, 3, tr),
-      new Card(Suit.HEARTS, 3, tr),
-      new Card(Suit.HEARTS, 3, tr),
-      new Card(Suit.HEARTS, 7, tr),
-      new Card(Suit.HEARTS, 7, tr),
-      new Card(Suit.HEARTS, 8, tr),
-      new Card(Suit.HEARTS, 8, tr),
-      new Card(Suit.HEARTS, 9, tr),
-      new Card(Suit.HEARTS, 9, tr),
+      c.H_2, c.H_2, c.H_2,
+      c.H_3, c.H_3, c.H_3,
+      c.H_7, c.H_7,
+      c.H_8, c.H_8,
+      c.H_9, c.H_9,
     ], tr).fl();
     let you = Play.extract([
-      new Card(Suit.DIAMONDS, 4, tr),
-      new Card(Suit.DIAMONDS, 4, tr),
-      new Card(Suit.DIAMONDS, 4, tr),
-      new Card(Suit.DIAMONDS, 5, tr),
-      new Card(Suit.DIAMONDS, 5, tr),
-      new Card(Suit.DIAMONDS, 5, tr),
-      new Card(Suit.DIAMONDS, 10, tr),
-      new Card(Suit.DIAMONDS, 10, tr),
-      new Card(Suit.DIAMONDS, Rank.Q, tr),
-      new Card(Suit.DIAMONDS, Rank.Q, tr),
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-      new Card(Suit.DIAMONDS, Rank.K, tr),
+      c.D_4, c.D_4, c.D_4,
+      c.D_5, c.D_5, c.D_5,
+      c.D_10, c.D_10,
+      c.D_Q, c.D_Q,
+      c.D_K, c.D_K,
     ], tr);
 
     expect(me.beats(you)).to.be.true;
@@ -440,32 +277,17 @@ describe('Flight#beats', () => {
   it('handles flight vs. failed trump flight', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
     let me = Play.extract([
-      new Card(Suit.DIAMONDS, 2, tr),
-      new Card(Suit.DIAMONDS, 2, tr),
-      new Card(Suit.DIAMONDS, 2, tr),
-      new Card(Suit.DIAMONDS, 3, tr),
-      new Card(Suit.DIAMONDS, 3, tr),
-      new Card(Suit.DIAMONDS, 3, tr),
-      new Card(Suit.DIAMONDS, 7, tr),
-      new Card(Suit.DIAMONDS, 7, tr),
-      new Card(Suit.DIAMONDS, 8, tr),
-      new Card(Suit.DIAMONDS, 8, tr),
-      new Card(Suit.DIAMONDS, 9, tr),
-      new Card(Suit.DIAMONDS, 9, tr),
+      c.D_2, c.D_2, c.D_2,
+      c.D_3, c.D_3, c.D_3,
+      c.D_7, c.D_7,
+      c.D_8, c.D_8,
+      c.D_9, c.D_9,
     ], tr).fl();
     let you = Play.extract([
-      new Card(Suit.HEARTS, 4, tr),
-      new Card(Suit.HEARTS, 4, tr),
-      new Card(Suit.HEARTS, 4, tr),
-      new Card(Suit.HEARTS, 5, tr),
-      new Card(Suit.HEARTS, 5, tr),
-      new Card(Suit.HEARTS, 5, tr),
-      new Card(Suit.HEARTS, Rank.Q, tr),
-      new Card(Suit.HEARTS, Rank.Q, tr),
-      new Card(Suit.HEARTS, Rank.Q, tr),
-      new Card(Suit.HEARTS, Rank.K, tr),
-      new Card(Suit.HEARTS, Rank.K, tr),
-      new Card(Suit.HEARTS, Rank.K, tr),
+      c.H_4, c.H_4, c.H_4,
+      c.H_5, c.H_5, c.H_5,
+      c.H_Q, c.H_Q, c.H_Q,
+      c.H_K, c.H_K, c.H_K,
     ], tr);
 
     expect(me.beats(you)).to.be.true;
@@ -477,30 +299,22 @@ describe('Hand#follow_with', () => {
   it('handles singletons', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.J);
     let hand = new Hand(new CardPile([
-      new CardBase(Suit.DIAMONDS, 4),
-      new CardBase(Suit.DIAMONDS, 4),
-      new CardBase(Suit.SPADES, 8),
-      new CardBase(Suit.SPADES, 9),
-      new CardBase(Suit.CLUBS, Rank.J),
-      new CardBase(Suit.HEARTS, Rank.J),
+      c.D_4, c.D_4,
+      c.S_8, c.S_9,
+      c.C_J,
+      c.H_J,
     ], tr));
 
     let lead: Flight;
     let play: CardPile;
 
     // invalid play: missing card
-    lead = Play.extract([
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-    ], tr).fl();
-    play = new CardPile([
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-    ], tr);
+    lead = Play.extract([c.D_K], tr).fl();
+    play = new CardPile([c.D_K], tr);
     expect(() => hand.follow_with(lead, play)).to.throw();
 
     // on-suit follow
-    play = new CardPile([
-      new Card(Suit.DIAMONDS, 4, tr),
-    ], tr);
+    play = new CardPile([c.D_4], tr);
     expect(hand.follow_with(lead, play).follows).to.be.true;
     expect(hand.pile.toString()).to.equal(`
 ♦[1]: 4♦
@@ -510,9 +324,7 @@ describe('Hand#follow_with', () => {
     );
 
     // basic renege
-    play = new CardPile([
-      new Card(Suit.SPADES, 9, tr),
-    ], tr);
+    play = new CardPile([c.S_9], tr);
     expect(hand.follow_with(lead, play).follows).to.be.false;
     expect(hand.pile.toString()).to.equal(`
 ♦[1]: 4♦
@@ -522,12 +334,8 @@ describe('Hand#follow_with', () => {
     );
 
     // void-of-suit follow
-    lead = Play.extract([
-      new Card(Suit.CLUBS, Rank.K, tr),
-    ], tr).fl();
-    play = new CardPile([
-      new Card(Suit.SPADES, 8, tr),
-    ], tr);
+    lead = Play.extract([c.C_K], tr).fl();
+    play = new CardPile([c.S_8], tr);
     expect(hand.follow_with(lead, play).follows).to.be.true;
     expect(hand.pile.toString()).to.equal(`
 ♦[1]: 4♦
@@ -536,12 +344,8 @@ describe('Hand#follow_with', () => {
     );
 
     // natural trump follow
-    lead = Play.extract([
-      new Card(Suit.HEARTS, 4, tr),
-    ], tr).fl();
-    play = new CardPile([
-      new Card(Suit.CLUBS, Rank.J, tr),
-    ], tr);
+    lead = Play.extract([c.H_4], tr).fl();
+    play = new CardPile([c.C_J], tr);
     expect(hand.follow_with(lead, play).follows).to.be.true;
     expect(hand.pile.toString()).to.equal(`
 ♦[1]: 4♦
@@ -553,68 +357,39 @@ describe('Hand#follow_with', () => {
   it('handles tuples', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.Q);
     let hand = new Hand(new CardPile([
-      new CardBase(Suit.DIAMONDS, 3),
-      new CardBase(Suit.DIAMONDS, 3),
-      new CardBase(Suit.DIAMONDS, 4),
-      new CardBase(Suit.DIAMONDS, 4),
-      new CardBase(Suit.DIAMONDS, 4),
-      new CardBase(Suit.DIAMONDS, 6),
-      new CardBase(Suit.DIAMONDS, 6),
-      new CardBase(Suit.DIAMONDS, 6),
-      new CardBase(Suit.DIAMONDS, 9),
-      new CardBase(Suit.DIAMONDS, 9),
-      new CardBase(Suit.DIAMONDS, 9),
-      new CardBase(Suit.DIAMONDS, 10),
-      new CardBase(Suit.DIAMONDS, 10),
-      new CardBase(Suit.SPADES, 2),
-      new CardBase(Suit.SPADES, 2),
-      new CardBase(Suit.SPADES, 3),
-      new CardBase(Suit.SPADES, 3),
-      new CardBase(Suit.SPADES, 3),
-      new CardBase(Suit.SPADES, 4),
-      new CardBase(Suit.SPADES, 4),
-      new CardBase(Suit.SPADES, 4),
-      new CardBase(Suit.SPADES, 5),
-      new CardBase(Suit.SPADES, 5),
-      new CardBase(Suit.CLUBS, 7),
-      new CardBase(Suit.CLUBS, Rank.J),
-      new CardBase(Suit.HEARTS, 2),
-      new CardBase(Suit.HEARTS, 2),
-      new CardBase(Suit.HEARTS, Rank.K),
-      new CardBase(Suit.HEARTS, Rank.K),
-      new CardBase(Suit.HEARTS, Rank.A),
-      new CardBase(Suit.HEARTS, Rank.A),
-      new CardBase(Suit.HEARTS, Rank.A),
-      new CardBase(Suit.HEARTS, Rank.Q),
-      new CardBase(Suit.HEARTS, Rank.Q),
+      c.D_3, c.D_3,
+      c.D_4, c.D_4, c.D_4,
+      c.D_6, c.D_6, c.D_6,
+      c.D_9, c.D_9, c.D_9,
+      c.D_10, c.D_10,
+
+      c.S_2, c.S_2,
+      c.S_3, c.S_3, c.S_3,
+      c.S_4, c.S_4, c.S_4,
+      c.S_5, c.S_5,
+
+      c.C_7, c.C_J,
+
+      c.H_2, c.H_2,
+      c.H_K, c.H_K,
+      c.H_A, c.H_A, c.H_A,
+      c.H_Q, c.H_Q,
     ], tr));
 
     let lead: Flight;
     let play: CardPile;
 
     // invalid play: count too low
-    lead = Play.extract([
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-    ], tr).fl();
-    play = new CardPile([
-      new Card(Suit.DIAMONDS, 3, tr),
-    ], tr);
+    lead = Play.extract([c.D_K, c.D_K], tr).fl();
+    play = new CardPile([c.D_3], tr);
     expect(() => hand.follow_with(lead, play)).to.throw();
 
     // invalid play: count too high
-    play = new CardPile([
-      new Card(Suit.DIAMONDS, 3, tr),
-      new Card(Suit.DIAMONDS, 3, tr),
-      new Card(Suit.DIAMONDS, 4, tr),
-    ], tr);
+    play = new CardPile([c.D_3, c.D_3, c.D_4], tr);
     expect(() => hand.follow_with(lead, play)).to.throw();
 
     // correct matching follow
-    play = new CardPile([
-      new Card(Suit.DIAMONDS, 3, tr),
-      new Card(Suit.DIAMONDS, 3, tr),
-    ], tr);
+    play = new CardPile([c.D_3, c.D_3], tr);
     expect(hand.follow_with(lead, play).follows).to.be.true;
     expect(hand.pile.toString()).to.equal(`
 ♣[2]: 7♣ J♣
@@ -625,14 +400,8 @@ describe('Hand#follow_with', () => {
     );
 
     // correct failure to follow (no match)
-    lead = Play.extract([
-      new Card(Suit.CLUBS, Rank.J, tr),
-      new Card(Suit.CLUBS, Rank.J, tr),
-    ], tr).fl();
-    play = new CardPile([
-      new Card(Suit.CLUBS, 7, tr),
-      new Card(Suit.CLUBS, Rank.J, tr),
-    ], tr);
+    lead = Play.extract([c.C_J, c.C_J], tr).fl();
+    play = new CardPile([c.C_7, c.C_J], tr);
     expect(hand.follow_with(lead, play).follows).to.be.true;
     expect(hand.pile.toString()).to.equal(`
 ♦[11]: 4♦ 4♦ 4♦ 6♦ 6♦ 6♦ 9♦ 9♦ 9♦ 10♦ 10♦
@@ -642,16 +411,8 @@ describe('Hand#follow_with', () => {
     );
 
     // failure to match triple
-    lead = Play.extract([
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-    ], tr).fl();
-    play = new CardPile([
-      new Card(Suit.DIAMONDS, 4, tr),
-      new Card(Suit.DIAMONDS, 4, tr),
-      new Card(Suit.DIAMONDS, 9, tr),
-    ], tr);
+    lead = Play.extract([c.D_K, c.D_K, c.D_K], tr).fl();
+    play = new CardPile([c.D_4, c.D_4, c.D_9], tr);
     expect(hand.follow_with(lead, play).follows).to.be.false;
     expect(hand.pile.toString()).to.equal(`
 ♦[8]: 4♦ 6♦ 6♦ 6♦ 9♦ 9♦ 10♦ 10♦
@@ -661,14 +422,8 @@ describe('Hand#follow_with', () => {
     );
 
     // failure to match double
-    lead = Play.extract([
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-    ], tr).fl();
-    play = new CardPile([
-      new Card(Suit.DIAMONDS, 4, tr),
-      new Card(Suit.DIAMONDS, 10, tr),
-    ], tr);
+    lead = Play.extract([c.D_K, c.D_K], tr).fl();
+    play = new CardPile([c.D_4, c.D_10], tr);
     expect(hand.follow_with(lead, play).follows).to.be.false;
     expect(hand.pile.toString()).to.equal(`
 ♦[6]: 6♦ 6♦ 6♦ 9♦ 9♦ 10♦
@@ -678,18 +433,8 @@ describe('Hand#follow_with', () => {
     );
 
     // correct best-effort follow
-    lead = Play.extract([
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-    ], tr).fl();
-    play = new CardPile([
-      new Card(Suit.DIAMONDS, 6, tr),
-      new Card(Suit.DIAMONDS, 6, tr),
-      new Card(Suit.DIAMONDS, 6, tr),
-      new Card(Suit.DIAMONDS, 10, tr),
-    ], tr);
+    lead = Play.extract([c.D_K, c.D_K, c.D_K, c.D_K], tr).fl();
+    play = new CardPile([c.D_6, c.D_6, c.D_6, c.D_10], tr);
     expect(hand.follow_with(lead, play).follows).to.be.true;
     expect(hand.pile.toString()).to.equal(`
 ♦[2]: 9♦ 9♦
@@ -699,16 +444,8 @@ describe('Hand#follow_with', () => {
     );
 
     // correct partial void follow
-    lead = Play.extract([
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-    ], tr).fl();
-    play = new CardPile([
-      new Card(Suit.DIAMONDS, 9, tr),
-      new Card(Suit.DIAMONDS, 9, tr),
-      new Card(Suit.HEARTS, 2, tr),
-    ], tr);
+    lead = Play.extract([c.D_K, c.D_K, c.D_K], tr).fl();
+    play = new CardPile([c.D_9, c.D_9, c.H_2], tr);
     expect(hand.follow_with(lead, play).follows).to.be.true;
     expect(hand.pile.toString()).to.equal(`
 ♠[10]: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
@@ -717,14 +454,8 @@ describe('Hand#follow_with', () => {
     );
 
     // correct total void follow
-    lead = Play.extract([
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-      new Card(Suit.DIAMONDS, Rank.K, tr),
-    ], tr).fl();
-    play = new CardPile([
-      new Card(Suit.HEARTS, 2, tr),
-      new Card(Suit.HEARTS, Rank.K, tr),
-    ], tr);
+    lead = Play.extract([c.D_K, c.D_K], tr).fl();
+    play = new CardPile([c.H_2, c.H_K], tr);
     expect(hand.follow_with(lead, play).follows).to.be.true;
     expect(hand.pile.toString()).to.equal(`
 ♠[10]: 2♠ 2♠ 3♠ 3♠ 3♠ 4♠ 4♠ 4♠ 5♠ 5♠
@@ -736,57 +467,34 @@ describe('Hand#follow_with', () => {
   it('deals with impractically complicated cases', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.Q);
     let cards = [
-      new CardBase(Suit.CLUBS, 3),
-      new CardBase(Suit.CLUBS, 3),
-      new CardBase(Suit.CLUBS, 4),
-      new CardBase(Suit.CLUBS, 4),
-      new CardBase(Suit.CLUBS, 5),
-      new CardBase(Suit.CLUBS, 5),
+      c.C_3, c.C_3,
+      c.C_4, c.C_4,
+      c.C_5, c.C_5,
 
-      new CardBase(Suit.CLUBS, 7),
-      new CardBase(Suit.CLUBS, 7),
-      new CardBase(Suit.CLUBS, 7),
-      new CardBase(Suit.CLUBS, 8),
-      new CardBase(Suit.CLUBS, 8),
-      new CardBase(Suit.CLUBS, 8),
+      c.C_7, c.C_7, c.C_7,
+      c.C_8, c.C_8, c.C_8,
 
-      new CardBase(Suit.CLUBS, 10),
-      new CardBase(Suit.CLUBS, 10),
-      new CardBase(Suit.CLUBS, Rank.J),
-      new CardBase(Suit.CLUBS, Rank.J),
-      new CardBase(Suit.CLUBS, Rank.J),
-      new CardBase(Suit.CLUBS, Rank.K),
-      new CardBase(Suit.CLUBS, Rank.K),
-      new CardBase(Suit.CLUBS, Rank.K),
-      new CardBase(Suit.CLUBS, Rank.A),
-      new CardBase(Suit.CLUBS, Rank.A),
+      c.C_10, c.C_10,
+      c.C_J, c.C_J, c.C_J,
+      c.C_K, c.C_K, c.C_K,
+      c.C_A, c.C_A,
     ];
 
     let lead: Flight;
     let play: CardPile;
 
     lead = Play.extract([
-      new Card(Suit.CLUBS, 9, tr),
-      new Card(Suit.CLUBS, 9, tr),
-      new Card(Suit.CLUBS, 9, tr),
-      new Card(Suit.CLUBS, 10, tr),
-      new Card(Suit.CLUBS, 10, tr),
-      new Card(Suit.CLUBS, 10, tr),
+      c.C_9, c.C_9, c.C_9,
+      c.C_10, c.C_10, c.C_10,
 
-      new Card(Suit.CLUBS, 4, tr),
-      new Card(Suit.CLUBS, 4, tr),
-      new Card(Suit.CLUBS, 5, tr),
-      new Card(Suit.CLUBS, 5, tr),
-      new Card(Suit.CLUBS, 6, tr),
-      new Card(Suit.CLUBS, 6, tr),
-      new Card(Suit.CLUBS, 7, tr),
-      new Card(Suit.CLUBS, 7, tr),
+      c.C_4, c.C_4,
+      c.C_5, c.C_5,
+      c.C_6, c.C_6,
+      c.C_7, c.C_7,
 
-      new Card(Suit.CLUBS, Rank.A, tr),
-      new Card(Suit.CLUBS, Rank.A, tr),
+      c.C_A, c.C_A,
 
-      new Card(Suit.CLUBS, Rank.K, tr),
-      new Card(Suit.CLUBS, Rank.J, tr),
+      c.C_K, c.C_J,
     ], tr).fl();
 
     expect(lead.toString(tr)).to.equal(
@@ -796,28 +504,17 @@ describe('Hand#follow_with', () => {
     // ambiguous misplay
     let hand1 = new Hand(new CardPile(cards, tr));
     play = new CardPile([
-      new Card(Suit.CLUBS, Rank.J, tr),
-      new Card(Suit.CLUBS, Rank.J, tr),
-      new Card(Suit.CLUBS, Rank.J, tr),
-      new Card(Suit.CLUBS, Rank.K, tr),
-      new Card(Suit.CLUBS, Rank.K, tr),
-      new Card(Suit.CLUBS, Rank.K, tr),
+      c.C_J, c.C_J, c.C_J,
+      c.C_K, c.C_K, c.C_K,
 
-      new Card(Suit.CLUBS, 3, tr),
-      new Card(Suit.CLUBS, 3, tr),
-      new Card(Suit.CLUBS, 4, tr),
-      new Card(Suit.CLUBS, 4, tr),
-      new Card(Suit.CLUBS, 5, tr),
-      new Card(Suit.CLUBS, 5, tr),
+      c.C_3, c.C_3,
+      c.C_4, c.C_4,
+      c.C_5, c.C_5,
 
-      new Card(Suit.CLUBS, 10, tr),
-      new Card(Suit.CLUBS, 10, tr),
+      c.C_10, c.C_10,
+      c.C_A, c.C_A,
 
-      new Card(Suit.CLUBS, Rank.A, tr),
-      new Card(Suit.CLUBS, Rank.A, tr),
-
-      new Card(Suit.CLUBS, 8, tr),
-      new Card(Suit.CLUBS, 7, tr),
+      c.C_8, c.C_7,
     ], tr);
     let hand1_str =
       '♣[22]: 3♣ 3♣ 4♣ 4♣ 5♣ 5♣ 7♣ 7♣ 7♣ 8♣ 8♣ 8♣ 10♣ 10♣ J♣ J♣ J♣ K♣ K♣ K♣ A♣ A♣';
@@ -834,27 +531,17 @@ describe('Hand#follow_with', () => {
     // ambiguous follow
     let hand2 = new Hand(new CardPile(cards, tr));
     play = new CardPile([
-      new Card(Suit.CLUBS, 7, tr),
-      new Card(Suit.CLUBS, 7, tr),
-      new Card(Suit.CLUBS, 7, tr),
-      new Card(Suit.CLUBS, 8, tr),
-      new Card(Suit.CLUBS, 8, tr),
-      new Card(Suit.CLUBS, 8, tr),
+      c.C_7, c.C_7, c.C_7,
+      c.C_8, c.C_8, c.C_8,
 
-      new Card(Suit.CLUBS, 10, tr),
-      new Card(Suit.CLUBS, 10, tr),
-      new Card(Suit.CLUBS, Rank.J, tr),
-      new Card(Suit.CLUBS, Rank.J, tr),
-      new Card(Suit.CLUBS, Rank.K, tr),
-      new Card(Suit.CLUBS, Rank.K, tr),
-      new Card(Suit.CLUBS, Rank.A, tr),
-      new Card(Suit.CLUBS, Rank.A, tr),
+      c.C_10, c.C_10,
+      c.C_J, c.C_J,
+      c.C_K, c.C_K,
+      c.C_A, c.C_A,
 
-      new Card(Suit.CLUBS, 3, tr),
-      new Card(Suit.CLUBS, 3, tr),
+      c.C_3, c.C_3,
 
-      new Card(Suit.CLUBS, Rank.K, tr),
-      new Card(Suit.CLUBS, Rank.J, tr),
+      c.C_K, c.C_J,
     ], tr);
     expect(hand2.follow_with(lead, play).follows).to.be.true;
   });
@@ -865,47 +552,31 @@ describe('Hand#follow_with', () => {
 
   it('avoids priority inversion', () => {
     const cards = [
-      new CardBase(Suit.CLUBS, 4),
-      new CardBase(Suit.CLUBS, 4),
-      new CardBase(Suit.CLUBS, 5),
-      new CardBase(Suit.CLUBS, 5),
-      new CardBase(Suit.CLUBS, Rank.J),
-      new CardBase(Suit.CLUBS, Rank.J),
-      new CardBase(Suit.CLUBS, Rank.J),
-      new CardBase(Suit.CLUBS, Rank.A),
+      c.C_4, c.C_4,
+      c.C_5, c.C_5,
+      c.C_J, c.C_J, c.C_J,
+      c.C_A,
 
-      new CardBase(Suit.HEARTS, 3),
-      new CardBase(Suit.HEARTS, 4),
-      new CardBase(Suit.HEARTS, Rank.A),
-      new CardBase(Suit.HEARTS, Rank.A),
+      c.H_3, c.H_4,
+      c.H_A, c.H_A,
     ];
 
     { // big pairs lead beats small tractor
       const tr = new TrumpMeta(Suit.HEARTS, Rank.Q);
-      const lead = Play.extract([
-        new Card(Suit.CLUBS, 10, tr),
-        new Card(Suit.CLUBS, 10, tr),
-        new Card(Suit.CLUBS, Rank.A, tr),
-        new Card(Suit.CLUBS, Rank.A, tr),
-      ], tr).fl();
+      const lead = Play.extract([c.C_10, c.C_10, c.C_A, c.C_A], tr).fl();
 
       expect(lead.toString(tr)).to.equal('[A♣A♣][10♣10♣]');
 
       const hand = new Hand(new CardPile(cards, tr));
-      const play = new CardPile([
-        new Card(Suit.CLUBS, 4, tr),
-        new Card(Suit.CLUBS, 4, tr),
-        new Card(Suit.CLUBS, 5, tr),
-        new Card(Suit.CLUBS, 5, tr),
-      ], tr);
+      const play = new CardPile([c.C_4, c.C_4, c.C_5, c.C_5], tr);
 
       const {follows, undo_chain, parses} = hand.follow_with(lead, play);
       expect(follows).to.be.true;
       expect(parses.length).to.equal(2);
 
       const sh = new Tractor.Shape(1, 2);
-      const pair4 = new Tractor(sh, new Card(Suit.CLUBS, 4, tr));
-      const pair5 = new Tractor(sh, new Card(Suit.CLUBS, 5, tr));
+      const pair4 = new Tractor(sh, Card.from(c.C_4, tr));
+      const pair5 = new Tractor(sh, Card.from(c.C_5, tr));
 
       expect(
         parses.map(fresh_flight)
@@ -919,20 +590,12 @@ describe('Hand#follow_with', () => {
 
     { // trump fly with pair beats non-trump singleton fly
       const tr = new TrumpMeta(Suit.HEARTS, Rank.Q);
-      const lead = Play.extract([
-        new Card(Suit.SPADES, 5, tr),
-        new Card(Suit.SPADES, Rank.J, tr),
-        new Card(Suit.SPADES, Rank.A, tr),
-      ], tr).fl();
+      const lead = Play.extract([c.S_5, c.S_J, c.S_A], tr).fl();
 
       expect(lead.toString(tr)).to.equal('[A♠][J♠][5♠]');
 
       const hand = new Hand(new CardPile(cards, tr));
-      const play = new CardPile([
-        new Card(Suit.HEARTS, 3, tr),
-        new Card(Suit.HEARTS, Rank.A, tr),
-        new Card(Suit.HEARTS, Rank.A, tr),
-      ], tr);
+      const play = new CardPile([c.H_3, c.H_A, c.H_A], tr);
 
       const {follows, undo_chain, parses} = hand.follow_with(lead, play);
       expect(follows).to.be.true;
@@ -952,20 +615,12 @@ describe('Hand#follow_with', () => {
 
     { // natural trump only fly with pair beats non-trump singleton fly
       const tr = new TrumpMeta(Suit.TRUMP, 4);
-      const lead = Play.extract([
-        new Card(Suit.SPADES, 5, tr),
-        new Card(Suit.SPADES, Rank.J, tr),
-        new Card(Suit.SPADES, Rank.A, tr),
-      ], tr).fl();
+      const lead = Play.extract([c.S_5, c.S_J, c.S_A], tr).fl();
 
       expect(lead.toString(tr)).to.equal('[A♠][J♠][5♠]');
 
       const hand = new Hand(new CardPile(cards, tr));
-      const play = new CardPile([
-        new Card(Suit.CLUBS, 4, tr),
-        new Card(Suit.CLUBS, 4, tr),
-        new Card(Suit.HEARTS, 4, tr),
-      ], tr);
+      const play = new CardPile([c.C_4, c.C_4, c.H_4], tr);
 
       const {follows, undo_chain, parses} = hand.follow_with(lead, play);
       expect(follows).to.be.true;
@@ -985,22 +640,12 @@ describe('Hand#follow_with', () => {
 
     { // two trump pair doesn't beat non-trump tractor
       const tr = new TrumpMeta(Suit.CLUBS, Rank.Q);
-      const lead = Play.extract([
-        new Card(Suit.SPADES, 3, tr),
-        new Card(Suit.SPADES, 3, tr),
-        new Card(Suit.SPADES, 4, tr),
-        new Card(Suit.SPADES, 4, tr),
-      ], tr).fl();
+      const lead = Play.extract([c.S_3, c.S_3, c.S_4, c.S_4], tr).fl();
 
       expect(lead.toString(tr)).to.equal('3♠3♠4♠4♠');
 
       const hand = new Hand(new CardPile(cards, tr));
-      const play = new CardPile([
-        new Card(Suit.CLUBS, 5, tr),
-        new Card(Suit.CLUBS, 5, tr),
-        new Card(Suit.CLUBS, Rank.J, tr),
-        new Card(Suit.CLUBS, Rank.J, tr),
-      ], tr);
+      const play = new CardPile([c.C_5, c.C_5, c.C_J, c.C_J], tr);
 
       const {follows, undo_chain, parses} = hand.follow_with(lead, play);
       expect(follows).to.be.true;
@@ -1012,37 +657,20 @@ describe('Hand#follow_with', () => {
 
   it('handles off-suit natural trumps', () => {
     const cards = [
-      new CardBase(Suit.DIAMONDS, 5),
-      new CardBase(Suit.DIAMONDS, 6),
-      new CardBase(Suit.DIAMONDS, 6),
-      new CardBase(Suit.HEARTS, 3),
-      new CardBase(Suit.HEARTS, 3),
-      new CardBase(Suit.HEARTS, Rank.Q),
-      new CardBase(Suit.HEARTS, Rank.Q),
-
-      new CardBase(Suit.DIAMONDS, 2),
-      new CardBase(Suit.DIAMONDS, 2),
-      new CardBase(Suit.HEARTS, 2),
-      new CardBase(Suit.HEARTS, 2),
-
-      new CardBase(Suit.TRUMP, Rank.B),
-      new CardBase(Suit.TRUMP, Rank.B),
+      c.D_5, c.D_6, c.D_6,
+      c.H_3, c.H_3, c.H_Q, c.H_Q,
+      c.D_2, c.D_2, c.H_2, c.H_2,
+      c.J_B, c.J_B,
     ];
 
     { // osnt tuples
       const tr = new TrumpMeta(Suit.SPADES, 2);
-      const lead = Play.extract([
-        new Card(Suit.SPADES, 10, tr),
-        new Card(Suit.SPADES, 10, tr),
-      ], tr).fl();
+      const lead = Play.extract([c.S_10, c.S_10], tr).fl();
 
       expect(lead.toString(tr)).to.equal('10♠10♠');
 
       const hand = new Hand(new CardPile(cards, tr));
-      const play = new CardPile([
-        new Card(Suit.DIAMONDS, 2, tr),
-        new Card(Suit.DIAMONDS, 2, tr),
-      ], tr);
+      const play = new CardPile([c.D_2, c.D_2], tr);
 
       const {follows, undo_chain, parses} = hand.follow_with(lead, play);
       expect(follows).to.be.true;
@@ -1050,22 +678,12 @@ describe('Hand#follow_with', () => {
 
     { // osnt tractors
       const tr = new TrumpMeta(Suit.HEARTS, 2);
-      const lead = Play.extract([
-        new Card(Suit.HEARTS, 10, tr),
-        new Card(Suit.HEARTS, 10, tr),
-        new Card(Suit.HEARTS, Rank.J, tr),
-        new Card(Suit.HEARTS, Rank.J, tr),
-      ], tr).fl();
+      const lead = Play.extract([c.H_10, c.H_10, c.H_J, c.H_J], tr).fl();
 
       expect(lead.toString(tr)).to.equal('10♥10♥J♥J♥');
 
       const hand = new Hand(new CardPile(cards, tr));
-      const play = new CardPile([
-        new Card(Suit.DIAMONDS, 2, tr),
-        new Card(Suit.DIAMONDS, 2, tr),
-        new Card(Suit.HEARTS, 2, tr),
-        new Card(Suit.HEARTS, 2, tr),
-      ], tr);
+      const play = new CardPile([c.D_2, c.D_2, c.H_2, c.H_2], tr);
 
       const {follows, undo_chain, parses} = hand.follow_with(lead, play);
       expect(follows).to.be.true;
