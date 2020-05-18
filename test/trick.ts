@@ -464,6 +464,24 @@ describe('Hand#follow_with', () => {
     );
   });
 
+  it('handles tractors', () => {
+    let tr = new TrumpMeta(Suit.HEARTS, Rank.Q);
+    let hand = new Hand(new CardPile([
+      c.D_3, c.D_3,
+      c.D_6, c.D_6, c.D_6,
+      c.D_9, c.D_9, c.D_9,
+      c.D_8, c.D_J,
+    ], tr));
+
+    let lead: Flight;
+    let play: CardPile;
+
+    // invalid play: only one pair of two played to match tractor
+    lead = Play.extract([c.D_K, c.D_K, c.D_A, c.D_A], tr).fl();
+    play = new CardPile([c.D_3, c.D_3, c.D_8, c.D_J], tr);
+    expect(hand.follow_with(lead, play).follows).to.be.false;
+  });
+
   it('deals with impractically complicated cases', () => {
     let tr = new TrumpMeta(Suit.HEARTS, Rank.Q);
     let cards = [

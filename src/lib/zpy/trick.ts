@@ -701,6 +701,31 @@ export class Hand {
 
     play_pile = CardPile.copy(play_pile); // don't mutate inputs
 
+    // get the shapes that "remain" after `smol` is accounted for as part of a
+    // match for `big`.
+    //
+    // basically performs the following operations:
+    //
+    //  (4, 4)     (3, 2)   (1, 4)  (3, 2)
+    //
+    //  3 4 5 6               3     4 5 6
+    //  3 4 5 6  -         =  3  +  4 5 6
+    //  3 4 5 6     7 8 9     3
+    //  3 4 5 6     7 8 9     3
+    const diff_shapes = (
+      big: Tractor.Shape,
+      smol: Tractor.Shape,
+    ): Tractor.Shape[] => {
+      const m = big.len - smol.len;
+      const n = big.arity - smol.arity;
+      assert(m >= 0 && n >= 0);
+
+      const result: Tractor.Shape[] = [];
+      if (m > 0) result.push(new Tractor.Shape(m, big.arity));
+      if (n > 1) result.push(new Tractor.Shape(big.len, n));
+      return result;
+    };
+
     // consume the remainder of the play and patch up the result.
     const finish = (
       follows: boolean,
@@ -791,13 +816,9 @@ export class Hand {
             node
           );
 
-          const m = shape.len - node.shape.len;
-          const n = shape.arity - node.shape.arity;
-          assert(m >= 0 && n >= 0);
-
-          if (m > 0 && n > 1) {
-            shapes.push(new Tractor.Shape(m, n));
-            shapes = shapes.sort(Tractor.Shape.compare);
+          const remainder = diff_shapes(shape, node.shape);
+          if (remainder.length > 0) {
+            shapes = shapes.concat(remainder).sort(Tractor.Shape.compare);
           }
           return Code.DONE;
         }
@@ -848,10 +869,15 @@ export class Hand {
     const seq_to_str = (seq: Tractor.Shape[]): string => {
       return seq.map(sh => sh.toString()).join('-');
     };
-    const path_to_str = (path: Hand.Node[]): string => {
+    const path_to_str = (path: Tractor[]): string => {
       return path.map(n => n.shape.toString()).join('-') +
         ` [${path.map(n => n.toString(this.tr, true)).join('-')}]`;
     };
+
+    if (trace && prefix.length > 0) {
+      console.log('initial path');
+      console.log(path_to_str(prefix));
+    }
 
     // current path that we're descending.  note that since JS and TS arrays
     // are always passed "by reference" and hence mutable, we avoid threading
@@ -919,15 +945,11 @@ export class Hand {
           console.log(prefix + '└--cur_path:', path_to_str(cur_path));
         }
 
-        const m = shape.len - node.shape.len;
-        const n = shape.arity - node.shape.arity;
-        assert(m >= 0 && n >= 0);
-
         const orig_shapes = (() => {
-          if (m > 0 && n > 1) {
-            const copy = [...shapes];
-            shapes.push(new Tractor.Shape(m, n));
-            shapes = shapes.sort(Tractor.Shape.compare);
+          const remainder = diff_shapes(shape, node.shape);
+          if (remainder.length > 0) {
+            const copy = shapes;
+            shapes = shapes.concat(remainder).sort(Tractor.Shape.compare);
             return copy;
           }
           return shapes;
