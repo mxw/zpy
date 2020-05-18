@@ -406,7 +406,5 @@ describe('ZPY', () => {
 
     expect_err(zpy.end_round(e), ZPY.WrongPlayerError);
     expect_ok(zpy.end_round(b));
-
-    console.log(zpy.toString(true));
   });
 });
