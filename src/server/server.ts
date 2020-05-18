@@ -12,8 +12,9 @@ import { o_map } from 'utils/array.ts'
 import {isOK, isErr} from 'utils/result.ts'
 
 import * as WebSocket from 'ws'
-import * as Http from 'http'
-import * as Uuid from 'uuid'
+import * as http from 'http'
+import * as net from 'net'
+import * as uuid from 'uuid'
 
 import * as options from 'options.ts'
 import assert from 'utils/assert.ts'
@@ -533,11 +534,15 @@ export class GameServer<
   /*
    * attach to the provided http server to handle upgrade requests
    */
-  constructor(engine: Eng, server: Http.Server, url_pref: string) {
+  constructor(engine: Eng, server: http.Server, url_pref: string) {
     this.engine = engine;
     this.ws = new WebSocket.Server({noServer: true});
 
-    server.on('upgrade', async (req: Http.IncomingMessage, sock, head) => {
+    server.on('upgrade', async (
+      req: http.IncomingMessage,
+      sock: net.Socket,
+      head: Buffer,
+    ) => {
       const bail = (reason: string, details?: object) => {
         log.error('websocket upgrade failure', {...details, reason});
 
@@ -596,7 +601,7 @@ export class GameServer<
 
     this.ws.on('connection', (
       ws: WebSocket,
-      req: Http.IncomingMessage,
+      req: http.IncomingMessage,
       game: Game<Config, Intent, State, Action,
                  ClientState, Effect, UpdateError, Eng>,
       session: Session.T
@@ -611,7 +616,7 @@ export class GameServer<
    * returns the game id
    */
   begin_game(cfg: Config, owner: Principal): GameId {
-    const id = Uuid.v4();
+    const id = uuid.v4();
 
     this.games[id] = new Game(
       id,
