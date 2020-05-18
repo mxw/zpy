@@ -1,7 +1,8 @@
-import {isOK, isErr} from 'utils/result.ts'
+import { isOK, isErr } from 'utils/result.ts'
 
 import * as P from 'protocol/protocol.ts'
-import {Engine} from 'protocol/engine.ts'
+import * as wscode from 'protocol/code.ts'
+import { Engine } from 'protocol/engine.ts'
 
 import * as options from 'options.ts'
 import assert from 'utils/assert.ts'
@@ -134,8 +135,14 @@ export class GameClient<
       this.users = null;
       this.me = null;
 
-      if (e.code === 4242 || this.status === 'disconnect') return;
-
+      if (e.code === wscode.DONE ||
+          this.status === 'disconnect') {
+        return;
+      }
+      if (e.code === wscode.REJECT) {
+        console.error(e.reason);
+        return;
+      }
       this.status = 'pending-reset';
 
       // reconnect with exponential backoff
@@ -213,7 +220,7 @@ export class GameClient<
   }
 
   close() {
-    this.socket.close(4242);
+    this.socket.close(wscode.DONE);
     this.status = 'disconnect';
   }
 

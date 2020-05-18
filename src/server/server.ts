@@ -2,14 +2,15 @@
  * Webserver implementation, wrapped around a generic game engine.
  */
 
-import {Engine} from 'protocol/engine.ts'
 import * as P from 'protocol/protocol.ts'
+import * as wscode from 'protocol/code.ts'
+import { Engine } from 'protocol/engine.ts'
 
 import * as db from 'server/db.ts'
 import * as Session from 'server/session.ts'
 
 import { o_map } from 'utils/array.ts'
-import {isOK, isErr} from 'utils/result.ts'
+import { isOK, isErr } from 'utils/result.ts'
 
 import * as WebSocket from 'ws'
 import * as http from 'http'
@@ -60,7 +61,7 @@ class Client {
   }
 
   close(): void {
-    this.socket.close(4242);
+    this.socket.close(wscode.DONE);
   }
 
   log_entry() {
@@ -439,7 +440,7 @@ class Game<
 
     sock.on('close', (code: number, reason: string) => {
       log.info('socket close', {code, reason, ...client.log_entry()});
-      if (code !== 4242) this.dispose(client);
+      if (code !== wscode.DONE) this.dispose(client);
     });
   }
 
@@ -546,10 +547,9 @@ export class GameServer<
       const bail = (reason: string, details?: object) => {
         log.error('websocket upgrade failure', {...details, reason});
 
-        sock.write('HTTP/1.1 400 Bad Request\r\n' +
-                   'X-Reason: ' + reason + '\r\n');
-        sock.destroy();
-        return;
+        this.ws.handleUpgrade(req, sock, head, async (ws: WebSocket) => {
+          ws.close(wscode.REJECT, reason);
+        });
       };
 
       // is the url cromulent
