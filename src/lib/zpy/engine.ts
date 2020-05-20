@@ -25,7 +25,7 @@ import {
 
 import { ZPY, Data as ZPYData } from 'lib/zpy/zpy.ts';
 
-import { array_fill } from 'utils/array.ts'
+import { array_fill, o_map } from 'utils/array.ts'
 import { Result, OK, Err } from 'utils/result.ts'
 import { nth_suffixed } from 'utils/string.ts'
 
@@ -332,7 +332,7 @@ export const set_decks = C.type({
 });
 export const set_rule_mods = C.type({
   kind: C.literal('set_rule_mods'),
-  args: C.tuple(PlayerID, Config),
+  args: C.tuple(PlayerID, cd_PartialConfig),
 });
 export const set_rank = C.type({
   kind: C.literal('set_rank'),
@@ -502,12 +502,21 @@ export const describe_effect = (
     case 'set_decks':
       return `${agent} set number of decks to ${eff.args[1]}`;
     case 'set_rule_mods':
-      return `${agent} set rules to [${[
-        ZPY.HiddenInfoRule[eff.args[1].info],
-        ZPY.RankSkipRule[eff.args[1].rank],
-        ZPY.KittyMultiplierRule[eff.args[1].kitty],
-        ZPY.JackHookRule[eff.args[1].hook],
-      ].map(s => s.toLowerCase().replace('_', '-')).join(',')}]`;
+      return `${agent} modified rules: ${o_map(
+        eff.args[1],
+        (k, v) => {
+          switch (k) {
+            case 'renege': return `${k} = ${ZPY.RenegeRule[v]}`;
+            case 'rank': return `${k} = ${ZPY.RankSkipRule[v]}`;
+            case 'kitty': return `${k} = ${ZPY.KittyMultiplierRule[v]}`;
+            case 'hook': return `${k} = ${ZPY.JackHookRule[v]}`;
+            case 'info': return `${k} = ${ZPY.HiddenInfoRule[v]}`;
+            case 'undo': return `${k} = ${ZPY.UndoPlayRule[v]}`;
+            case 'trash': return `${k} = ${ZPY.TrashKittyRule[v]}`;
+          }
+          return '';
+        }
+      ).map(s => s.toLowerCase().replace('_', '-')).join(',')}`;
     case 'set_rank':
       return `${agent} changed their rank to ${rank_to_string(eff.args[1])}`;
     case 'init_game':

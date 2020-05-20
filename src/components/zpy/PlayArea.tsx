@@ -1257,15 +1257,12 @@ export class PlayArea extends React.Component<
   }
 
   onConfigChange<K extends ConfigArea.Key>(key: K, val: ConfigArea.T[K]) {
-    // XXX: this is... suboptimal, because if the user presses a lot of buttons
-    // and we don't render between all of them, we might send partially stale
-    // updates.  the correct time to do is from componentDidUpdate()
     if (key === 'ndecks') {
       this.attempt({kind: 'set_decks', args: [this.props.me.id, val]});
     } else {
       this.attempt({
         kind: 'set_rule_mods',
-        args: [this.props.me.id, {...this.state.config, [key]: val}]
+        args: [this.props.me.id, {[key]: val}]
       });
     }
     this.setState((state, props) => ({

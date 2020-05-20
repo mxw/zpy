@@ -360,7 +360,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     }
     this.ndecks = ndecks;
   }
-  set_rule_mods(player: PlayerID, rules: ZPY.RuleModifiers): ZPY.Result {
+  set_rule_mods(player: PlayerID, rules: Partial<ZPY.RuleModifiers>): ZPY.Result {
     if (this.phase !== ZPY.Phase.INIT &&
         this.phase !== ZPY.Phase.WAIT) {
       return ZPY.BadPhaseError.from('set_rule_mods', this.phase);
@@ -368,7 +368,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     if (player !== this.owner) {
       return new ZPY.WrongPlayerError('game owner only');
     }
-    this.rules = {...rules};
+    this.rules = {...this.rules, ...rules};
   }
 
   /*
