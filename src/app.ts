@@ -21,6 +21,8 @@ import log from 'utils/logger.ts'
 
 const app = express();
 
+app.set('trust proxy', 'loopback');
+
 app.use('/', express.static("assets/html"));
 app.use(
   `/zpy/:game_id(${escape_backslashes(Session.regex.source)})`,
