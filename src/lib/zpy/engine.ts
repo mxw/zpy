@@ -47,6 +47,7 @@ const cd_PartialConfig = C.partial({
   info: P.Enum<ZPY.HiddenInfoRule>(ZPY.HiddenInfoRule),
   undo: P.Enum<ZPY.UndoPlayRule>(ZPY.UndoPlayRule),
   trash: P.Enum<ZPY.TrashKittyRule>(ZPY.TrashKittyRule),
+  team: P.Enum<ZPY.TeamSelectRule>(ZPY.TeamSelectRule),
 });
 export const Config: C.Codec<ZPY.RuleModifiers> = C.make(
   D.parse(
@@ -513,6 +514,7 @@ export const describe_effect = (
             case 'info': return `${k} = ${ZPY.HiddenInfoRule[v]}`;
             case 'undo': return `${k} = ${ZPY.UndoPlayRule[v]}`;
             case 'trash': return `${k} = ${ZPY.TrashKittyRule[v]}`;
+            case 'team': return `${k} = ${ZPY.TeamSelectRule[v]}`;
           }
           return '';
         }

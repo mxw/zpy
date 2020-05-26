@@ -23,7 +23,7 @@ export class ConfigArea extends React.Component<ConfigArea.Props, {}> {
     tooltip?: string,
     tooltip_props?: Record<string, any>,
   ) {
-    const classes = [key as string];
+    const classes = [(key as string) + '-opt'];
     if (val === this.props.config[key]) classes.push('selected');
 
     if (key === 'ndecks' &&
@@ -61,7 +61,7 @@ export class ConfigArea extends React.Component<ConfigArea.Props, {}> {
     return <div className="config-container">
       game settings
       <div className="config">
-        <label className="ndecks">
+        <label>
           <div># decks</div>
           <div className="config-options">
             {[...range(
@@ -72,7 +72,22 @@ export class ConfigArea extends React.Component<ConfigArea.Props, {}> {
             )}
           </div>
         </label>
-        <label className="hidden-info">
+        <label>
+          <div>teams</div>
+          <div className="config-options one-col">
+            {this.renderOption(
+              'friend', 'team', ZPY.TeamSelectRule.FRIEND,
+              'call friends before each round',
+            )}
+            {this.renderOption(
+              'fixed', 'team', ZPY.TeamSelectRule.FIXED,
+              'fixed teams, alternating in play order; ' +
+              'ignored if there are an odd number of players',
+              {'data-balloon-length': 'large'},
+            )}
+          </div>
+        </label>
+        <label>
           <div>hidden info</div>
           <div className="config-options">
             {this.renderOption(
@@ -93,7 +108,7 @@ export class ConfigArea extends React.Component<ConfigArea.Props, {}> {
             )}
           </div>
         </label>
-        <label className="rank-skip">
+        <label>
           <div>rank up</div>
           <div className="config-options">
             {this.renderOption(
@@ -114,9 +129,9 @@ export class ConfigArea extends React.Component<ConfigArea.Props, {}> {
             )}
           </div>
         </label>
-        <label className="hook">
+        <label>
           <div>hook</div>
-          <div className="config-options">
+          <div className="config-options one-col">
             {this.renderOption(
               'j-hook', 'hook', ZPY.JackHookRule.WIN_HOOK,
               'attacking team hooks host team to 2 if they win a J round ' +
@@ -129,7 +144,7 @@ export class ConfigArea extends React.Component<ConfigArea.Props, {}> {
             )}
           </div>
         </label>
-        <label className="kitty-mult">
+        <label>
           <div>kitty</div>
           <div className="config-options">
             {this.renderOption(

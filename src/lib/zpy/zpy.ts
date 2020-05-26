@@ -148,6 +148,16 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     return kitty_sz;
   }
 
+  /*
+   * Whether fixed team rules are in effect.
+   */
+  fixed_teams(): boolean {
+    return (
+      this.rules.team === ZPY.TeamSelectRule.FIXED &&
+      this.nplayers % 2 == 0
+    );
+  }
+
   /////////////////////////////////////////////////////////////////////////////
   /*
    * Convenience getters.
@@ -729,7 +739,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
    * Phase.KITTY : Effect.seal_hand
    *
    * The host discards their kitty.  We Hand-ify every player's draw pile, and
-   * transition to Phase.FRIEND.
+   * transition to Phase.FRIEND (or Phase.LEAD if fixed teams are in effect).
    */
   replace_kitty(player: PlayerID, kitty: CardBase[]): ZPY.Result<[]> {
     if (this.phase !== ZPY.Phase.KITTY) {
@@ -762,7 +772,23 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       this.hands[p] = new Hand(this.draws[p]);
     }
     this.draws = {} as any; // clear this, mostly to prevent bugs
-    this.phase = ZPY.Phase.FRIEND;
+
+    if (this.fixed_teams()) {
+      // assign teams right now, alternating host and attacking
+      let want_host = true;
+      const host_idx = this.order[this.host];
+      for (let p of [
+        ...this.players.slice(host_idx),
+        ...this.players.slice(0, host_idx)
+      ]) {
+        const team = want_host ? this.host_team : this.atk_team;
+        team.add(p);
+        want_host = !want_host;
+      }
+      this.phase = ZPY.Phase.LEAD;
+    } else {
+      this.phase = ZPY.Phase.FRIEND;
+    }
   }
 
   /*
@@ -850,6 +876,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
         !this.plays[this.winning].fl()!.beats(play)) {
       this.winning = player;
     }
+    this.cur_idx = this.next_player_idx(this.cur_idx);
+
+    if (this.fixed_teams()) return;
 
     for (let [card, n] of play.gen_counts(this.tr)) {
       for (let friend of this.friends) {
@@ -871,7 +900,6 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
         }
       }
     }
-    this.cur_idx = this.next_player_idx(this.cur_idx);
   }
 
   /*
@@ -1442,6 +1470,10 @@ export namespace ZPY {
     NO,   // no overturns once kitty is picked up
     YES,  // trash kitty: overturn gives you the discarded kitty
   }
+  export enum TeamSelectRule {
+    FRIEND, // zhao peng you; variable teams
+    FIXED,  // sheng ji; fixed teams
+  }
   export type RuleModifiers = {
     renege: RenegeRule;
     rank: RankSkipRule;
@@ -1450,6 +1482,7 @@ export namespace ZPY {
     info: HiddenInfoRule;
     undo: UndoPlayRule;
     trash: TrashKittyRule;
+    team: TeamSelectRule;
   }
 
   export const default_rules: RuleModifiers = {
@@ -1460,6 +1493,7 @@ export namespace ZPY {
     info: 0,
     undo: 0,
     trash: 0,
+    team: 0,
   };
 
   export enum Phase {
