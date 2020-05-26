@@ -698,7 +698,8 @@ export class GameServer<
     );
     log.info('snapshot decode succeeded', {game: id});
 
-    return this.games[id] = new Game(
+    // note that we have to check for the presence of `id` again, because async
+    return this.games[id] = this.games[id] ?? new Game(
       id,
       this.engine,
       config,
