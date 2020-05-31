@@ -29,7 +29,7 @@ export async function make(): Promise<T> {
 
   try {
     await db.pool.query(
-      'INSERT INTO sessions (id, token) VALUES ($1, $2)',
+      'INSERT INTO sessions (id, token, ts) VALUES ($1, $2, NOW())',
       [id, token]
     );
   } catch (err) {
@@ -48,6 +48,12 @@ export async function get(id: Id): Promise<T | null> {
       [id]
     );
     if (res.rows.length !== 1) return null;
+
+    // bump access time w/o awaiting
+    db.pool.query(
+      'UPDATE sessions SET ts = NOW() WHERE id = $1',
+      [id]
+    );
 
     const token = res.rows[0].token;
     return active[id] = {id, token};

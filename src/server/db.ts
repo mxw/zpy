@@ -18,6 +18,7 @@ export const ensure_init = async () => {
 CREATE TABLE IF NOT EXISTS sessions (
   id uuid NOT NULL,
   token char(128) NOT NULL,
+  ts timestamptz NOT NULL,
   PRIMARY KEY (id)
 )`
     );
