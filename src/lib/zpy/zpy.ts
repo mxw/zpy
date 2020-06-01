@@ -785,6 +785,10 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
         team.add(p);
         want_host = !want_host;
       }
+
+      this.leader = this.host;
+      this.cur_idx = this.order[this.leader];
+
       this.phase = ZPY.Phase.LEAD;
     } else {
       this.phase = ZPY.Phase.FRIEND;
