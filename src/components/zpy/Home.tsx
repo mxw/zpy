@@ -60,11 +60,12 @@ export class Home extends React.Component<{}, Home.State> {
           outlined <a href="https://en.wikipedia.org/wiki/Sheng_ji">here</a>.
         </p>
         <p>
-          ZPY was made by <a href="https://github.com/mxw/">max wang</a>.
+          ZPY was made by max wang.  you can contribute to ZPY
+          on <a href="https://github.com/mxw/zpy">github</a>.
         </p>
         <p>
-          ZPY is currently in <b><i>beta</i></b>, so expect occasional
-          disruptions as issues are fixed live.
+          ZPY is under active development, so expect infrequent disruptions as
+          issues are fixed.
         </p>
       </div>
     </div>;
