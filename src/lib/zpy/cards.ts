@@ -477,6 +477,8 @@ export class CardPile {
    * Select a new trump for the pile.
    */
   rehash(tr: TrumpMeta): void {
+    if (TrumpMeta.same(this.tr, tr)) return;
+
     const idx_off = CardPile.index_of(Suit.TRUMP, Rank.N_off);
     const idx_on  = CardPile.index_of(Suit.TRUMP, Rank.N_on);
 

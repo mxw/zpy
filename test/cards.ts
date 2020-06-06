@@ -164,5 +164,15 @@ describe('CardPile', () => {
 ☉[13]: 3♣ K♣ K♣ K♣ 7♦ 7♦ 7♦ 7♠ 7♣ 7♣ w☉ W☉ W☉
 `.trim()
     );
+
+    pile.rehash(tr);
+
+    expect('' + pile).to.equal(`
+♦[3]: 2♦ J♦ A♦
+♠[3]: 2♠ 2♠ A♠
+♥[5]: 2♥ 8♥ 9♥ 10♥ A♥
+☉[13]: 3♣ K♣ K♣ K♣ 7♦ 7♦ 7♦ 7♠ 7♣ 7♣ w☉ W☉ W☉
+`.trim()
+    );
   });
 });
