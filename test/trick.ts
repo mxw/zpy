@@ -707,4 +707,31 @@ describe('Hand#follow_with', () => {
       expect(follows).to.be.true;
     }
   });
+
+  it('pairs forcing triples', () => {
+    const cards = [
+      c.S_J, c.S_J, c.S_J,
+      c.S_A, c.S_A, c.S_A,
+    ];
+
+    {
+      const tr = new TrumpMeta(Suit.SPADES, 2);
+      const lead = Play.extract([
+        c.S_3, c.S_3,
+        c.S_4, c.S_4,
+        c.S_5, c.S_5,
+      ], tr).fl();
+
+      expect(lead.toString(tr)).to.equal('3♠3♠4♠4♠5♠5♠');
+
+      const hand = new Hand(new CardPile(cards, tr));
+      const play = new CardPile([
+        c.S_J, c.S_J, c.S_J,
+        c.S_A, c.S_A, c.S_A,
+      ], tr);
+
+      const {follows, undo_chain, parses} = hand.follow_with(lead, play, true);
+      expect(follows).to.be.true;
+    }
+  });
 });

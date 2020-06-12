@@ -759,7 +759,7 @@ export class Hand {
     // check for stop conditions (and potentially returning Code.STOP), pop the
     // biggest shape off `shapes`, and try to find a match in this.#K.  if we
     // find such a match, call `fn` and return its result.  if we don't, return
-    // Code.DONE.
+    // Code.STOP.
     const step = function<T extends Array<any>>(
       fn: StepFn<T>,
       ...args: T
@@ -784,7 +784,7 @@ export class Hand {
           return fn(sh, K, ...args);
         }
       }
-      return Code.DONE;
+      return Code.STOP;
     }.bind(this);
 
     let undo_chain: Hand.Node = null;
@@ -956,8 +956,8 @@ export class Hand {
         })();
 
         const code = step(explore_, explore_, depth + 1);
-        // if we got STOP, it means the mutual recursion finished immediately
-        // before invoking explore again, so we need to do the bookkeeping.
+        // if we got STOP, it means the mutual recursion finished before
+        // invoking explore again, so we need to do the bookkeeping.
         if (code === Code.STOP) finish_path();
 
         const out = cur_path.pop();
