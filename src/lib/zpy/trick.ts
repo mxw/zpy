@@ -748,7 +748,12 @@ export class Hand {
     // basically a poor man's prioqueue).
     let shapes = [...blueprint.design].reverse();
 
-    enum Code { DONE, FAIL, STOP };
+    enum Code {
+      DONE, // success condition; used by step() clients
+      FAIL, // failure condition; used by step() clients
+      TERM, // we exhausted either the input or hand
+      MISS, // the next shape in the stack failed to match
+    };
 
     // callback for generic match loop step function.
     type StepFn<T extends Array<any>> =
@@ -756,16 +761,16 @@ export class Hand {
 
     // generic step function.
     //
-    // check for stop conditions (and potentially returning Code.STOP), pop the
+    // check for stop conditions (and potentially returning Code.TERM), pop the
     // biggest shape off `shapes`, and try to find a match in this.#K.  if we
     // find such a match, call `fn` and return its result.  if we don't, return
-    // Code.STOP.
+    // Code.DONE.
     const step = function<T extends Array<any>>(
       fn: StepFn<T>,
       ...args: T
     ): Code {
-      if (shapes.length === 0) return Code.STOP;
-      if (play_pile.size <= 1) return Code.STOP;
+      if (shapes.length === 0) return Code.TERM;
+      if (play_pile.size <= 1) return Code.TERM;
 
       const sh = shapes.pop();
       assert(sh.arity > 1);
@@ -784,7 +789,7 @@ export class Hand {
           return fn(sh, K, ...args);
         }
       }
-      return Code.STOP;
+      return Code.MISS;
     }.bind(this);
 
     let undo_chain: Hand.Node = null;
@@ -798,7 +803,7 @@ export class Hand {
           // in `play`, we can avoid backtracking.  otherwise, we're shit outta
           // luck.
           shapes.push(shape);
-          return Code.STOP;
+          return Code.TERM;
         }
 
         for (let node of K) {
@@ -827,7 +832,8 @@ export class Hand {
       switch (code) {
         case Code.DONE: continue;
         case Code.FAIL: return finish(false, undo_chain);
-        case Code.STOP: break;
+        case Code.TERM: break;
+        case Code.MISS: continue;
       }
       break;
     }
@@ -956,9 +962,12 @@ export class Hand {
         })();
 
         const code = step(explore_, explore_, depth + 1);
-        // if we got STOP, it means the mutual recursion finished before
+        // if we got TERM, it means the mutual recursion finished before
         // invoking explore again, so we need to do the bookkeeping.
-        if (code === Code.STOP) finish_path();
+        if (code === Code.TERM ||
+            code === Code.MISS) {
+          finish_path();
+        }
 
         const out = cur_path.pop();
         assert(

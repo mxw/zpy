@@ -708,7 +708,7 @@ describe('Hand#follow_with', () => {
     }
   });
 
-  it('pairs forcing triples', () => {
+  it('handles pairs forcing triples', () => {
     const cards = [
       c.S_J, c.S_J, c.S_J,
       c.S_A, c.S_A, c.S_A,
@@ -730,7 +730,30 @@ describe('Hand#follow_with', () => {
         c.S_A, c.S_A, c.S_A,
       ], tr);
 
-      const {follows, undo_chain, parses} = hand.follow_with(lead, play, true);
+      const {follows, undo_chain, parses} = hand.follow_with(lead, play);
+      expect(follows).to.be.true;
+    }
+  });
+
+  it('succeeds on a nontrivial final trick', () => {
+    const cards = [
+      c.D_5, c.D_A,
+      c.H_Q, c.H_A,
+    ];
+
+    {
+      const tr = new TrumpMeta(Suit.CLUBS, 2);
+      const lead = Play.extract([c.H_6, c.H_6, c.H_9, c.H_9], tr).fl();
+
+      expect(lead.toString(tr)).to.equal('[9♥9♥][6♥6♥]');
+
+      const hand = new Hand(new CardPile(cards, tr));
+      const play = new CardPile([
+        c.D_5, c.D_A,
+        c.H_Q, c.H_A,
+      ], tr);
+
+      const {follows, undo_chain, parses} = hand.follow_with(lead, play);
       expect(follows).to.be.true;
     }
   });
