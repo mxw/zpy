@@ -1,0 +1,10 @@
+[Unit]
+Description=ZPY asynchronous maintenance
+
+[Service]
+User=zpy
+ExecStart=psql zpydb < /usr/local/lib/zpy/scripts/gc.sql
+WorkingDirectory=/usr/local/lib/zpy
+
+[Install]
+WantedBy=multi-user.target

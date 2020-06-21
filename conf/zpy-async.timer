@@ -1,0 +1,10 @@
+[Unit]
+Description=ZPY asynchronous maintenance
+
+[Timer]
+OnCalendar=*-*-* 4:00:00
+RandomizedDelaySec=7200
+Persistent=True
+
+[Install]
+WantedBy=timers.target

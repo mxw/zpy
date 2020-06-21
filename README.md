@@ -56,7 +56,10 @@ publish the nginx and systemd configs:
 
     sudo cp conf/zpy.nginx /etc/nginx/sites-available/zpy
     sudo ln -s /etc/nginx/sites-available/zpy /etc/nginx/sites-enabled/zpy
+
     sudo cp conf/zpy.service /lib/systemd/system/zpy.service
+    sudo cp conf/zpy-async.service /lib/systemd/system/zpy-async.service
+    sudo cp conf/zpy-async.timer /lib/systemd/system/zpy-async.timer
 
 you'll probably want to change the nginx `server_name` and obtain TLS certs.
 
@@ -64,6 +67,7 @@ finally, start the ZPY server:
 
     sudo systemctl reload nginx
     sudo systemctl start zpy
+    sudo systemctl start zpy-async.timer
 
 logs can be monitored via
 
