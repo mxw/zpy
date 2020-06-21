@@ -1434,6 +1434,7 @@ export class PlayArea extends React.Component<
           me={this.props.me}
           phase={this.props.phase}
           zpy={this.props.zpy}
+          onEnter={this.onSubmit}
         />
         {this.renderHand()}
       </DragDropContext>

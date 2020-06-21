@@ -22,7 +22,12 @@ export class Instructions extends React.Component<Instructions.Props, {}> {
     const me = this.props.me.id;
     const zpy = this.props.zpy;
 
-    const enter = <kbd>↵ Enter</kbd>;
+    const enter = <kbd
+      style={{cursor: 'pointer'}}
+      onClick={this.props.onEnter}
+    >
+      ↵ Enter
+    </kbd>;
 
     const is_active = (() => {
       switch (this.props.phase) {
@@ -149,6 +154,8 @@ export type Props = {
   me: P.User;
   phase: ZPY.Phase;
   zpy: ZPYEngine.ClientState;
+
+  onEnter: () => any;
 };
 
 }
