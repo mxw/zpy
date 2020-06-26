@@ -13,6 +13,10 @@ body {
   font-family: "Minion Pro", "Minion", "Trebuchet MS", "Trebuchet", sans-serif;
 }
 
+#zpy {
+  @include flex.column;
+}
+
 .board {
   @include flex.column;
   width: fit-content;
