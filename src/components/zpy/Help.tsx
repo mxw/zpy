@@ -60,6 +60,9 @@ export function Help(props: {}) {
 
         <div className="help-key">{enter}</div>
         <div>submit a play or confirm a prompt</div>
+
+        <div className="help-key">{cmd}+<kbd>z</kbd></div>
+        <div>undo a play</div>
       </div>
 
       <h3>keyboard shortcuts</h3>

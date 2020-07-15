@@ -22,7 +22,7 @@ export class ErrorMessage extends React.Component<ErrorMessage.Props, {}> {
       if (ue instanceof ZPY.InvalidArgError) return "invalid value";
       if (ue instanceof ZPY.DuplicateActionError) return "duplicate action";
       if (ue instanceof ZPY.WrongPlayerError) return "action not allowed";
-      if (ue instanceof ZPY.OutOfTurnError) return "invalid play";
+      if (ue instanceof ZPY.OutOfTurnError) return "turn error";
       if (ue instanceof ZPY.InvalidPlayError) return "invalid play";
       return "error";
     })();

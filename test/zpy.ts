@@ -249,6 +249,10 @@ describe('ZPY', () => {
 
     lead(d, [Suit.DIAMONDS, Rank.J]);
     follow(e, [Suit.DIAMONDS, Rank.A]);
+    expect_err(
+      zpy.undo_play(e),
+      ZPY.InvalidPlayError, 'cannot undo a play that joined the host team'
+    );
     follow(a, [Suit.DIAMONDS, 4]);
     follow(b, [Suit.SPADES, 10]);
     follow(c, [Suit.DIAMONDS, 6]);
@@ -355,8 +359,22 @@ describe('ZPY', () => {
     expect_ok(zpy.collect_trick(c));
 
     lead(c, [Suit.HEARTS, 5]);
+    expect_err(
+      zpy.undo_play(c),
+      ZPY.WrongPlayerError, 'cannot undo a lead'
+    );
+    follow(d, [Suit.HEARTS, 4]);
+    expect_err(
+      zpy.undo_play(e),
+      ZPY.OutOfTurnError
+    );
+    expect_ok(zpy.undo_play(d));
     follow(d, [Suit.SPADES, 2]);
     follow(e, [Suit.HEARTS, 4]);
+    expect_err(
+      zpy.undo_play(d),
+      ZPY.WrongPlayerError, 'only the most recent play can be undone'
+    );
     follow(a, [Suit.HEARTS, 7]);
     follow(b, [Suit.HEARTS, 7]);
     expect_ok(zpy.collect_trick(d));

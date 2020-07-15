@@ -36,8 +36,6 @@ describe('new Hand', () => {
       c.J_S, c.J_B, c.J_B,
     ], tr);
     hand = new Hand(pile);
-
-    console.log(hand.toString());
   });
 });
 

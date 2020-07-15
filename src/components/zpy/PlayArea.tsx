@@ -567,6 +567,25 @@ export class PlayArea extends React.Component<
     return this.submitContestFly();
   }
 
+  submitUndoPlay(): boolean {
+    if (this.state.action_pending) return false;
+
+    const play = this.props.zpy.plays[this.props.me.id] ?? null;
+    if (play === null) return false;
+
+    const to_add = play.gen_cards(this.props.zpy.tr);
+
+    return this.attempt(
+      {kind: 'undo_play', args: [this.props.me.id]},
+      (effect: ZPYEngine.Effect) => {
+        this.setState((state, props) =>
+          PlayArea.withCardsAdded(state, props, to_add, 0)
+        );
+        this.onEffect(effect);
+      }
+    );
+  }
+
   submitEndRound(): boolean {
     if (this.props.me.id !== this.props.zpy.host) return false;
     return this.attempt({kind: 'end_round', args: [this.props.me.id]});
@@ -761,6 +780,12 @@ export class PlayArea extends React.Component<
     if (ev.key === 'a' && metaKey) {
       ev.preventDefault();
       this.selectAll();
+      return;
+    }
+    if (ev.key === 'z' && metaKey) {
+      if (this.submitUndoPlay()) {
+        ev.preventDefault();
+      }
       return;
     }
     if (ev.key === 'S') {

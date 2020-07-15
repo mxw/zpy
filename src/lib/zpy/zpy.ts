@@ -84,6 +84,8 @@ export class Data<PlayerID extends keyof any> {
   plays: Record<PlayerID, Play> = {} as any;
   // current winning player
   winning: PlayerID | null = null;
+  // players who joined the host team this trick
+  joiners: Set<PlayerID> = new Set();
 
   constructor() {}
 }
@@ -98,6 +100,9 @@ export type Type<PlayerID extends keyof any> = Exclude<
 }
 
 export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
+  // undo chains corresponding to `plays`
+  undo_chains: Record<PlayerID, Hand.Node> = {} as any;
+
   // debugging determinism flag
   debug: boolean = false;
 
@@ -464,6 +469,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     this.leader = null;
     this.lead = null;
     this.plays = {} as any;
+    this.undo_chains = {} as any;
     this.winning = null;
 
     for (let p of this.players) {
@@ -876,8 +882,8 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
 
     // set `player` as the new winner if they're the first play or the current
     // winner fails to beat them
-    if (this.winning == null ||
-        !this.plays[this.winning].fl()!.beats(play)) {
+    if (this.winning === null ||
+        !this.plays[this.winning].beats(play)) {
       this.winning = player;
     }
     this.cur_idx = this.next_player_idx(this.cur_idx);
@@ -891,6 +897,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
             (friend.tally -= n) <= 0) {
           friend.tally = 0;
           this.host_team.add(player);
+          this.joiners.add(player);
 
           if (++this.joins === this.nfriends) {
             // add all other players to the attacking team.  note that some
@@ -1083,6 +1090,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
         }
       }
     }
+    this.undo_chains[player] = undo_chain;
 
     // choose the best parse of `play` that we can, falling back to the user
     // submission (which may have been obtained via Play#extract())
@@ -1094,6 +1102,77 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   observe_follow(player: PlayerID, play: Play): ZPY.Result {
     this.commit_play(player, play);
     if (this.trick_over()) this.cur_idx = null;
+  }
+
+  /*
+   * Phase.FOLLOW : Action.undo_play
+   * Phase.FOLLOW : Effect.observe_undo
+   *
+   * Undo a play.  Only follows can be undone, and only if nobody else has
+   * played over the follow.
+   */
+  check_undo(player: PlayerID): ZPY.Result {
+    if (!(player in this.plays)) {
+      return new ZPY.OutOfTurnError();
+    }
+    if (player === this.leader) {
+      return new ZPY.WrongPlayerError('cannot undo a lead');
+    }
+    if (this.next_player_idx(this.order[player]) !== this.cur_idx) {
+      return new ZPY.WrongPlayerError(
+        'only the most recent play can be undone'
+      );
+    }
+    if (this.joiners.has(player)) {
+      return new ZPY.InvalidPlayError(
+        'cannot undo a play that joined the host team'
+      );
+    }
+  }
+  undo_play(player: PlayerID): ZPY.Result<[]> {
+    if (this.phase !== ZPY.Phase.FOLLOW) {
+      return ZPY.BadPhaseError.from('undo_play', this.phase);
+    }
+    const res = this.check_undo(player);
+    if (res) return res;
+
+    this.observe_undo(player);
+    return [];
+  }
+  observe_undo(player: PlayerID): ZPY.Result {
+    if (this.can_see(player)) {
+      this.hands[player].undo(
+        this.plays[player].gen_counts(this.tr),
+        this.undo_chains[player] ?? null,
+      );
+
+      if (!(player in this.undo_chains)) {
+        // if the state was deserialized (e.g., from persistent store or over
+        // the wire due to a re-sync request), we won't have an undo chain, so
+        // rebuild the Hand in that event
+        this.hands[player] = new Hand(this.hands[player].pile);
+      }
+    }
+
+    delete this.plays[player];
+    delete this.undo_chains[player];
+
+    if (player === this.winning) {
+      // recompute winning player
+      this.winning = this.leader;
+
+      for (
+        let cur_idx = this.order[this.leader];
+        cur_idx !== this.order[player];
+        cur_idx = this.next_player_idx(cur_idx)
+      ) {
+        const current = this.players[cur_idx];
+        if (!this.plays[this.winning].beats(this.plays[current])) {
+          this.winning = current;
+        }
+      }
+    }
+    this.cur_idx = this.order[player];
   }
 
   /*
@@ -1130,6 +1209,8 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     this.winning = null;
     this.lead = null;
     this.plays = {} as any;
+    this.undo_chains = {} as any;
+    this.joiners.clear();
 
     this.phase = ZPY.Phase.LEAD;
   }
@@ -1366,7 +1447,9 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
     copy.leader  = this.leader;
     copy.lead    = this.lead;
     copy.plays   = this.plays;
+    // undo chains can't be copied
     copy.winning = this.winning;
+    copy.joiners = this.joiners;
 
     return copy;
   }
@@ -1420,6 +1503,7 @@ ${o_map(this.plays,
   (p, play) => `  ${p}: ${play.toString(this.tr, color)}`
 ).join('\n')}
 winning: ${this.winning}
+joiners: ${Array.from(this.joiners.values()).join(', ')}
 
 points:
 ${o_map(this.points,

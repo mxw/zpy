@@ -283,6 +283,7 @@ const cd_ZPYData = (
   lead: C.nullable(cd_Flight(tr)),
   plays: C.record(cd_Play(tr)),
   winning: C.nullable(PlayerID),
+  joiners: P.set(PlayerID),
 });
 const cd_ZPY = (tr: TrumpMeta): C.Codec<ZPY<PlayerID>> => C.make(
   D.parse(cd_ZPYData(tr), data => P.success(ZPY.from<PlayerID>(data))),
@@ -400,6 +401,9 @@ export const observe_follow = (tr: TrumpMeta) => C.type({
   args: C.tuple(PlayerID, cd_Play(tr)),
 });
 
+export const undo_play = trivial('undo_play');
+export const observe_undo = trivial('observe_undo');
+
 export const collect_trick = trivial('collect_trick');
 
 export const end_round = trivial('end_round');
@@ -427,6 +431,7 @@ const Intent_ = (tr: TrumpMeta) => C.sum('kind')({
   'contest_fly': A.contest_fly,
   'pass_contest': A.pass_contest,
   'follow_lead': A.follow_lead(tr),
+  'undo_play': A.undo_play,
   'collect_trick': A.collect_trick,
   'end_round': A.end_round,
   'next_ready': A.next_ready,
@@ -464,6 +469,7 @@ const Effect_ = (tr: TrumpMeta) => C.sum('kind')({
   'pass_contest': A.pass_contest,
   'follow_lead': A.follow_lead(tr),
   'observe_follow': A.observe_follow(tr),
+  'observe_undo': A.observe_undo,
   'collect_trick': A.collect_trick,
   'finish': A.finish,
   'next_ready': A.next_ready,
@@ -557,6 +563,8 @@ export const describe_effect = (
     case 'follow_lead':
     case 'observe_follow':
       return `${agent} played ${eff.args[1].toString(tr)}`;
+    case 'observe_undo':
+      return `${agent} took back their play`;
     case 'collect_trick':
       return `${agent} collected their trick`;
     case 'finish':
@@ -644,6 +652,7 @@ export const predict = (
         ? Err(result)
         : OK({effect: intent, state});
     }
+    case 'undo_play': break;
     case 'collect_trick': {
       const result = state[intent.kind](...intent.args);
       return (result instanceof ZPY.Error)
@@ -801,6 +810,11 @@ export const larp = (
       return OK([state, you_and_them(
         intent, effect('observe_follow', p, ...result))]);
     }
+    case 'undo_play': {
+      const result = state[intent.kind](...intent.args);
+      if (result instanceof ZPY.Error) return Err(result);
+      return OK([state, everyone(effect('observe_undo', p, ...result))]);
+    }
     case 'collect_trick': {
       const result = state[intent.kind](...intent.args);
       if (result instanceof ZPY.Error) return Err(result);
@@ -923,6 +937,10 @@ export const apply_client = (
           return (result instanceof ZPY.Error) ? Err(result) : OK(state);
         }
         case 'observe_follow': {
+          const result = state[effect.kind](...effect.args);
+          return (result instanceof ZPY.Error) ? Err(result) : OK(state);
+        }
+        case 'observe_undo': {
           const result = state[effect.kind](...effect.args);
           return (result instanceof ZPY.Error) ? Err(result) : OK(state);
         }
