@@ -499,7 +499,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
       );
     }
 
-    const players = !this.debug
+    const players = !this.debug && !this.fixed_teams()
       ? array_shuffle(this.players)
       : this.players;
 
