@@ -198,7 +198,7 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
   /*
    * Team from string literal.
    */
-  team(which: 'host' | 'attacking') {
+  team(which: 'host' | 'attacking'): Set<PlayerID> {
     return which === 'host' ? this.host_team : this.atk_team;
   }
 
@@ -1278,6 +1278,28 @@ export class ZPY<PlayerID extends keyof any> extends Data<PlayerID> {
 
     for (let player of this.team(winner).values()) {
       this.rank_up(player, Math.abs(delta));
+    }
+
+    if (this.fixed_teams()) {
+      // set everyone's rank on each team to whoever's is highest.  this is an
+      // easy way to simulate the team having a "shared" host.
+      const fixup = (which: 'host' | 'attacking') => {
+        const players = Array.from(this.team(which).values());
+        const ranks = players.map(p => this.ranks[p]);
+
+        const max_start = Math.max(...ranks.map(r => r.start));
+        const filtered = ranks.filter(r => r.start === max_start);
+        assert(filtered.length > 0);
+
+        const max_rank = Math.max(...filtered.map(r => r.rank));
+
+        for (let r of ranks) {
+          r.start = max_start;
+          r.rank = max_rank;
+        }
+      };
+      fixup('host');
+      fixup('attacking');
     }
 
     (() => {
