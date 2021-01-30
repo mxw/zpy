@@ -2,4 +2,4 @@
  * platform-dependent nonsense garbage
  */
 
-export const isWindows = () => (navigator.platform.indexOf('Win') >= 0);
+export const isMac = () => (navigator.platform.indexOf('Mac') >= 0);

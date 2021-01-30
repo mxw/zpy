@@ -3,7 +3,7 @@
  */
 import * as React from 'react'
 
-import { isWindows } from 'components/utils/platform.ts'
+import { isMac } from 'components/utils/platform.ts'
 
 import * as options from 'options.ts'
 import assert from 'utils/assert.ts'
@@ -80,7 +80,7 @@ export class Editable extends React.Component<Editable.Props, Editable.State> {
   onKeyDown(ev: React.KeyboardEvent) {
     if (ev.defaultPrevented) return;
 
-    const metaKey = isWindows() ? ev.ctrlKey : ev.metaKey;
+    const metaKey = isMac() ? ev.metaKey : ev.ctrlKey;
 
     // enable other keydown handlers to prevent their behaviors if this was an
     // keydown captured by our text input during editing

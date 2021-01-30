@@ -23,7 +23,7 @@ import { ConfigArea } from 'components/zpy/ConfigArea.tsx'
 import { FriendSelector } from 'components/zpy/FriendSelector.tsx'
 import { Instructions } from 'components/zpy/Instructions.tsx'
 
-import { isWindows } from 'components/utils/platform.ts'
+import { isMac } from 'components/utils/platform.ts'
 
 import { array_fill } from 'utils/array.ts'
 import * as cookie from 'utils/cookie.ts'
@@ -775,7 +775,7 @@ export class PlayArea extends React.Component<
     const ev_ = ev as (typeof ev & {editableCaptured: boolean});
     if (ev_.editableCaptured) return;
 
-    const metaKey = isWindows() ? ev.ctrlKey : ev.metaKey;
+    const metaKey = isMac() ? ev.metaKey : ev.ctrlKey;
 
     if (ev.key === 'a' && metaKey) {
       ev.preventDefault();
@@ -823,7 +823,7 @@ export class PlayArea extends React.Component<
     if ('button' in ev && ev.button !== 0) return;
 
     // synthetic events won't persist into the setState() callback
-    const metaKey = isWindows() ? ev.ctrlKey : ev.metaKey;
+    const metaKey = isMac() ? ev.metaKey : ev.ctrlKey;
     const {shiftKey} = ev;
 
     ev.preventDefault(); // bypass window handler

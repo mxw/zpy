@@ -3,7 +3,7 @@
  */
 import * as React from 'react'
 
-import { isWindows } from 'components/utils/platform.ts'
+import { isMac } from 'components/utils/platform.ts'
 
 import assert from 'utils/assert.ts'
 
@@ -14,7 +14,7 @@ export function Help(props: {}) {
     src="/static/png/icons/backhand-index-pointing-up.png"
   />;
 
-  const cmd = <kbd>{isWindows() ? 'ctrl' : 'cmd'}</kbd>;
+  const cmd = <kbd>{isMac() ? 'cmd' : 'ctrl'}</kbd>;
   const shift = <kbd>shift</kbd>;
   const enter = <kbd>↵ Enter</kbd>;
 
