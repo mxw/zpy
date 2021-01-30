@@ -733,6 +733,34 @@ describe('Hand#follow_with', () => {
     }
   });
 
+  it('handles pairs forcing quadruples', () => {
+    const cards = [
+      c.H_K, c.H_A,
+      c.C_3, c.C_5, c.C_7, c.C_Q,
+
+      c.D_7, c.D_7, c.D_7, c.D_7,
+      c.D_8, c.D_9, c.D_J, c.D_K,
+
+      c.S_5, c.S_9, c.S_9,
+      c.C_4, c.S_4, c.S_4,
+    ];
+
+    {
+      const tr = new TrumpMeta(Suit.SPADES, 4);
+      const lead = Play.extract([
+        c.D_Q, c.D_Q,
+      ], tr).fl();
+
+      expect(lead.toString(tr)).to.equal('Q♦Q♦');
+
+      const hand = new Hand(new CardPile(cards, tr));
+      const play = new CardPile([c.D_7, c.D_7], tr);
+
+      const {follows, undo_chain, parses} = hand.follow_with(lead, play);
+      expect(follows).to.be.true;
+    }
+  });
+
   it('succeeds on a nontrivial final trick', () => {
     const cards = [
       c.D_5, c.D_A,

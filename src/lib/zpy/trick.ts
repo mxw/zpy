@@ -815,11 +815,8 @@ export class Hand {
             play_pile.remove(card, n);
             undo_chain = this.remove_(card, n, undo_chain);
           }
-          assert(
-            !node.valid, // should be invalidated by the remove
-            'Hand#follow_with: remove error',
-            node
-          );
+          // `node` may not be invalidated if its position still admits the
+          // component tractor's shape
 
           const remainder = diff_shapes(shape, node.shape);
           if (remainder.length > 0) {
@@ -936,12 +933,6 @@ export class Hand {
         for (let [card, n] of node.gen_counts(this.tr)) {
           chain = this.remove_(card, n, chain);
         }
-        assert(
-          !node.valid, // should be invalidated by the remove
-          'Hand#follow_with: remove error',
-          node
-        );
-
         cur_path.push(node);
 
         if (trace) {
