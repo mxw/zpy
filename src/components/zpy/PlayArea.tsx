@@ -373,6 +373,9 @@ export class PlayArea extends React.Component<
               pending_cards: [],
             };
           });
+        } else if (me === effect.args[0]) {
+          // put our reveal back in our hand to avoid auto-play
+          this.resetPlays();
         }
         break;
       }
