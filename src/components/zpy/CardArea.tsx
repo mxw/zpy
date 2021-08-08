@@ -7,14 +7,14 @@ import {
   Droppable, DroppableProvided, DroppableStateSnapshot,
 } from 'react-beautiful-dnd'
 
-import { CardBase, Suit, Rank } from 'lib/zpy/cards.ts'
+import { CardBase, Suit, Rank } from 'lib/zpy/cards'
 
-import { CardID } from "components/zpy/common.ts"
-import { CardShape } from "components/zpy/CardImage.tsx"
-import { Card } from "components/zpy/Card.tsx"
-import { CardFan } from "components/zpy/CardFan.tsx"
+import { CardID } from "components/zpy/common"
+import { CardShape } from "components/zpy/CardImage"
+import { Card } from "components/zpy/Card"
+import { CardFan } from "components/zpy/CardFan"
 
-import assert from 'utils/assert.ts'
+import assert from 'utils/assert'
 
 
 export const card_width = 100;

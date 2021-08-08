@@ -1,4 +1,4 @@
-import { Suit, Rank, CardBase } from 'lib/zpy/cards.ts'
+import { Suit, Rank, CardBase } from 'lib/zpy/cards'
 
 export const C_2 = new CardBase(Suit.CLUBS, 2);
 export const C_3 = new CardBase(Suit.CLUBS, 3);

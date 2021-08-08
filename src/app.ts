@@ -1,12 +1,12 @@
-import * as ZPYEngine from 'lib/zpy/engine.ts'
+import * as ZPYEngine from 'lib/zpy/engine'
 
-import { GameServer, GameId } from 'server/server.ts'
-import * as db from 'server/db.ts'
-import * as Session from 'server/session.ts'
+import { GameServer, GameId } from 'server/server'
+import * as db from 'server/db'
+import * as Session from 'server/session'
 
-import { ZPY } from 'lib/zpy/zpy.ts'
+import { ZPY } from 'lib/zpy/zpy'
 
-import { escape_backslashes } from 'utils/string.ts';
+import { escape_backslashes } from 'utils/string';
 
 import CookieParser from 'cookie-parser'
 import express from 'express'
@@ -14,9 +14,9 @@ import * as HTTP from 'http'
 import * as WebSocket from 'ws'
 import * as os from 'os'
 
-import * as options from 'options.ts'
-import assert from 'utils/assert.ts'
-import log from 'utils/logger.ts'
+import * as options from 'options'
+import assert from 'utils/assert'
+import log from 'utils/logger'
 
 
 const app = express();

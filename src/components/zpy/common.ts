@@ -1,10 +1,10 @@
 /*
  * common types and utilities shared by ZPY game components.
  */
-import { GameClient } from 'protocol/client.ts'
+import { GameClient } from 'protocol/client'
 
-import { CardBase } from "lib/zpy/cards.ts"
-import * as ZPYEngine from "lib/zpy/engine.ts"
+import { CardBase } from "lib/zpy/cards"
+import * as ZPYEngine from "lib/zpy/engine"
 
 
 export type Client = GameClient<

@@ -3,10 +3,10 @@
  */
 import * as React from "react"
 
-import { CardBase } from 'lib/zpy/cards.ts'
+import { CardBase } from 'lib/zpy/cards'
 
-import { rem_per_px } from "components/zpy/CardImage.tsx"
-import { Card } from "components/zpy/Card.tsx"
+import { rem_per_px } from "components/zpy/CardImage"
+import { Card } from "components/zpy/Card"
 
 
 export class CardFan extends React.Component<CardFan.Props> {

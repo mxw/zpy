@@ -9,26 +9,26 @@ import {
   DragStart, DropResult,
 } from 'react-beautiful-dnd'
 
-import * as P from 'protocol/protocol.ts'
+import * as P from 'protocol/protocol'
 
-import { TrumpMeta, Suit, CardBase, Card, CardPile } from 'lib/zpy/cards.ts'
-import { Play, Flight } from 'lib/zpy/trick.ts'
-import { ZPY } from 'lib/zpy/zpy.ts'
-import * as ZPYEngine from 'lib/zpy/engine.ts'
+import { TrumpMeta, Suit, CardBase, Card, CardPile } from 'lib/zpy/cards'
+import { Play, Flight } from 'lib/zpy/trick'
+import { ZPY } from 'lib/zpy/zpy'
+import * as ZPYEngine from 'lib/zpy/engine'
 
-import { CardID, EngineCallbacks } from 'components/zpy/common.ts'
-import { CardImage } from 'components/zpy/CardImage.tsx'
-import { card_width, CardArea, EmptyArea } from 'components/zpy/CardArea.tsx'
-import { ConfigArea } from 'components/zpy/ConfigArea.tsx'
-import { FriendSelector } from 'components/zpy/FriendSelector.tsx'
-import { Instructions } from 'components/zpy/Instructions.tsx'
+import { CardID, EngineCallbacks } from 'components/zpy/common'
+import { CardImage } from 'components/zpy/CardImage'
+import { card_width, CardArea, EmptyArea } from 'components/zpy/CardArea'
+import { ConfigArea } from 'components/zpy/ConfigArea'
+import { FriendSelector } from 'components/zpy/FriendSelector'
+import { Instructions } from 'components/zpy/Instructions'
 
-import { isMac } from 'components/utils/platform.ts'
+import { isMac } from 'components/utils/platform'
 
-import { array_fill } from 'utils/array.ts'
-import * as cookie from 'utils/cookie.ts'
+import { array_fill } from 'utils/array'
+import * as cookie from 'utils/cookie'
 
-import assert from 'utils/assert.ts'
+import assert from 'utils/assert'
 
 
 export class PlayArea extends React.Component<

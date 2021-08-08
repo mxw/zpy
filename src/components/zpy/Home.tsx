@@ -5,7 +5,7 @@ import * as React from "react"
 import { Redirect } from 'react-router-dom';
 import axios from "axios"
 
-import { GameId } from 'server/server.ts'
+import { GameId } from 'server/server'
 
 import 'styles/zpy/home.scss'
 

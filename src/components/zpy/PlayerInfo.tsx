@@ -12,17 +12,17 @@
 import * as React from 'react'
 import axios from "axios"
 
-import * as P from 'protocol/protocol.ts'
-import { GameId } from 'server/server.ts'
+import * as P from 'protocol/protocol'
+import { GameId } from 'server/server'
 
-import { ZPY } from 'lib/zpy/zpy.ts'
+import { ZPY } from 'lib/zpy/zpy'
 
-import { Editable } from 'components/common/Editable.tsx'
+import { Editable } from 'components/common/Editable'
 
-import { hash_code } from 'utils/string.ts'
+import { hash_code } from 'utils/string'
 
-import * as options from 'options.ts'
-import assert from 'utils/assert.ts'
+import * as options from 'options'
+import assert from 'utils/assert'
 
 
 export class PlayerInfo extends React.Component<

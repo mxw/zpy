@@ -4,18 +4,18 @@ import * as Crypto from 'crypto'
 import {
   SessionID as Id,
   Session as T,
-} from 'server/types.ts'
+} from 'server/types'
 export {
   SessionID as Id,
   Session as T,
   session_regex as regex
-} from 'server/types.ts'
+} from 'server/types'
 
-import * as db from 'server/db.ts'
+import * as db from 'server/db'
 
-import * as options from 'options.ts'
-import assert from 'utils/assert.ts'
-import log from 'utils/logger.ts'
+import * as options from 'options'
+import assert from 'utils/assert'
+import log from 'utils/logger'
 
 
 const active: Record<Id, T> = {};

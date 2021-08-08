@@ -3,9 +3,9 @@
  */
 import * as React from "react"
 
-import { CardBase, Suit, Rank } from 'lib/zpy/cards.ts'
+import { CardBase, Suit, Rank } from 'lib/zpy/cards'
 
-import { CardImage } from "components/zpy/CardImage.tsx"
+import { CardImage } from "components/zpy/CardImage"
 
 
 export class Card extends React.Component<Card.Props> {

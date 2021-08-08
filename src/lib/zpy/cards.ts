@@ -6,11 +6,11 @@
  * suit, combos, etc.).
  */
 
-import { array_fill } from 'utils/array.ts';
-import { ansi } from 'utils/string.ts';
+import { array_fill } from 'utils/array';
+import { ansi } from 'utils/string';
 
-import assert from 'utils/assert.ts'
-import * as options from 'options.ts'
+import assert from 'utils/assert'
+import * as options from 'options'
 
 /*
  * Card suit enum.

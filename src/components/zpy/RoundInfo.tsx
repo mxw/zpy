@@ -3,19 +3,19 @@
  */
 import * as React from 'react'
 
-import * as P from 'protocol/protocol.ts'
-import { GameId } from 'server/server.ts'
+import * as P from 'protocol/protocol'
+import { GameId } from 'server/server'
 
-import { CardBase, Suit } from 'lib/zpy/cards.ts'
-import { ZPY } from 'lib/zpy/zpy.ts'
-import { State as Z } from 'lib/zpy/engine.ts'
+import { CardBase, Suit } from 'lib/zpy/cards'
+import { ZPY } from 'lib/zpy/zpy'
+import { State as Z } from 'lib/zpy/engine'
 
-import { EngineCallbacks } from 'components/zpy/common.ts'
-import { ActionInfo } from 'components/zpy/ActionInfo.tsx'
-import { PlayerInfo } from 'components/zpy/PlayerInfo.tsx'
-import { ScoreInfo } from 'components/zpy/ScoreInfo.tsx'
+import { EngineCallbacks } from 'components/zpy/common'
+import { ActionInfo } from 'components/zpy/ActionInfo'
+import { PlayerInfo } from 'components/zpy/PlayerInfo'
+import { ScoreInfo } from 'components/zpy/ScoreInfo'
 
-import assert from 'utils/assert.ts'
+import assert from 'utils/assert'
 
 
 class Column extends React.Component<Column.Props, {}> {

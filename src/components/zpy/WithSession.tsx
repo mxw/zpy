@@ -5,7 +5,7 @@
 import * as React from "react"
 import axios from "axios"
 
-import { SessionID } from 'server/types.ts'
+import { SessionID } from 'server/types'
 
 
 export class WithSession extends React.Component<

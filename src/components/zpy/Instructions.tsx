@@ -3,14 +3,14 @@
  */
 import * as React from 'react'
 
-import * as P from 'protocol/protocol.ts'
+import * as P from 'protocol/protocol'
 
-import { ZPY } from 'lib/zpy/zpy.ts'
-import * as ZPYEngine from 'lib/zpy/engine.ts'
+import { ZPY } from 'lib/zpy/zpy'
+import * as ZPYEngine from 'lib/zpy/engine'
 
-import { plural } from 'utils/string.ts'
+import { plural } from 'utils/string'
 
-import assert from 'utils/assert.ts'
+import assert from 'utils/assert'
 
 
 export class Instructions extends React.Component<Instructions.Props, {}> {

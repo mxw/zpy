@@ -1,15 +1,20 @@
 {
   "compilerOptions": {
-    "outDir": "./dist/",
-    "sourceMap": true,
-    "noImplicitAny": true,
     "module": "commonjs",
-    "esModuleInterop": true,
+    "target": "es2019",
+    "jsx": "react",
+    "outDir": "./dist/",
+
     "baseUrl": ".",
     "paths": {
       "*": ["*", "src/*"]
     },
-    "target": "es2019",
-    "jsx": "react"
+
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "noImplicitAny": true
+  },
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
   }
 }

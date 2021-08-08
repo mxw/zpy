@@ -1,10 +1,10 @@
 import {
   Suit, Rank, TrumpMeta, CardBase, Card, CardPile
-} from 'lib/zpy/cards.ts';
+} from 'lib/zpy/cards';
 import {
   CardTuple, Tractor, Flight, Play, Hand
-} from 'lib/zpy/trick.ts';
-import { ZPY } from 'lib/zpy/zpy.ts';
+} from 'lib/zpy/trick';
+import { ZPY } from 'lib/zpy/zpy';
 
 import {expect} from 'chai';
 

@@ -1,11 +1,11 @@
 import {
   Suit, Rank, TrumpMeta, CardBase, Card, CardPile
-} from 'lib/zpy/cards.ts'
+} from 'lib/zpy/cards'
 import {
   CardTuple, Tractor, Flight, Play, Hand
-} from 'lib/zpy/trick.ts'
+} from 'lib/zpy/trick'
 
-import * as c from 'test/common.ts'
+import * as c from 'test/common'
 
 import {expect} from 'chai'
 

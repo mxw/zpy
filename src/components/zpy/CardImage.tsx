@@ -18,7 +18,7 @@
  */
 import * as React from 'react'
 
-import assert from 'utils/assert.ts'
+import assert from 'utils/assert'
 
 
 ///////////////////////////////////////////////////////////////////////////////

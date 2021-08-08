@@ -6,15 +6,15 @@
  */
 import * as React from 'react'
 
-import { CardBase, TrumpMeta, Suit, Rank, gen_deck } from 'lib/zpy/cards.ts'
-import { ZPY } from 'lib/zpy/zpy.ts'
-import * as ZPYEngine from 'lib/zpy/engine.ts'
+import { CardBase, TrumpMeta, Suit, Rank, gen_deck } from 'lib/zpy/cards'
+import { ZPY } from 'lib/zpy/zpy'
+import * as ZPYEngine from 'lib/zpy/engine'
 
-import { Card } from 'components/zpy/Card.tsx'
+import { Card } from 'components/zpy/Card'
 
-import { nth_suffixed } from 'utils/string.ts'
+import { nth_suffixed } from 'utils/string'
 
-import assert from 'utils/assert.ts'
+import assert from 'utils/assert'
 
 
 const card_width = 80;

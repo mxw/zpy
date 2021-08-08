@@ -3,20 +3,20 @@
  */
 import * as React from 'react'
 
-import * as P from 'protocol/protocol.ts'
-import { GameId } from 'server/server.ts'
+import * as P from 'protocol/protocol'
+import { GameId } from 'server/server'
 
-import { CardBase, Suit, Rank } from 'lib/zpy/cards.ts'
-import { ZPY } from 'lib/zpy/zpy.ts'
-import * as ZPYEngine from 'lib/zpy/engine.ts'
+import { CardBase, Suit, Rank } from 'lib/zpy/cards'
+import { ZPY } from 'lib/zpy/zpy'
+import * as ZPYEngine from 'lib/zpy/engine'
 
-import { EngineCallbacks } from 'components/zpy/common.ts'
-import { RoundInfo } from 'components/zpy/RoundInfo.tsx'
-import { PlayArea } from 'components/zpy/PlayArea.tsx'
+import { EngineCallbacks } from 'components/zpy/common'
+import { RoundInfo } from 'components/zpy/RoundInfo'
+import { PlayArea } from 'components/zpy/PlayArea'
 
-import * as options from 'options.ts'
+import * as options from 'options'
 
-import assert from 'utils/assert.ts'
+import assert from 'utils/assert'
 
 
 export class Board extends React.Component<Board.Props, Board.State> {

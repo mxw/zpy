@@ -11,12 +11,12 @@
 
 import {
   Suit, Rank, TrumpMeta, CardBase, Card, CardPile, gen_cards
-} from 'lib/zpy/cards.ts';
+} from 'lib/zpy/cards';
 
-import { array_fill } from 'utils/array.ts';
-import { ansi } from 'utils/string.ts';
+import { array_fill } from 'utils/array';
+import { ansi } from 'utils/string';
 
-import assert from 'utils/assert.ts'
+import assert from 'utils/assert'
 
 /*
  * The most basic unit of play: N copies of one card.
@@ -168,7 +168,7 @@ export abstract class Play {
   /*
    * Number of cards in the play.
    */
-  readonly count: number;
+  abstract readonly count: number;
 
   /*
    * Yield (card, count), or each card individually, for every card in `this`.

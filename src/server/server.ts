@@ -2,24 +2,24 @@
  * Webserver implementation, wrapped around a generic game engine.
  */
 
-import * as P from 'protocol/protocol.ts'
-import * as wscode from 'protocol/code.ts'
-import { Engine } from 'protocol/engine.ts'
+import * as P from 'protocol/protocol'
+import * as wscode from 'protocol/code'
+import { Engine } from 'protocol/engine'
 
-import * as db from 'server/db.ts'
-import * as Session from 'server/session.ts'
+import * as db from 'server/db'
+import * as Session from 'server/session'
 
-import { o_map } from 'utils/array.ts'
-import { isOK, isErr } from 'utils/result.ts'
+import { o_map } from 'utils/array'
+import { isOK, isErr } from 'utils/result'
 
 import * as WebSocket from 'ws'
 import * as http from 'http'
 import * as net from 'net'
 import * as uuid from 'uuid'
 
-import * as options from 'options.ts'
-import assert from 'utils/assert.ts'
-import log from 'utils/logger.ts'
+import * as options from 'options'
+import assert from 'utils/assert'
+import log from 'utils/logger'
 
 export type GameId = string;
 export type Principal = Session.Id;
@@ -158,6 +158,7 @@ class Game<
     if (this.expiry_timer !== null) {
       clearTimeout(this.expiry_timer);
     }
+    // @ts-ignore
     this.expiry_timer = setTimeout(this.destroy, options.game_expiry);
   }
 

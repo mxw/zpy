@@ -2,7 +2,7 @@
  * Engine interface wrapper for ZPY
  */
 
-import * as P from 'protocol/protocol.ts';
+import * as P from 'protocol/protocol';
 
 import {
   Suit,
@@ -13,7 +13,7 @@ import {
   CardPile,
   suit_to_symbol,
   rank_to_string,
-} from 'lib/zpy/cards.ts';
+} from 'lib/zpy/cards';
 import {
   CardTuple,
   Tractor,
@@ -21,18 +21,18 @@ import {
   Toss,
   Play,
   Hand,
-} from 'lib/zpy/trick.ts';
+} from 'lib/zpy/trick';
 
-import { ZPY, Data as ZPYData } from 'lib/zpy/zpy.ts';
+import { ZPY, Data as ZPYData } from 'lib/zpy/zpy';
 
-import { array_fill, o_map } from 'utils/array.ts'
-import { Result, OK, Err } from 'utils/result.ts'
-import { nth_suffixed } from 'utils/string.ts'
+import { array_fill, o_map } from 'utils/array'
+import { Result, OK, Err } from 'utils/result'
+import { nth_suffixed } from 'utils/string'
 
 import * as C from 'io-ts/lib/Codec';
 import * as D from 'io-ts/lib/Decoder';
 
-import assert from 'utils/assert.ts'
+import assert from 'utils/assert'
 
 ///////////////////////////////////////////////////////////////////////////////
 /*

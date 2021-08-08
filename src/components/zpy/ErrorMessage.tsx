@@ -3,10 +3,10 @@
  */
 import * as React from 'react'
 
-import { ZPY } from 'lib/zpy/zpy.ts'
-import * as ZPYEngine from 'lib/zpy/engine.ts'
+import { ZPY } from 'lib/zpy/zpy'
+import * as ZPYEngine from 'lib/zpy/engine'
 
-import assert from 'utils/assert.ts'
+import assert from 'utils/assert'
 
 
 export class ErrorMessage extends React.Component<ErrorMessage.Props, {}> {

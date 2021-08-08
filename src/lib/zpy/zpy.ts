@@ -4,19 +4,19 @@
 
 import {
   Suit, Rank, TrumpMeta, CardBase, Card, CardPile, rank_to_string, gen_deck
-} from 'lib/zpy/cards.ts';
+} from 'lib/zpy/cards';
 import {
   CardTuple, Tractor, Flight, Play, Hand
-} from 'lib/zpy/trick.ts';
+} from 'lib/zpy/trick';
 import {
   array_fill, array_shuffle, o_map
-} from 'utils/array.ts';
-import { plural } from 'utils/string.ts';
+} from 'utils/array';
+import { plural } from 'utils/string';
 
-import { UserID } from 'protocol/protocol.ts'
+import { UserID } from 'protocol/protocol'
 
-import * as options from 'options.ts'
-import assert from 'utils/assert.ts'
+import * as options from 'options'
+import assert from 'utils/assert'
 
 ///////////////////////////////////////////////////////////////////////////////
 

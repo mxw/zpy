@@ -2,6 +2,8 @@ const path = require('path');
 const process = require('process');
 const externals = require('webpack-node-externals');
 
+const TSConfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+
 const resolve_path = (() => {
   if (process.env.NODE_PATH === undefined) {
     return [
@@ -19,10 +21,6 @@ const resolve_path = (() => {
 
 const common = {
   devtool: "source-map",
-
-  resolve: {
-    extensions: [".ts", ".tsx"],
-  },
 
   module: {
     rules: [
@@ -54,7 +52,11 @@ const common = {
   },
 
   resolve: {
+    extensions: [".ts", ".tsx", ".js"],
     modules: resolve_path,
+    fallback: {
+      'assert': require.resolve('assert')
+    },
   },
   resolveLoader: {
     modules: resolve_path,

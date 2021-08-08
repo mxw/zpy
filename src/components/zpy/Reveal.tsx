@@ -5,19 +5,19 @@
  */
 import * as React from 'react'
 
-import * as P from 'protocol/protocol.ts'
+import * as P from 'protocol/protocol'
 
-import { CardBase, Suit } from 'lib/zpy/cards.ts'
-import { Tractor } from 'lib/zpy/trick.ts'
-import { ZPY } from 'lib/zpy/zpy.ts'
-import * as ZPYEngine from 'lib/zpy/engine.ts'
+import { CardBase, Suit } from 'lib/zpy/cards'
+import { Tractor } from 'lib/zpy/trick'
+import { ZPY } from 'lib/zpy/zpy'
+import * as ZPYEngine from 'lib/zpy/engine'
 
-import { Client } from 'components/zpy/common.ts'
-import { Card } from 'components/zpy/Card.tsx'
+import { Client } from 'components/zpy/common'
+import { Card } from 'components/zpy/Card'
 
-import { plural } from 'utils/string.ts'
+import { plural } from 'utils/string'
 
-import assert from 'utils/assert.ts'
+import assert from 'utils/assert'
 
 
 export const card_width = 100;

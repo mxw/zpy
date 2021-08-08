@@ -3,17 +3,17 @@
  */
 import * as React from 'react'
 
-import * as P from 'protocol/protocol.ts'
+import * as P from 'protocol/protocol'
 
-import { Rank, rank_to_string } from 'lib/zpy/cards.ts'
-import { ZPY } from 'lib/zpy/zpy.ts'
-import { State as Z } from 'lib/zpy/engine.ts'
+import { Rank, rank_to_string } from 'lib/zpy/cards'
+import { ZPY } from 'lib/zpy/zpy'
+import { State as Z } from 'lib/zpy/engine'
 
-import { Editable } from 'components/common/Editable.tsx'
-import { EngineCallbacks } from 'components/zpy/common.ts'
-import { Card } from 'components/zpy/Card.tsx'
+import { Editable } from 'components/common/Editable'
+import { EngineCallbacks } from 'components/zpy/common'
+import { Card } from 'components/zpy/Card'
 
-import assert from 'utils/assert.ts'
+import assert from 'utils/assert'
 
 
 const card_width = 48;

@@ -3,19 +3,19 @@
  */
 import * as React from 'react'
 
-import * as P from 'protocol/protocol.ts'
+import * as P from 'protocol/protocol'
 
-import { TrumpMeta, CardBase } from 'lib/zpy/cards.ts'
-import { Card, Suit, Rank } from 'lib/zpy/cards.ts'
-import { Play, Flight, Toss, Tractor } from 'lib/zpy/trick.ts'
-import { ZPY } from 'lib/zpy/zpy.ts'
-import { State as Z } from 'lib/zpy/engine.ts'
+import { TrumpMeta, CardBase } from 'lib/zpy/cards'
+import { Card, Suit, Rank } from 'lib/zpy/cards'
+import { Play, Flight, Toss, Tractor } from 'lib/zpy/trick'
+import { ZPY } from 'lib/zpy/zpy'
+import { State as Z } from 'lib/zpy/engine'
 
-import { CardFan } from 'components/zpy/CardFan.tsx'
+import { CardFan } from 'components/zpy/CardFan'
 
-import { array_fill } from 'utils/array.ts'
+import { array_fill } from 'utils/array'
 
-import assert from 'utils/assert.ts'
+import assert from 'utils/assert'
 
 
 const card_width = 72;

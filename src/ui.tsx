@@ -2,15 +2,15 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { withRouter, BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 
-import { session_regex } from 'server/types.ts';
+import { session_regex } from 'server/types';
 
-import { WithSession } from 'components/zpy/WithSession.tsx';
-import { Home } from 'components/zpy/Home.tsx';
-import { Game } from 'components/zpy/Game.tsx';
+import { WithSession } from 'components/zpy/WithSession';
+import { Home } from 'components/zpy/Home';
+import { Game } from 'components/zpy/Game';
 
-import * as cookie from 'utils/cookie.ts'
+import * as cookie from 'utils/cookie'
 
-import { escape_backslashes } from 'utils/string.ts';
+import { escape_backslashes } from 'utils/string';
 
 
 class RouterDebugger_ extends React.Component {

@@ -52,8 +52,8 @@
  *   State ------redact------> ClientState
  */
 
-import * as P from 'protocol/protocol.ts'
-import { Result } from 'utils/result.ts'
+import * as P from 'protocol/protocol'
+import { Result } from 'utils/result'
 
 import { Codec } from 'io-ts/lib/Codec'
 

@@ -1,11 +1,11 @@
-import { isOK, isErr } from 'utils/result.ts'
+import { isOK, isErr } from 'utils/result'
 
-import * as P from 'protocol/protocol.ts'
-import * as wscode from 'protocol/code.ts'
-import { Engine } from 'protocol/engine.ts'
+import * as P from 'protocol/protocol'
+import * as wscode from 'protocol/code'
+import { Engine } from 'protocol/engine'
 
-import * as options from 'options.ts'
-import assert from 'utils/assert.ts'
+import * as options from 'options'
+import assert from 'utils/assert'
 
 export class GameClient<
   Config,

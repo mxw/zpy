@@ -1,8 +1,8 @@
 import {
   Suit, Rank, TrumpMeta, CardBase, Card, CardPile
-} from 'lib/zpy/cards.ts'
+} from 'lib/zpy/cards'
 
-import * as c from 'test/common.ts'
+import * as c from 'test/common'
 
 import {expect} from 'chai'
 

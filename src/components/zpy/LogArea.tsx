@@ -3,15 +3,15 @@
  */
 import * as React from 'react'
 
-import * as P from 'protocol/protocol.ts'
+import * as P from 'protocol/protocol'
 
-import { ZPY } from 'lib/zpy/zpy.ts'
-import * as ZPYEngine from 'lib/zpy/engine.ts'
+import { ZPY } from 'lib/zpy/zpy'
+import * as ZPYEngine from 'lib/zpy/engine'
 
-import { EngineCallbacks } from 'components/zpy/common.ts'
+import { EngineCallbacks } from 'components/zpy/common'
 
-import * as options from 'options.ts'
-import assert from 'utils/assert.ts'
+import * as options from 'options'
+import assert from 'utils/assert'
 
 
 export class LogArea extends React.Component<LogArea.Props, LogArea.State> {

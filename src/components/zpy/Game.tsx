@@ -7,22 +7,22 @@
 import * as React from 'react'
 import ReactModal = require('react-modal');
 
-import * as P from 'protocol/protocol.ts'
-import { GameId } from 'server/server.ts'
-import { GameClient } from 'protocol/client.ts'
+import * as P from 'protocol/protocol'
+import { GameId } from 'server/server'
+import { GameClient } from 'protocol/client'
 
-import { ZPY } from 'lib/zpy/zpy.ts'
-import * as ZPYEngine from 'lib/zpy/engine.ts'
+import { ZPY } from 'lib/zpy/zpy'
+import * as ZPYEngine from 'lib/zpy/engine'
 
-import { Client, EngineCallbacks } from 'components/zpy/common.ts'
-import { Help } from 'components/zpy/Help.tsx'
-import { Board } from 'components/zpy/Board.tsx'
-import { LogArea } from 'components/zpy/LogArea.tsx'
-import { Reveal } from 'components/zpy/Reveal.tsx'
-import { ErrorMessage } from 'components/zpy/ErrorMessage.tsx'
+import { Client, EngineCallbacks } from 'components/zpy/common'
+import { Help } from 'components/zpy/Help'
+import { Board } from 'components/zpy/Board'
+import { LogArea } from 'components/zpy/LogArea'
+import { Reveal } from 'components/zpy/Reveal'
+import { ErrorMessage } from 'components/zpy/ErrorMessage'
 
-import * as options from 'options.ts'
-import assert from 'utils/assert.ts'
+import * as options from 'options'
+import assert from 'utils/assert'
 
 import 'styles/zpy/zpy.scss'
 

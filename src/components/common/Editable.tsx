@@ -3,10 +3,10 @@
  */
 import * as React from 'react'
 
-import { isMac } from 'components/utils/platform.ts'
+import { isMac } from 'components/utils/platform'
 
-import * as options from 'options.ts'
-import assert from 'utils/assert.ts'
+import * as options from 'options'
+import assert from 'utils/assert'
 
 
 export class Editable extends React.Component<Editable.Props, Editable.State> {

@@ -3,9 +3,9 @@
  */
 import * as React from 'react'
 
-import { isMac } from 'components/utils/platform.ts'
+import { isMac } from 'components/utils/platform'
 
-import assert from 'utils/assert.ts'
+import assert from 'utils/assert'
 
 
 export function Help(props: {}) {

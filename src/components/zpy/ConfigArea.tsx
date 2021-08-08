@@ -3,12 +3,12 @@
  */
 import * as React from 'react'
 
-import { ZPY } from 'lib/zpy/zpy.ts'
-import * as ZPYEngine from 'lib/zpy/engine.ts'
+import { ZPY } from 'lib/zpy/zpy'
+import * as ZPYEngine from 'lib/zpy/engine'
 
-import { range } from 'utils/iterable.ts'
+import { range } from 'utils/iterable'
 
-import assert from 'utils/assert.ts'
+import assert from 'utils/assert'
 
 
 export class ConfigArea extends React.Component<ConfigArea.Props, {}> {

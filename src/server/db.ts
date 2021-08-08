@@ -4,8 +4,8 @@
 
 import * as pg from 'pg'
 
-import assert from 'utils/assert.ts'
-import log from 'utils/logger.ts'
+import assert from 'utils/assert'
+import log from 'utils/logger'
 
 import format = require('pg-format');
 export { format };
