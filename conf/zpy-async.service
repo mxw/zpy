@@ -1,5 +1,7 @@
 [Unit]
 Description=ZPY asynchronous maintenance
+Wants=postgresql.service
+After=postgresql.service
 
 [Service]
 User=zpy

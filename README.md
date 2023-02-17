@@ -66,8 +66,8 @@ you'll probably want to change the nginx `server_name` and obtain TLS certs.
 finally, start the ZPY server:
 
     sudo systemctl reload nginx
-    sudo systemctl start zpy
-    sudo systemctl start zpy-async.timer
+    sudo systemctl enable zpy zpy-async.timer
+    sudo systemctl start zpy zpy-async.timer
 
 logs can be monitored via
 

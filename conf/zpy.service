@@ -1,6 +1,7 @@
 [Unit]
 Description=ZPY game server
-After=network.target
+Wants=postgresql.service
+After=network.target postgresql.service
 
 [Service]
 User=zpy
